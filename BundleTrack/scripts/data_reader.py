@@ -28,6 +28,7 @@ class YcbineoatReader:
     for color_file in self.color_files:
       id_str = os.path.basename(color_file).replace('.png','')
       self.id_strs.append(id_str)
+    print(f"reading {self.color_files[0]}")
     self.H,self.W = cv2.imread(self.color_files[0]).shape[:2]
 
     if shorter_side is not None:
@@ -36,6 +37,8 @@ class YcbineoatReader:
     self.H = int(self.H*self.downscale)
     self.W = int(self.W*self.downscale)
     self.K[:2] *= self.downscale
+    logging.info(f"W: {self.W} H: {self.H} downscale: {self.downscale}")
+
 
     self.gt_pose_files = sorted(glob.glob(f'{self.video_dir}/annotated_poses/*'))
 

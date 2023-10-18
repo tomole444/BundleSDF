@@ -14,6 +14,7 @@
 Eigen::Vector3f Frame::model_dimensions = Eigen::Vector3f::Zero();
 zmq::context_t Frame::context;
 zmq::socket_t Frame::socket;
+void SaveGrid(std::string filename,int arr[1280][720]);
 
 Frame::Frame()
 {
@@ -127,6 +128,20 @@ void Frame::init()
   if (Frame::model_dimensions==Eigen::Vector3f::Zero())  //Measure model dimensions
   {
     PointCloudRGBNormal::Ptr cloud_world(new PointCloudRGBNormal);
+    /* Debugging
+    const std::string debug_dir = (*yml)["debug_dir"].as<std::string>();
+
+    int debugPoints[1280][720]; 
+    for (int w=0;w<_W;w++)
+    {
+      for (int h=0;h<_H;h++)
+      {
+        const auto &pt = (*_cloud)(w,h);
+        debugPoints[w][h] = pt.z;
+      }
+    }
+    SaveGrid(fmt::format("{}/ptcloudZ.txt", debug_dir),debugPoints);
+    */
     Utils::passFilterPointCloud(_cloud, cloud_world, "z", 0.1, (*yml)["depth_processing"]["zfar"].as<float>());
     pcl::transformPointCloudWithNormals(*cloud_world, *cloud_world, _pose_in_model);
     pcl::PointXYZRGBNormal min_pt, max_pt;
@@ -148,22 +163,35 @@ void Frame::setNewInitCoordinate()
 {
   const std::string debug_dir = (*yml)["debug_dir"].as<std::string>();
   PointCloudRGBNormal::Ptr cloud(new PointCloudRGBNormal);
+  SPDLOG("_W: {} _H: {}", _W, _H);
+  int debugPoints[1280][720]; 
   for (int w=0;w<_W;w++)
   {
     for (int h=0;h<_H;h++)
     {
       const auto &pt = (*_cloud)(w,h);
+      debugPoints[w][h] = pt.z;
+      if (pt.z != 0)
+        SPDLOG("pt.z: {}", pt.z);
+      //if (_fg_mask.at<uchar>(h,w) != 0)
+        //SPDLOG("_fg_mask.at<uchar>(h,w): {}", _fg_mask.at<uchar>(h,w));
+
+
       if (pt.z>0.1 && _fg_mask.at<uchar>(h,w)>0)
       {
         cloud->points.push_back(pt);
       }
     }
   }
+  //SaveGrid(fmt::format("{}/ptcloudZ.txt", debug_dir),debugPoints);
+
   pcl::io::savePLYFile(fmt::format("{}/cloud_init.ply", debug_dir), *cloud);
   Utils::outlierRemovalStatistic(cloud,cloud,3,30);
   pcl::io::savePLYFile(fmt::format("{}/cloud_for_init_coord.ply", debug_dir), *cloud);
   Eigen::MatrixXf mat = cloud->getMatrixXfMap();  // (D,N)
   Eigen::MatrixXf pts = mat.block(0,0,3,cloud->points.size());
+  SPDLOG("debug cloud: {}",cloud->points.size());
+  SPDLOG("debug _cloud: {}",_cloud->points.size());
   Eigen::Vector3f max_xyz = pts.rowwise().maxCoeff();
   Eigen::Vector3f min_xyz = pts.rowwise().minCoeff();
   _pose_in_model.block(0,3,3,1) << -(max_xyz+min_xyz)/2;
@@ -471,3 +499,19 @@ bool Frame::operator < (const Frame &other)
   return false;
 }
 
+void SaveGrid(std::string filename,int arr[1280][720])
+{
+    int x_max = 1280, y_max = 720;
+    std::ofstream outputFile(filename);
+    if (outputFile.is_open()) 
+      SPDLOG("Offen... x: {} y: {}", x_max,y_max);
+    for (int x = 0; x < x_max; x++) {
+        for (int y = 0; y < y_max; y++)
+        {
+            SPDLOG("Schreibe {}",arr[x][y]);
+            outputFile << arr[x][y] << " ";
+        }
+        outputFile << std::endl;
+    }
+    outputFile.close();
+}

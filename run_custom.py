@@ -67,8 +67,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
 
-  reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
-
+  #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
+  reader = YcbineoatReader(video_dir=video_dir)
 
   for i in range(0,len(reader.color_files),args.stride):
     color_file = reader.color_files[i]

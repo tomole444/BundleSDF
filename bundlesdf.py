@@ -390,7 +390,7 @@ class BundleSdf:
 
   def process_new_frame(self, frame):
     logging.info(f"process frame {frame._id_str}")
-
+    
     self.bundler._newframe = frame
     os.makedirs(self.debug_dir, exist_ok=True)
 
@@ -403,8 +403,8 @@ class BundleSdf:
 
     frame.invalidatePixelsByMask(frame._fg_mask)
     if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
+      ##@@@ Scheitert hieran
       frame.setNewInitCoordinate()
-
 
     n_fg = (np.array(frame._fg_mask)>0).sum()
     if n_fg<100:
@@ -412,10 +412,10 @@ class BundleSdf:
       frame._status = my_cpp.Frame.FAIL;
       self.bundler.forgetFrame(frame)
       return
-
+    
     if self.cfg_track["depth_processing"]["denoise_cloud"]:
       frame.pointCloudDenoise()
-
+   
     n_valid = frame.countValidPoints()
     n_valid_first = self.bundler._firstframe.countValidPoints()
     if n_valid<n_valid_first/40.0:
@@ -428,7 +428,6 @@ class BundleSdf:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
       return
-
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
 
     self.find_corres([(frame, ref_frame)])
@@ -528,13 +527,24 @@ class BundleSdf:
     H,W = color.shape[:2]
 
     percentile = self.cfg_track['depth_processing']["percentile"]
+    #print(f"\033[94m depth: {depth.shape} mask: {mask.shape}\033[0m")
+
     if percentile<100:   # Denoise
       logging.info("percentile denoise start")
+      #logging.info(f"depth: {depth.shape}")
       valid = (depth>=0.1) & (mask>0)
+
+      #np.savetxt("test.txt", depth, delimiter = ",")
+      #print(f"\033[94m Valid: {valid.shape} \033[0m")
+
       thres = np.percentile(depth[valid], percentile)
       depth[depth>=thres] = 0
       logging.info("percentile denoise done")
+    
+    #np.savetxt("test.txt", valid, delimiter = ",")
+    #print(f"\033[94m Depth: {depth} \033[0m")
 
+    
     frame = self.make_frame(color, depth, K, id_str, mask, occ_mask, pose_in_model)
     os.makedirs(f"{self.debug_dir}/{frame._id_str}", exist_ok=True)
 
