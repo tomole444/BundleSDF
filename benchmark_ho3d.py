@@ -13,6 +13,7 @@ import pandas as pd
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{code_dir}/BundleTrack/scripts')
 from data_reader import *
+import pdb
 
 
 def benchmark_one_video(method,video_dir):
@@ -24,6 +25,7 @@ def benchmark_one_video(method,video_dir):
   benchmark_pose = True
   benchmark_mesh = True
 
+  #pdb.set_trace()
   dir = f'{args.out_dir}/{video_name}'
   pose_files = sorted(glob.glob(f'{dir}/ob_in_cam/*.txt'))
   pred_poses = []
@@ -153,7 +155,7 @@ if __name__=='__main__':
 
   video_dirs = args.video_dirs.split(',')
   out_data = {}
-  args = []
+  #args = []
   for video_dir in video_dirs:
     out = benchmark_one_video(method, video_dir)
     out_data.update(out)

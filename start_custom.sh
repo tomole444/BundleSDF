@@ -35,7 +35,7 @@ python run_custom.py --mode global_refine --video_dir /home/thws_robotik/Documen
 python run_custom.py --mode draw_bb --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritz2 --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownFritz
 
 # Run BundleSDF to get the pose and reconstruction results
-python run_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D
+python run_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D --use_gui 1 
 
 # Benchmark the output results
-python benchmark_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D
+python benchmark_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D --log_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3Dlog
