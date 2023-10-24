@@ -32,4 +32,10 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/py38/x86_64-conda-linux-
 python run_custom.py --mode global_refine --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritz2 --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownFritz   # Change the path to your video_directory
 
 #Visualisierung
-python run_custom.py --mode draw_pose --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritz2 --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownFritz
+python run_custom.py --mode draw_bb --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritz2 --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownFritz
+
+# Run BundleSDF to get the pose and reconstruction results
+python run_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D
+
+# Benchmark the output results
+python benchmark_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D

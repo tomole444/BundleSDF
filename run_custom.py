@@ -189,13 +189,13 @@ def postprocess_mesh(out_folder):
 
 
 
-def draw_pose():
+def draw_bb():
   K = np.loadtxt(f'{args.out_folder}/cam_K.txt').reshape(3,3)
   color_files = sorted(glob.glob(f'{args.out_folder}/color/*'))
   mesh = trimesh.load(f'{args.out_folder}/textured_mesh.obj')
   to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
   bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
-  out_dir = f'{args.out_folder}/pose_vis'
+  out_dir = f'{args.out_folder}/bb_vis'
   os.makedirs(out_dir, exist_ok=True)
   logging.info(f"Saving to {out_dir}")
   for color_file in color_files:
@@ -205,12 +205,34 @@ def draw_pose():
     vis = draw_posed_3d_box(K, color, ob_in_cam=pose, bbox=bbox, line_color=(255,255,0))
     id_str = os.path.basename(color_file).replace('.png','')
     imageio.imwrite(f'{out_dir}/{id_str}.png', vis)
+    logging.info(f"Saving {id_str}.png")
+
+def draw_pose():
+  K = np.loadtxt(f'{args.out_folder}/cam_K.txt').reshape(3,3)
+  color_files = sorted(glob.glob(f'{args.out_folder}/color/*'))
+  #mesh = trimesh.load(f'{args.out_folder}/textured_mesh.obj')
+  #to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
+  #bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
+  out_dir = f'{args.out_folder}/pose_vis'
+  os.makedirs(out_dir, exist_ok=True)
+  logging.info(f"Saving to {out_dir}")
+  for color_file in color_files:
+    color = imageio.imread(color_file)
+    pose = np.loadtxt(color_file.replace('.png','.txt').replace('color','ob_in_cam'))
+    #logging.info(f"Pose: {pose}")
+    #pose = pose@np.linalg.inv(to_origin)
+    #vis = draw_posed_3d_box(K, color, ob_in_cam=pose, bbox=bbox, line_color=(255,255,0))
+    vis = draw_xyz_axis(color, ob_in_cam=pose, K = K, is_input_rgb = False)
+    #vis = draw_posed_3d_box(K, color, ob_in_cam=pose, bbox=bbox, line_color=(255,255,0))
+    id_str = os.path.basename(color_file).replace('.png','')
+    imageio.imwrite(f'{out_dir}/{id_str}.png', vis)
+    logging.info(f"Saving {id_str}.png")
 
 
 
 if __name__=="__main__":
   parser = argparse.ArgumentParser()
-  parser.add_argument('--mode', type=str, default="run_video", help="run_video / global_refine / get_mesh")
+  parser.add_argument('--mode', type=str, default="run_video", help="run_video / global_refine / get_mesh / draw_bb / draw_pose")
   parser.add_argument('--video_dir', type=str, default="/home/bowen/debug/2022-11-18-15-10-24_milk/")
   parser.add_argument('--out_folder', type=str, default="/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk")
   parser.add_argument('--use_segmenter', type=int, default=0)
@@ -225,6 +247,8 @@ if __name__=="__main__":
     run_one_video_global_nerf(out_folder=args.out_folder)
   elif args.mode=='get_mesh':
     postprocess_mesh(out_folder=args.out_folder)
+  elif args.mode=='draw_bb':
+    draw_bb()
   elif args.mode=='draw_pose':
     draw_pose()
   else:
