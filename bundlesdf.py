@@ -527,8 +527,8 @@ class BundleSdf:
     H,W = color.shape[:2]
 
     percentile = self.cfg_track['depth_processing']["percentile"]
-    #print(f"\033[94m depth: {depth.shape} mask: {mask.shape}\033[0m")
-
+    print(f"\033[94m depth: {depth.shape} mask: {mask.shape} percentile: {percentile}\033[0m")
+    #percentile = 100
     if percentile<100:   # Denoise
       logging.info("percentile denoise start")
       #logging.info(f"depth: {depth.shape}")
@@ -541,7 +541,7 @@ class BundleSdf:
       depth[depth>=thres] = 0
       logging.info("percentile denoise done")
     
-    #np.savetxt("test.txt", valid, delimiter = ",")
+    #np.savetxt("test.txt", depth, delimiter = ",")
     #print(f"\033[94m Depth: {depth} \033[0m")
 
     

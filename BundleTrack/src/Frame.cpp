@@ -128,20 +128,34 @@ void Frame::init()
   if (Frame::model_dimensions==Eigen::Vector3f::Zero())  //Measure model dimensions
   {
     PointCloudRGBNormal::Ptr cloud_world(new PointCloudRGBNormal);
-    /* Debugging
+    // Debugging
+    //Maske hier noch nicht gefüllt _fg_mask
+    /*
     const std::string debug_dir = (*yml)["debug_dir"].as<std::string>();
 
-    int debugPoints[1280][720]; 
+    //int debugPoints[1280][720]; 
     for (int w=0;w<_W;w++)
     {
       for (int h=0;h<_H;h++)
       {
         const auto &pt = (*_cloud)(w,h);
-        debugPoints[w][h] = pt.z;
+        //debugPoints[w][h] = pt.z;
+        //SPDLOG("pt.z: {}", pt.z);
+        if (pt.z != 0)
+          SPDLOG("pt.z: {}", pt.z);
+        //if(_fg_mask.at<uchar>(h,w)>0){
+        //  SPDLOG("_fg_mask.at<uchar>({},{}) {}", h,w,_fg_mask.at<uchar>(h,w));
+        //}
+
+        //if (pt.z>0.1 && _fg_mask.at<uchar>(h,w)>0)
+        //{
+        //  SPDLOG("pt.z: {}", pt.z);
+        //}
       }
     }
-    SaveGrid(fmt::format("{}/ptcloudZ.txt", debug_dir),debugPoints);
     */
+    //SaveGrid(fmt::format("{}/ptcloudZ.txt", debug_dir),debugPoints);
+    
     Utils::passFilterPointCloud(_cloud, cloud_world, "z", 0.1, (*yml)["depth_processing"]["zfar"].as<float>());
     pcl::transformPointCloudWithNormals(*cloud_world, *cloud_world, _pose_in_model);
     pcl::PointXYZRGBNormal min_pt, max_pt;
@@ -164,17 +178,17 @@ void Frame::setNewInitCoordinate()
   const std::string debug_dir = (*yml)["debug_dir"].as<std::string>();
   PointCloudRGBNormal::Ptr cloud(new PointCloudRGBNormal);
   SPDLOG("_W: {} _H: {}", _W, _H);
-  int debugPoints[1280][720]; 
+  //int debugPoints[1280][720]; 
   for (int w=0;w<_W;w++)
   {
     for (int h=0;h<_H;h++)
     {
       const auto &pt = (*_cloud)(w,h);
-      debugPoints[w][h] = pt.z;
-      if (pt.z != 0)
-        SPDLOG("pt.z: {}", pt.z);
+      //debugPoints[w][h] = pt.z;
+      //if (pt.z != 0)
+      //  SPDLOG("pt.z: {}", pt.z);
       //if (_fg_mask.at<uchar>(h,w) != 0)
-        //SPDLOG("_fg_mask.at<uchar>(h,w): {}", _fg_mask.at<uchar>(h,w));
+      //  SPDLOG("_fg_mask.at<uchar>({},{}) {}", h,w,_fg_mask.at<uchar>(h,w));
 
 
       if (pt.z>0.1 && _fg_mask.at<uchar>(h,w)>0)

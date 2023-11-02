@@ -59,6 +59,7 @@ def benchmark_one_video(method,video_dir):
   gt_poses = np.array(gt_poses)
   pred_poses = np.array(pred_poses)[ids]
 
+  #print(pred_poses.shape)
   ######### Align first frame
   pred_pose_init_old = pred_poses[0].copy()
   pred_poses = pred_poses@np.linalg.inv(pred_poses[0])@gt_poses[0]

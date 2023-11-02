@@ -39,3 +39,12 @@ python run_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/dataset
 
 # Benchmark the output results
 python benchmark_ho3d.py --video_dirs /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1 --out_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D --log_dir /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3Dlog
+
+#Visualisierung Ho3D Pose
+python run_custom.py --mode draw_pose --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/SM1  --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outHO3D
+
+#Visualisierung FritzCon
+python run_custom.py --mode draw_pose --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritzConcat  --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outFritzCon
+
+#Buch
+python run_custom.py --mode run_video --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBook  --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBook --use_segmenter 0 --use_gui 1 --debug_level 4
