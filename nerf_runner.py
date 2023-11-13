@@ -1465,7 +1465,7 @@ class NerfRunner:
     return mesh
 
 
-  def mesh_texture_from_train_images(self, mesh, rgbs_raw, train_texture=False, tex_res=1024):
+  def mesh_texture_from_train_images(self, mesh, rgbs_raw, rgbNames, train_texture=False, tex_res=1024):
     '''
     @rgbs_raw: raw complete image that was trained on, no black holes
     @mesh: in normalized space
@@ -1488,6 +1488,8 @@ class NerfRunner:
     uvs_tex = (mesh.visual.uv*np.array([W-1,H-1]).reshape(1,2))    #(n_V,2)
 
     renderer = ModelRendererOffscreen([], cam_K=self.K, H=self.H, W=self.W, zfar=self.cfg['far']*self.cfg['sc_factor'])
+
+    logging.info(f"zfar = {self.cfg['far']} * {self.cfg['sc_factor']} = {self.cfg['far']*self.cfg['sc_factor']}")
     renderer.add_mesh(mesh)
 
     vertices_cuda = torch.from_numpy(mesh.vertices).float().cuda()
@@ -1497,17 +1499,22 @@ class NerfRunner:
       face_vertices[:,i] = vertices_cuda[faces_cuda[:,i]]
 
     for i in range(len(rgbs_raw)):
-      print(f'project train_images {i}/{len(rgbs_raw)}')
+      logging.info(f'project train_images {rgbNames[i]} ({i}/{len(rgbs_raw)})')
 
       ############# Raterization
       cvcam_in_ob = tf[i]@np.linalg.inv(glcam_in_cvcam)
       _, render_depth = renderer.render([np.linalg.inv(cvcam_in_ob)])
       xyz_map = depth2xyzmap(render_depth, self.K)
+      
       mask = self.masks[i].reshape(self.H,self.W).astype(bool)
       valid = (render_depth.reshape(self.H,self.W)>=0.1*self.cfg['sc_factor']) & (mask)
       pts = xyz_map[valid].reshape(-1,3)
       pts = transform_pts(pts, cvcam_in_ob)
       ray_colors = rgbs_raw[i][valid].reshape(-1,3)
+
+      logging.warn(f"PTS Shape of {i} : {pts.shape}")
+      if pts.shape == (0,3) or i == 165:
+        pdb.set_trace()
       locations, distance, index_tri = trimesh.proximity.closest_point(mesh, pts)
       normals = mesh.face_normals[index_tri]
       rays_o = np.zeros((len(normals),3))

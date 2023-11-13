@@ -27,7 +27,8 @@ export PYTHONPATH=$PYTHONPATH:/home/thws_robotik/Documents/Leyh/6dpose/detection
 conda install gcc=12.1.0
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/py38/x86_64-conda-linux-gnu/lib/
 
-
+#Log console to file
+echo test 2>&1 | tee SomeFile.txt
 
 python run_custom.py --mode global_refine --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritz2 --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownFritz   # Change the path to your video_directory
 
@@ -47,4 +48,18 @@ python run_custom.py --mode draw_pose --video_dir /home/thws_robotik/Documents/L
 python run_custom.py --mode draw_pose --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritzConcat  --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outFritzCon
 
 #Buch
-python run_custom.py --mode run_video --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBook  --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBook --use_segmenter 0 --use_gui 1 --debug_level 4
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownBook  --out_folder /home/grass/Documents/Leyh/BundleSDF/outBook --use_segmenter 0 --use_gui 1 --debug_level 1
+
+python run_custom.py --mode global_refine --video_dir /home/grass/Documents/Leyh/datasets/ownBookSmall --out_folder /home/grass/Documents/Leyh/BundleSDF/outBookSmall --debug_level 4
+
+
+
+#Truck
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownTruckSmall --out_folder /home/grass/Documents/Leyh/BundleSDF/outTruckSmall --use_segmenter 0 --use_gui 1 --debug_level 4 2>&1 | tee TruckSmall.log
+
+#Duplo
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownDuploAz --out_folder /home/grass/Documents/Leyh/BundleSDF/outDuploAz --use_segmenter 0 --use_gui 1 --debug_level 4 2>&1 | tee log/DuploAz.log 
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownDuploZed --out_folder /home/grass/Documents/Leyh/BundleSDF/outDuploZed --use_segmenter 0 --use_gui 1 --debug_level 4 2>&1 | tee log/DuploZed.log 
+
+#Buch
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownBookComb  --out_folder /home/grass/Documents/Leyh/BundleSDF/outBookComb --use_segmenter 0 --use_gui 1 --debug_level 4 2>&1 | tee log/BookComb.log

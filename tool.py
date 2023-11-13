@@ -40,6 +40,7 @@ def compute_translation_scales(pts,max_dim=2,cluster=True, eps=0.06, min_samples
 
 
 def compute_scene_bounds_worker(color_file,K,glcam_in_world,use_mask,rgb=None,depth=None,mask=None):
+  #print(f"Color file {color_file}")
   if rgb is None:
     depth_file = color_file.replace('images','depth_filtered')
     mask_file = color_file.replace('images','masks')
@@ -54,6 +55,8 @@ def compute_scene_bounds_worker(color_file,K,glcam_in_world,use_mask,rgb=None,de
   pts = xyz_map[valid].reshape(-1,3)
   if len(pts)==0:
     return None
+  #logging.info(f"RGB Shape {rgb.shape}")
+  #logging.info(f"Valid Shape {valid.shape}")
   colors = rgb[valid].reshape(-1,3)
   pcd = toOpen3dCloud(pts,colors)
   pcd = pcd.voxel_down_sample(0.01)
@@ -66,7 +69,7 @@ def compute_scene_bounds_worker(color_file,K,glcam_in_world,use_mask,rgb=None,de
 
 def compute_scene_bounds(color_files,glcam_in_worlds,K,use_mask=True,base_dir=None,rgbs=None,depths=None,masks=None,cluster=True, translation_cvcam=None, sc_factor=None, eps=0.06, min_samples=1):
   assert color_files is None or rgbs is None
-
+  #pdb.set_trace()
   if base_dir is None:
     base_dir = os.path.dirname(color_files[0])+'/../'
 
@@ -79,6 +82,7 @@ def compute_scene_bounds(color_files,glcam_in_worlds,K,use_mask=True,base_dir=No
       args.append((color_files[i],K,glcam_in_worlds[i],use_mask))
 
   logging.info(f"compute_scene_bounds_worker start")
+  logging.info(f"RGBS shape: {np.array(rgbs).shape}")
   ret = joblib.Parallel(n_jobs=10, prefer="threads")(joblib.delayed(compute_scene_bounds_worker)(*arg) for arg in args)
   logging.info(f"compute_scene_bounds_worker done")
 

@@ -130,6 +130,7 @@ def run_nerf(p_dict, kf_to_nerf_list, lock, cfg_nerf, translation, sc_factor, st
 
     cnt_nerf += 1
     rgbs_all += list(rgbs)
+    #print(f"All RGBS {np.array(rgbs_all)}")
     depths_all += list(depths)
     masks_all += list(masks)
     if normal_maps is not None:
@@ -147,6 +148,7 @@ def run_nerf(p_dict, kf_to_nerf_list, lock, cfg_nerf, translation, sc_factor, st
     if cfg_nerf['continual']:
       if cnt_nerf==0:
         if translation is None:
+          #pdb.set_trace()
           sc_factor,translation,pcd_real_scale, pcd_normalized = compute_scene_bounds(None,glcam_in_obs,K,use_mask=True,base_dir=cfg_nerf['save_dir'],rgbs=np.array(rgbs_all),depths=np.array(depths_all),masks=np.array(masks_all), eps=cfg_nerf['dbscan_eps'], min_samples=cfg_nerf['dbscan_eps_min_samples'])
           sc_factor *= 0.7      # Ensure whole object within bound
           cfg_nerf['sc_factor'] = float(sc_factor)
@@ -447,7 +449,7 @@ class BundleSdf:
       visibles = np.array(visibles)
       ids = np.argsort(visibles)[::-1]
       found = False
-      pdb.set_trace()
+      #pdb.set_trace()
       for id in ids:
         kf = self.bundler._keyframes[id]
         logging.info(f"trying new ref frame {kf._id_str}")
@@ -675,6 +677,7 @@ class BundleSdf:
     os.system(f'rm -rf {self.debug_dir}/final/used_rgbs/ && mkdir -p {self.debug_dir}/final/used_rgbs/')
 
     rgbs = []
+    rgbNames = []
     depths = []
     normal_maps = []
     masks = []
@@ -686,16 +689,19 @@ class BundleSdf:
         rgbs.append(reader.get_color(id))
         depths.append(reader.get_depth(id))
         masks.append(reader.get_mask(id))
+        #pdb.set_trace()
       else:
         self.cfg_nerf['down_scale_ratio'] = 1   # Images have been downscaled in tracking outputs
         rgb_file = f"{self.debug_dir}/color_segmented/{frame_id}.png"
         shutil.copy(rgb_file, f'{self.debug_dir}/final/used_rgbs/')
         rgb = imageio.imread(rgb_file)
+        #pdb.set_trace()
         depth = cv2.imread(rgb_file.replace('color_segmented','depth_filtered'),-1)/1e3
         mask = cv2.imread(rgb_file.replace('color_segmented','mask'),-1)
         rgbs.append(rgb)
         depths.append(depth)
         masks.append(mask)
+      rgbNames.append(f"{frame_id}.png")
 
     glcam_in_obs = cam_in_obs@glcam_in_cvcam
 
@@ -770,7 +776,7 @@ class BundleSdf:
     mesh.export(f'{self.debug_dir}/mesh_cleaned.obj')
 
     if get_texture:
-      mesh = nerf.mesh_texture_from_train_images(mesh, rgbs_raw=rgbs_raw, train_texture=False, tex_res=tex_res)
+      mesh = nerf.mesh_texture_from_train_images(mesh, rgbs_raw=rgbs_raw, train_texture=False, tex_res=tex_res, rgbNames = rgbNames)
 
     mesh = mesh_to_real_world(mesh, pose_offset=offset, translation=self.cfg_nerf['translation'], sc_factor=self.cfg_nerf['sc_factor'])
     mesh.export(f'{self.debug_dir}/textured_mesh.obj')

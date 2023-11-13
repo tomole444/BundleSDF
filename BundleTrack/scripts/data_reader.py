@@ -72,6 +72,10 @@ class YcbineoatReader:
 
   def get_color(self,i):
     color = imageio.imread(self.color_files[i])
+    #For Pictures of Zed camera -> RGBA -> Kanäle begrenzen
+    
+    color = color[:,:,:3]
+    #pdb.set_trace()
     color = cv2.resize(color, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
     return color
 
