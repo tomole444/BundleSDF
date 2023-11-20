@@ -120,5 +120,5 @@ target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${P
 
 ############# Pybind
 # pybind11_add_module(my_cpp pybind_interface/pybind_api.cpp ${MY_SRC})
-pybind11_add_module(my_cpp pybind_interface/pybind_api.cpp ${CMAKE_SOURCE_DIR}/src/Frame.cpp)
+pybind11_add_module(my_cpp pybind_interface/pybind_api.cpp ${CMAKE_SOURCE_DIR}/src/Frame.cpp ${CMAKE_SOURCE_DIR}/src/Bundler.cpp)
 target_link_libraries(my_cpp PRIVATE ${PROJECT_NAME} MY_CUDA_LIB ${YAML_CPP_LIBRARIES} ${PYTHON_LIBRARIES} ${CUDA_LIBRARIES})

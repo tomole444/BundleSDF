@@ -958,9 +958,13 @@ void Bundler::optimizeGPU(std::vector<std::shared_ptr<Frame>> &frames, bool find
 
 void Bundler::saveNewframeResult()
 {
+  const std::string debug_dir = (*yml)["debug_dir"].as<std::string>();
+  saveNewframeResult(debug_dir);
+}
+void Bundler::saveNewframeResult(const std::string &debug_dir)
+{
   SPDLOG("Welcome saveNewframeResult");
   std::string K_file = fmt::format("{}/cam_K.txt",(*yml)["debug_dir"].as<std::string>());
-  const std::string debug_dir = (*yml)["debug_dir"].as<std::string>();
   const std::string out_dir = debug_dir+_newframe->_id_str+"/";
   const std::string pose_out_dir = debug_dir+"ob_in_cam/";
 
@@ -1151,6 +1155,47 @@ void Bundler::saveKeyframesPose()
     ff<<kf->_pose_in_model<<std::endl;
     ff.close();
   }
+}
+
+void Bundler::loadKeyframes(const py::array_t<int> &keyframeIds, size_t decimalCount, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::string key_folder, std::shared_ptr<YAML::Node> yml1)
+{
+
+  std::vector<int> _keyframeIds = std::vector<int>(keyframeIds.data(), keyframeIds.data() + keyframeIds.nbytes()/keyframeIds.itemsize());
+  SPDLOG("First frame {} ",_keyframeIds[0]);
+  py::buffer_info bufPoses = poses_in_model.request();
+  float *ptr1 = (float *) bufPoses.ptr;
+  //std::vector<Eigen::Matrix4f> _poses_in_model = std::vector<Eigen::Matrix4f>(poses_in_model.data(), poses_in_model.data() + poses_in_model.size());
+  //frame = my_cpp.Frame(color,depth,roi,pose_in_model,self.cnt,id_str,K,self.bundler.yml)
+  const std::string color_dir = key_folder+"/color/";
+  const std::string depth_dir = key_folder+"/depth/";
+  const std::string mask_dir = key_folder+"/mask/";
+  
+  for (int idx = 0; idx < _keyframeIds.size(); idx++)
+  {
+    int id = _keyframeIds[idx];
+    float *ptr2 = &ptr1[idx * 4 * 4];
+
+    std::string idStr = std::to_string(id);
+    int precision = decimalCount - std::min(decimalCount, idStr.size());
+    idStr = std::string(precision, '0').append(idStr);
+
+
+    cv::Mat color = cv::imread(color_dir + "/" + idStr + ".png");
+    cvtColor(color, color, cv::COLOR_BGR2RGB);
+    cv::Mat depth = cv::imread(depth_dir + "/" + idStr + ".png", cv::IMREAD_ANYCOLOR | cv::IMREAD_ANYDEPTH);
+    cv::Mat mask = cv::imread(mask_dir + "/" + idStr+ ".png", cv::IMREAD_GRAYSCALE);
+    Eigen::Matrix4f pose_in_model;
+    pose_in_model << ptr2[0], ptr2[1], ptr2[2];
+
+
+    //(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
+    std::shared_ptr<Frame> frame (new Frame (color,depth, pose_in_model, id, std::to_string(id), K, yml1));
+    frame->_fg_mask = mask;
+    _keyframes.push_back(frame);
+    SPDLOG("Added frame {} as keyframe, current #keyframe: {}", key_folder + frame->_id_str, _keyframes.size());
+  }
+  
+
 }
 
 void Bundler::saveFramesData(std::vector<std::shared_ptr<Frame>> frames, std::string foldername)

@@ -27,6 +27,16 @@ export PYTHONPATH=$PYTHONPATH:/home/thws_robotik/Documents/Leyh/6dpose/detection
 conda install gcc=12.1.0
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/py38/x86_64-conda-linux-gnu/lib/
 
+#Kompiliert nicht
+(py38) root@fe-w404-u:/opt/conda/envs/py38/bin# ls | grep gcc
+lrwxrwxrwx 1 root root   33 Nov  2 04:11 gcc-ranlib -> x86_64-conda-linux-gnu-gcc-ranlib
+lrwxrwxrwx 1 root root   29 Nov  2 04:11 gcc-nm -> x86_64-conda-linux-gnu-gcc-nm
+lrwxrwxrwx 1 root root   29 Nov  2 04:11 gcc-ar -> x86_64-conda-linux-gnu-gcc-ar
+lrwxrwxrwx 1 root root   26 Nov  2 04:11 gcc-12 -> x86_64-conda-linux-gnu-gcc
+lrwxrwxrwx 1 root root   26 Nov  2 04:11 cc -> x86_64-conda-linux-gnu-gcc
+lrwxrwxrwx 1 root root   14 Nov 16 01:07 gcc -> /usr/bin/gcc-9                  #neu erstellt
+
+
 #Log console to file
 echo test 2>&1 | tee SomeFile.txt
 
@@ -63,3 +73,5 @@ python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/dat
 
 #Buch
 python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownBookComb  --out_folder /home/grass/Documents/Leyh/BundleSDF/outBookComb --use_segmenter 0 --use_gui 1 --debug_level 4 2>&1 | tee log/BookComb.log
+
+python run_realtime.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/bookRealtime720p --key_folder /home/grass/Documents/Leyh/BundleSDF/outBookComb720p --out_folder /home/grass/Documents/Leyh/BundleSDF/outRealtime --use_segmenter 0 --use_gui 0 --debug_level 4

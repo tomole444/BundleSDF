@@ -42,6 +42,22 @@ Frame::Frame(const py::array_t<uchar> &color, const py::array_t<float> &depth, c
   init();
 }
 
+Frame::Frame(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
+{
+  _status = OTHER;
+  _color = color;
+  _depth = depth;
+  _pose_in_model = pose_in_model;
+  _id = id;
+  _id_str = id_str;
+  _K = K;
+  yml = yml1;
+
+  _depth_raw = _depth.clone();
+  _depth_sim = _depth.clone();
+
+  init();
+}
 
 Frame::Frame(const cv::Mat &color, const cv::Mat &depth, const cv::Mat &depth_raw, const cv::Mat &depth_sim, const Eigen::Vector4f &roi, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1, PointCloudRGBNormal::Ptr cloud, const Eigen::Matrix4f &gt_pose_in_model, const cv::Mat &gt_fg_mask, PointCloudRGBNormal::Ptr real_model)
 {

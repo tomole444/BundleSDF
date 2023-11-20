@@ -76,10 +76,12 @@ public:
   void maxNumEdgePathDfs(std::shared_ptr<Frame> cur, std::shared_ptr<Frame> goal, const std::vector<std::shared_ptr<Frame>> &frames_pool,  std::set<std::shared_ptr<Frame>, FramePtrComparator> &path, std::set<std::shared_ptr<Frame>, FramePtrComparator> &best_path, std::map<std::set<std::shared_ptr<Frame>, FramePtrComparator>, bool> &visited, int &best_n_edges);
   void nearEnoughRotSearch(std::shared_ptr<Frame> cur, std::shared_ptr<Frame> goal, const std::vector<std::shared_ptr<Frame>> &frames_pool,  std::set<std::shared_ptr<Frame>, FramePtrComparator> &path, std::set<std::shared_ptr<Frame>, FramePtrComparator> &best_path, std::map<std::set<std::shared_ptr<Frame>, FramePtrComparator>, bool> &visited);
   void saveNewframeResult();
+  void saveNewframeResult(const std::string &debug_dir);
   void saveFramesCloud(std::vector<std::shared_ptr<Frame>> frames, std::string prefix);
   void saveKeyframesPose();
   void saveFramesData(std::vector<std::shared_ptr<Frame>> frames, std::string foldername);
   void runNerf(std::vector<std::shared_ptr<Frame>> &frames);
+  void loadKeyframes(const py::array_t<int> &keyframeIds, size_t decimalCount, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::string key_folder, std::shared_ptr<YAML::Node> yml1);
 };
 
 #endif
