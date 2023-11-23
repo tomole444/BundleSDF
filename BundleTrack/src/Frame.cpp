@@ -42,11 +42,12 @@ Frame::Frame(const py::array_t<uchar> &color, const py::array_t<float> &depth, c
   init();
 }
 
-Frame::Frame(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
+Frame::Frame(const cv::Mat &color, const cv::Mat &depth,const Eigen::Vector4f &roi, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
 {
   _status = OTHER;
   _color = color;
   _depth = depth;
+  _roi = roi;
   _pose_in_model = pose_in_model;
   _id = id;
   _id_str = id_str;
@@ -201,9 +202,9 @@ void Frame::setNewInitCoordinate()
     {
       const auto &pt = (*_cloud)(w,h);
       //debugPoints[w][h] = pt.z;
-      //if (pt.z != 0)
+      // if (pt.z != 0)
       //  SPDLOG("pt.z: {}", pt.z);
-      //if (_fg_mask.at<uchar>(h,w) != 0)
+      // if (_fg_mask.at<uchar>(h,w) != 0)
       //  SPDLOG("_fg_mask.at<uchar>({},{}) {}", h,w,_fg_mask.at<uchar>(h,w));
 
 

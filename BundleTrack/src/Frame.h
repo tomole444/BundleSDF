@@ -64,7 +64,7 @@ public:
   Frame();
   Frame(const cv::Mat &color, const cv::Mat &depth, const cv::Mat &depth_raw, const cv::Mat &depth_sim, const Eigen::Vector4f &roi, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1, PointCloudRGBNormal::Ptr cloud=NULL, const Eigen::Matrix4f &gt_pose_in_model=Eigen::Matrix4f::Identity(), const cv::Mat &gt_fg_mask=cv::Mat(), PointCloudRGBNormal::Ptr real_model=NULL);
   Frame(const py::array_t<uchar> &color, const py::array_t<float> &depth, const Eigen::Vector4f &roi, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1);
-  Frame(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1);
+  Frame(const cv::Mat &color, const cv::Mat &depth,const Eigen::Vector4f &roi, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1);
   void init();
   ~Frame();
   void setNewInitCoordinate();

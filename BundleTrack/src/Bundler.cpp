@@ -1163,36 +1163,63 @@ void Bundler::loadKeyframes(const py::array_t<int> &keyframeIds, size_t decimalC
   std::vector<int> _keyframeIds = std::vector<int>(keyframeIds.data(), keyframeIds.data() + keyframeIds.nbytes()/keyframeIds.itemsize());
   SPDLOG("First frame {} ",_keyframeIds[0]);
   py::buffer_info bufPoses = poses_in_model.request();
-  float *ptr1 = (float *) bufPoses.ptr;
+  float *ptr1 = static_cast<float *>( bufPoses.ptr);
+
+  // for(int i = 0; i < bufPoses.shape.size(); i++){
+  //   SPDLOG(std::to_string(bufPoses.shape[i]));
+  // }
+  // SPDLOG("{}, {}, {}, {}",std::to_string(ptr1[0 + 0]),std::to_string(ptr1[0 + 1]),std::to_string(ptr1[0 + 2]),std::to_string(ptr1[0 + 3]));
+  // for (int i = 0; i < rA; ++i)
+  //       for (int j = 0; j < cB; ++j)
+  //           for (int k = 0; k < cA; ++k)
+  //               ptr_res[i*cB + j] += ptr_A[i*cA + k] * ptr_B[k*cB + j];
+
   //std::vector<Eigen::Matrix4f> _poses_in_model = std::vector<Eigen::Matrix4f>(poses_in_model.data(), poses_in_model.data() + poses_in_model.size());
   //frame = my_cpp.Frame(color,depth,roi,pose_in_model,self.cnt,id_str,K,self.bundler.yml)
   const std::string color_dir = key_folder+"/color/";
-  const std::string depth_dir = key_folder+"/depth/";
+  const std::string depth_dir = key_folder+"/depth_raw/";
   const std::string mask_dir = key_folder+"/mask/";
-  
+  int id = 0;
   for (int idx = 0; idx < _keyframeIds.size(); idx++)
   {
-    int id = _keyframeIds[idx];
-    float *ptr2 = &ptr1[idx * 4 * 4];
 
-    std::string idStr = std::to_string(id);
+    std::string idStr = std::to_string(_keyframeIds[idx]);
     int precision = decimalCount - std::min(decimalCount, idStr.size());
     idStr = std::string(precision, '0').append(idStr);
 
 
     cv::Mat color = cv::imread(color_dir + "/" + idStr + ".png");
     cvtColor(color, color, cv::COLOR_BGR2RGB);
-    cv::Mat depth = cv::imread(depth_dir + "/" + idStr + ".png", cv::IMREAD_ANYCOLOR | cv::IMREAD_ANYDEPTH);
+    cv::Mat depth = cv::imread(depth_dir + "/" + idStr + ".png", cv::IMREAD_UNCHANGED);
+    depth.convertTo(depth, CV_32F);
+    for(int i = 0; i < depth.rows; i++){
+      for(int j = 0; j < depth.cols; j++){
+        //if (depth.at<float>(i,j) > 1)
+          depth.at<float>(i,j) = depth.at<float>(i,j) / 1e3f; 
+      }
+      //std::cout << std::endl;
+    }
+    
     cv::Mat mask = cv::imread(mask_dir + "/" + idStr+ ".png", cv::IMREAD_GRAYSCALE);
     Eigen::Matrix4f pose_in_model;
-    pose_in_model << ptr2[0], ptr2[1], ptr2[2];
-
+    Eigen::Vector4f roi;
+    int H = color.rows;
+    int W = color.cols;
+    roi << 0,W-1,0,H-1;
+    pose_in_model << ptr1[idx * 4 * 4 + 0], ptr1[idx * 4 * 4 + 1], ptr1[idx * 4 * 4 + 2], ptr1[idx * 4 * 4 + 3],
+    ptr1[idx * 4 * 4 + 4], ptr1[idx * 4 * 4 + 5], ptr1[idx * 4 * 4 + 6], ptr1[idx * 4 * 4 + 7],
+    ptr1[idx * 4 * 4 + 8], ptr1[idx * 4 * 4 + 9], ptr1[idx * 4 * 4 + 10], ptr1[idx * 4 * 4 + 11],
+    ptr1[idx * 4 * 4 + 12], ptr1[idx * 4 * 4 + 13], ptr1[idx * 4 * 4 + 14], ptr1[idx * 4 * 4 + 15];
+    //std::cout << pose_in_model;
 
     //(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
-    std::shared_ptr<Frame> frame (new Frame (color,depth, pose_in_model, id, std::to_string(id), K, yml1));
+    std::shared_ptr<Frame> frame (new Frame (color,depth,roi, pose_in_model, id, idStr, K, yml1));
     frame->_fg_mask = mask;
+    frame->invalidatePixelsByMask(frame->_fg_mask);
     _keyframes.push_back(frame);
-    SPDLOG("Added frame {} as keyframe, current #keyframe: {}", key_folder + frame->_id_str, _keyframes.size());
+    _frames[id] = frame;
+    SPDLOG("Added frame {} as keyframe, current #keyframe: {}", key_folder + "/" + idStr, _keyframes.size());
+    id++;
   }
   
 

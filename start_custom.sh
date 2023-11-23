@@ -75,3 +75,5 @@ python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/dat
 python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownBookComb  --out_folder /home/grass/Documents/Leyh/BundleSDF/outBookComb --use_segmenter 0 --use_gui 1 --debug_level 4 2>&1 | tee log/BookComb.log
 
 python run_realtime.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/bookRealtime720p --key_folder /home/grass/Documents/Leyh/BundleSDF/outBookComb720p --out_folder /home/grass/Documents/Leyh/BundleSDF/outRealtime --use_segmenter 0 --use_gui 0 --debug_level 4
+
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownBookComb  --out_folder /home/grass/Documents/Leyh/BundleSDF/outBookCombDEBUG --use_segmenter 0 --use_gui 0 --debug_level 4

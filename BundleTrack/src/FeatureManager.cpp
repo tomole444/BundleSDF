@@ -1559,6 +1559,9 @@ Correspondence SiftManager::makeCorrespondence(float uA_, float vA_, float uB_, 
   const auto &ptB = (*fB->_cloud)(uB,vB);
   if (ptA.z<=0.1 || ptB.z<=0.1)
   {
+    // SPDLOG("Erste Bedinging ptA.z = {} ptB.z = {}", ptA.z, ptB.z);
+    // SPDLOG("uA = {} vA = {}", uA, vA);
+    // SPDLOG("uB = {} vB = {}", uB, vB);
     Correspondence corres;
     corres._isinlier = false;
     return corres;
@@ -1571,6 +1574,7 @@ Correspondence SiftManager::makeCorrespondence(float uA_, float vA_, float uB_, 
   Eigen::Vector3f n2(PB_world.normal_x,PB_world.normal_y,PB_world.normal_z);
   if (dist>dist_thres || n1.normalized().dot(n2.normalized())<dot_thres)
   {
+    //SPDLOG("Zweite Bedinging");
     Correspondence corres;
     corres._isinlier = false;
     return corres;
@@ -2752,8 +2756,11 @@ void GluNet::rawMatchesToCorres(const std::vector<FramePair> &pairs)
     {
       float conf = 1;
       Correspondence corres = makeCorrespondence(corres_array(i,0), corres_array(i,1), corres_array(i,2), corres_array(i,3), frameA,frameB,dist_thres,dot_thres,conf);
-      if (corres._isinlier==false) continue;
-
+      if (corres._isinlier==false) 
+      {
+        //SPDLOG("Corres no inlier");
+        continue;
+      }
       // cv::circle(visA,{int(uvA(0)),int(uvA(1))},1,{0,255,0},-1);
 
       // std::array<int,2> keyA = {uvA(0)/grid_step, uvA(1)/grid_step};
@@ -2765,6 +2772,28 @@ void GluNet::rawMatchesToCorres(const std::vector<FramePair> &pairs)
       _matches[{frameA,frameB}].push_back(corres);
     }
   }
+
+  //Debug
+  // const auto &frameA = pairs[0].first;
+  // const auto &frameB = pairs[0].second;
+  // for (int w=0;w<frameB->_W;w++)
+  // {
+  //   for (int h=0;h<frameB->_H;h++)
+  //   {
+  //     const auto &pt = (*(frameB->_cloud))(w,h);
+  //     //debugPoints[w][h] = pt.z;
+  //     // if (pt.z != 0)
+  //     //  SPDLOG("pt.z: {}", pt.z);
+  //     // if (_fg_mask.at<uchar>(h,w) != 0)
+  //     //  SPDLOG("_fg_mask.at<uchar>({},{}) {}", h,w,_fg_mask.at<uchar>(h,w));
+
+
+  //     if (pt.z>0.1)
+  //     {
+  //       SPDLOG("pt.z: {}", pt.z);
+  //     }
+  //   }
+  // }
 
 }
 

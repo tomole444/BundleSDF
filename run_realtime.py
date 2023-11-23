@@ -2,6 +2,7 @@
 from bundlesdf import *
 import argparse
 import os,sys
+from tqdm import tqdm
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
 from segmentation_utils import Segmenter
@@ -18,20 +19,35 @@ def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', k
   cfg_bundletrack['debug_dir'] = out_folder+'/'
   cfg_bundletrack['bundle']['max_BA_frames'] = 10
   cfg_bundletrack['bundle']['max_optimized_feature_loss'] = 0.03
-  cfg_bundletrack['feature_corres']['max_dist_neighbor'] = 0.02
-  cfg_bundletrack['feature_corres']['max_normal_neighbor'] = 30
-  cfg_bundletrack['feature_corres']['max_dist_no_neighbor'] = 0.01
-  cfg_bundletrack['feature_corres']['max_normal_no_neighbor'] = 20
+
+  cfg_bundletrack['feature_corres']['max_dist_neighbor'] = 0.3#0.02
+  cfg_bundletrack['feature_corres']['max_normal_neighbor'] = 60 #30
+  cfg_bundletrack['feature_corres']['max_dist_no_neighbor'] = 0.3 #0.01
+  cfg_bundletrack['feature_corres']['max_normal_no_neighbor'] = 60 #20
+  # cfg_bundletrack['feature_corres']['max_dist_neighbor'] = 0.02
+  # cfg_bundletrack['feature_corres']['max_normal_neighbor'] = 30
+  # cfg_bundletrack['feature_corres']['max_dist_no_neighbor'] = 0.01
+  # cfg_bundletrack['feature_corres']['max_normal_no_neighbor'] = 20
+
   cfg_bundletrack['feature_corres']['map_points'] = True
   cfg_bundletrack['feature_corres']['resize'] = 400
   cfg_bundletrack['feature_corres']['rematch_after_nerf'] = True
   cfg_bundletrack['keyframe']['min_rot'] = 5
-  cfg_bundletrack['ransac']['inlier_dist'] = 0.01
-  cfg_bundletrack['ransac']['inlier_normal_angle'] = 20
-  cfg_bundletrack['ransac']['max_trans_neighbor'] = 0.02
-  cfg_bundletrack['ransac']['max_rot_deg_neighbor'] = 30
-  cfg_bundletrack['ransac']['max_trans_no_neighbor'] = 0.01
-  cfg_bundletrack['ransac']['max_rot_no_neighbor'] = 10
+
+  cfg_bundletrack['ransac']['inlier_dist'] = 0.2#0.01
+  cfg_bundletrack['ransac']['inlier_normal_angle'] = 60#20
+  cfg_bundletrack['ransac']['max_trans_neighbor'] = 0.8#0.02
+  cfg_bundletrack['ransac']['max_rot_deg_neighbor'] = 270#30
+  cfg_bundletrack['ransac']['max_trans_no_neighbor'] = 0.8#0.01
+  cfg_bundletrack['ransac']['max_rot_no_neighbor'] = 270#10  
+  # cfg_bundletrack['ransac']['inlier_dist'] = 0.01
+  # cfg_bundletrack['ransac']['inlier_normal_angle'] = 20
+  # cfg_bundletrack['ransac']['max_trans_neighbor'] = 0.02
+  # cfg_bundletrack['ransac']['max_rot_deg_neighbor'] = 30
+  # cfg_bundletrack['ransac']['max_trans_no_neighbor'] = 0.01
+  # cfg_bundletrack['ransac']['max_rot_no_neighbor'] = 10
+
+
   cfg_bundletrack['p2p']['max_dist'] = 0.02
   cfg_bundletrack['p2p']['max_normal_angle'] = 45
   cfg_track_dir = f'{out_folder}/config_bundletrack.yml'
@@ -60,7 +76,8 @@ def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', k
   
   reader = YcbineoatReader(video_dir=video_dir)
 
-  for i in range(0,len(reader.color_files),args.stride):
+  #for i in range(0,len(reader.color_files),args.stride):
+  for i in tqdm(range(0,len(reader.color_files),args.stride)):
     color_file = reader.color_files[i]
     color = cv2.imread(color_file)
     H0, W0 = color.shape[:2]
@@ -121,7 +138,7 @@ def draw_pose():
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default="run_video", help="run_video")
+    parser.add_argument('--mode', type=str, default="run_video", help="run_video/drawpose")
     parser.add_argument('--video_dir', type=str, default="/home/grass/Documents/Leyh/datasets/bookRealtime")
     parser.add_argument('--key_folder', type=str, default="/home/grass/Documents/Leyh/BundleSDF/outBookComb720p")
     parser.add_argument('--out_folder', type=str, default="/home/grass/Documents/Leyh/BundleSDF/outBookRealtime")
@@ -133,5 +150,7 @@ if __name__=="__main__":
 
     if args.mode=='run_video':
         run_video_realtime(video_dir=args.video_dir, key_folder=args.key_folder, out_folder=args.out_folder, use_segmenter=args.use_segmenter, use_gui=args.use_gui)
+    elif args.mode=='draw_pose':
+      draw_pose()
     else:
         raise RuntimeError

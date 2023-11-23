@@ -13,6 +13,7 @@ from tool import *
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{code_dir}/BundleTrack/build')
 import my_cpp
+import operator
 from gui import *
 from BundleTrack.scripts.data_reader import *
 from Utils import *
@@ -357,13 +358,22 @@ class BundleSdf:
     logging.info(f"frame_pairs: {len(frame_pairs)}")
     is_match_ref = len(frame_pairs)==1 and frame_pairs[0][0]._ref_frame_id==frame_pairs[0][1]._id and self.bundler._newframe==frame_pairs[0][0]
 
+    if is_match_ref:
+      frameA = frame_pairs[0][0]
+      frameB = frame_pairs[0][1]
+
     imgs, tfs, query_pairs = self.bundler._fm.getProcessedImagePairs(frame_pairs)
     imgs = np.array([np.array(img) for img in imgs])
 
     if len(query_pairs)==0:
       return
-    pdb.set_trace()
+    #pdb.set_trace()
     corres = self.loftr.predict(rgbAs=imgs[::2], rgbBs=imgs[1::2])
+    # if not hasattr(self, 'corres'):
+    #   self.corres = corres
+    # if np.array(corres).shape[1] > np.array(self.corres).shape[1]:
+    #   self.corres = corres
+
     for i_pair in range(len(query_pairs)):
       cur_corres = corres[i_pair][:,:4]
       tfA = np.array(tfs[i_pair*2])
@@ -373,7 +383,6 @@ class BundleSdf:
       self.bundler._fm._raw_matches[query_pairs[i_pair]] = cur_corres.round().astype(np.uint16)
 
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
-
     if is_match_ref and len(self.bundler._fm._raw_matches[frame_pairs[0]])<min_match_with_ref:
       self.bundler._fm._raw_matches[frame_pairs[0]] = []
       self.bundler._newframe._status = my_cpp.Frame.FAIL
@@ -381,7 +390,7 @@ class BundleSdf:
       return
 
     self.bundler._fm.rawMatchesToCorres(query_pairs)
-
+    #pdb.set_trace()
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'before_ransac')
 
@@ -520,7 +529,10 @@ class BundleSdf:
 
   def process_new_frame_realtime(self, frame):
     self.bundler._newframe = frame
-    if frame._id == 0:
+    
+    frame.invalidatePixelsByMask(frame._fg_mask)
+
+    if frame._id == len(self.bundler._keyframes):
       logging.info(f"first Frame {frame._id}")
       self.bundler._firstframe = frame
       self.bundler._frames[frame._id] = frame
@@ -535,7 +547,9 @@ class BundleSdf:
       visibles.append(visible)
     visibles = np.array(visibles)
     ids = np.argsort(visibles)[::-1]
+    min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     found = False
+    matches_dict = dict()
     #pdb.set_trace()
     for id in ids:
       kf = self.bundler._keyframes[id]
@@ -543,14 +557,22 @@ class BundleSdf:
       ref_frame = kf
       frame._ref_frame_id = kf._id
       frame._pose_in_model = kf._pose_in_model
+      #pdb.set_trace()
       self.find_corres([(frame, ref_frame)])
+      matches_dict[kf._id] = len(self.bundler._fm._matches[(frame,kf)])
 
       # self.bundler._fm.findCorres(frame, ref_frame)
 
       if len(self.bundler._fm._matches[(frame,kf)])>=min_match_with_ref:
         logging.info(f"re-choose new ref frame to {kf._id_str}")
         found = True
-        break
+        #break
+    
+    most_matches_id = max(matches_dict.items(), key=operator.itemgetter(1))[0]
+    ref_frame = self.bundler._keyframes[most_matches_id]
+    frame._ref_frame_id = ref_frame._id
+    frame._pose_in_model = ref_frame._pose_in_model
+    #pdb.set_trace()
     if not found:
         frame._status = my_cpp.Frame.FAIL
         logging.info(f"frame {frame._id_str} has not suitable ref_frame, mark as FAIL")
@@ -843,7 +865,6 @@ class BundleSdf:
     
 
 
-    
     frame = self.make_frame(color, depth, K, id_str, mask, occ_mask, pose_in_model)
     os.makedirs(f"{self.debug_dir}/{frame._id_str}", exist_ok=True)
 
@@ -852,78 +873,78 @@ class BundleSdf:
     logging.info(f"processNewFrame done {frame._id_str}")
 
     ##NERF ANFANG
-    if self.bundler._keyframes[-1]==frame:
-      logging.info(f"{frame._id_str} prepare data for nerf")
+    # if self.bundler._keyframes[-1]==frame:
+    #   logging.info(f"{frame._id_str} prepare data for nerf")
 
-      with self.lock:
-        self.p_dict['frame_id'] = frame._id_str
-        self.p_dict['running'] = True
-        self.kf_to_nerf_list.append({
-          'rgb': np.array(frame._color).reshape(H,W,3)[...,::-1].copy(),
-          'depth': np.array(frame._depth).reshape(H,W).copy(),
-          'mask': np.array(frame._fg_mask).reshape(H,W).copy(),
-          # 'occ_mask': occ_mask.reshape(H,W),
-          # 'normal_map': np.array(frame._normal_map).copy(),
-          'occ_mask': None,
-          'normal_map': None,
-          })
-        cam_in_obs = []
-        for f in self.bundler._keyframes:
-          cam_in_obs.append(np.array(f._pose_in_model).copy())
-        self.p_dict['cam_in_obs'] = np.array(cam_in_obs)
+    #   with self.lock:
+    #     self.p_dict['frame_id'] = frame._id_str
+    #     self.p_dict['running'] = True
+    #     self.kf_to_nerf_list.append({
+    #       'rgb': np.array(frame._color).reshape(H,W,3)[...,::-1].copy(),
+    #       'depth': np.array(frame._depth).reshape(H,W).copy(),
+    #       'mask': np.array(frame._fg_mask).reshape(H,W).copy(),
+    #       # 'occ_mask': occ_mask.reshape(H,W),
+    #       # 'normal_map': np.array(frame._normal_map).copy(),
+    #       'occ_mask': None,
+    #       'normal_map': None,
+    #       })
+    #     cam_in_obs = []
+    #     for f in self.bundler._keyframes:
+    #       cam_in_obs.append(np.array(f._pose_in_model).copy())
+    #     self.p_dict['cam_in_obs'] = np.array(cam_in_obs)
 
-      if self.SPDLOG>=2:
-        with open(f"{self.debug_dir}/{frame._id_str}/nerf_frames.txt",'w') as ff:
-          for f in self.bundler._keyframes:
-            ff.write(f"{f._id_str}\n")
+    #   if self.SPDLOG>=2:
+    #     with open(f"{self.debug_dir}/{frame._id_str}/nerf_frames.txt",'w') as ff:
+    #       for f in self.bundler._keyframes:
+    #         ff.write(f"{f._id_str}\n")
 
-      ############# Wait for sync
-      while 1:
-        with self.lock:
-          running = self.p_dict['running']
-          nerf_num_frames = self.p_dict['nerf_num_frames']
-        if not running:
-          break
-        if len(self.bundler._keyframes)-nerf_num_frames>=self.cfg_nerf['sync_max_delay']:
-          time.sleep(0.01)
-          # logging.info(f"wait for sync len(self.bundler._keyframes):{len(self.bundler._keyframes)}, nerf_num_frames:{nerf_num_frames}")
-          continue
-        break
+    #   ############# Wait for sync
+    #   while 1:
+    #     with self.lock:
+    #       running = self.p_dict['running']
+    #       nerf_num_frames = self.p_dict['nerf_num_frames']
+    #     if not running:
+    #       break
+    #     if len(self.bundler._keyframes)-nerf_num_frames>=self.cfg_nerf['sync_max_delay']:
+    #       time.sleep(0.01)
+    #       # logging.info(f"wait for sync len(self.bundler._keyframes):{len(self.bundler._keyframes)}, nerf_num_frames:{nerf_num_frames}")
+    #       continue
+    #     break
 
-    rematch_after_nerf = self.cfg_track["feature_corres"]["rematch_after_nerf"]
-    logging.info(f"rematch_after_nerf: {rematch_after_nerf}")
-    frames_large_update = []
-    with self.lock:
-      if 'optimized_cvcam_in_obs' in self.p_dict:
-        for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
-          if rematch_after_nerf:
-            trans_update = np.linalg.norm(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,3]-self.bundler._keyframes[i_f]._pose_in_model[:3,3])
-            rot_update = geodesic_distance(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,:3], self.bundler._keyframes[i_f]._pose_in_model[:3,:3])
-            if trans_update>=0.005 or rot_update>=5/180.0*np.pi:
-              frames_large_update.append(self.bundler._keyframes[i_f])
-            logging.info(f"{self.bundler._keyframes[i_f]._id_str}, trans_update={trans_update}, rot_update={rot_update}")
-          self.bundler._keyframes[i_f]._pose_in_model = self.p_dict['optimized_cvcam_in_obs'][i_f]
-          self.bundler._keyframes[i_f]._nerfed = True
-        logging.info(f"synced pose from nerf, latest nerf frame {self.bundler._keyframes[len(self.p_dict['optimized_cvcam_in_obs'])-1]._id_str}")
-        del self.p_dict['optimized_cvcam_in_obs']
+    # rematch_after_nerf = self.cfg_track["feature_corres"]["rematch_after_nerf"]
+    # logging.info(f"rematch_after_nerf: {rematch_after_nerf}")
+    # frames_large_update = []
+    # with self.lock:
+    #   if 'optimized_cvcam_in_obs' in self.p_dict:
+    #     for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
+    #       if rematch_after_nerf:
+    #         trans_update = np.linalg.norm(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,3]-self.bundler._keyframes[i_f]._pose_in_model[:3,3])
+    #         rot_update = geodesic_distance(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,:3], self.bundler._keyframes[i_f]._pose_in_model[:3,:3])
+    #         if trans_update>=0.005 or rot_update>=5/180.0*np.pi:
+    #           frames_large_update.append(self.bundler._keyframes[i_f])
+    #         logging.info(f"{self.bundler._keyframes[i_f]._id_str}, trans_update={trans_update}, rot_update={rot_update}")
+    #       self.bundler._keyframes[i_f]._pose_in_model = self.p_dict['optimized_cvcam_in_obs'][i_f]
+    #       self.bundler._keyframes[i_f]._nerfed = True
+    #     logging.info(f"synced pose from nerf, latest nerf frame {self.bundler._keyframes[len(self.p_dict['optimized_cvcam_in_obs'])-1]._id_str}")
+    #     del self.p_dict['optimized_cvcam_in_obs']
 
-      if self.use_gui:
-        with self.gui_lock:
-          if 'mesh' in self.p_dict:
-            self.gui_dict['mesh'] = self.p_dict['mesh']
-            del self.p_dict['mesh']
+    #   if self.use_gui:
+    #     with self.gui_lock:
+    #       if 'mesh' in self.p_dict:
+    #         self.gui_dict['mesh'] = self.p_dict['mesh']
+    #         del self.p_dict['mesh']
 
-    if rematch_after_nerf:
-      if len(frames_large_update)>0:
-        with self.lock:
-          nerf_num_frames = self.p_dict['nerf_num_frames']
-        logging.info(f"before matches keys: {len(self.bundler._fm._matches)}")
-        ks = list(self.bundler._fm._matches.keys())
-        for k in ks:
-          if k[0] in frames_large_update or k[1] in frames_large_update:
-            del self.bundler._fm._matches[k]
-            logging.info(f"Delete match between {k[0]._id_str} and {k[1]._id_str}")
-        logging.info(f"after matches keys: {len(self.bundler._fm._matches)}")
+    # if rematch_after_nerf:
+    #   if len(frames_large_update)>0:
+    #     with self.lock:
+    #       nerf_num_frames = self.p_dict['nerf_num_frames']
+    #     logging.info(f"before matches keys: {len(self.bundler._fm._matches)}")
+    #     ks = list(self.bundler._fm._matches.keys())
+    #     for k in ks:
+    #       if k[0] in frames_large_update or k[1] in frames_large_update:
+    #         del self.bundler._fm._matches[k]
+    #         logging.info(f"Delete match between {k[0]._id_str} and {k[1]._id_str}")
+    #     logging.info(f"after matches keys: {len(self.bundler._fm._matches)}")
     
     ##NERF ENDE
 
@@ -948,7 +969,7 @@ class BundleSdf:
     keys = list(keyframes.keys())
     key_cam_in_obs = []
     for k in keys:
-      cam_in_ob = np.array(keyframes[k]['cam_in_ob']).reshape(4,4)
+      cam_in_ob = np.array(keyframes[k]['cam_in_ob']).reshape(4,4).astype('float32') 
       key_cam_in_obs.append(cam_in_ob)
     key_cam_in_obs = np.array(key_cam_in_obs)
     logging.info("Starting Loading via cpp")
@@ -956,8 +977,10 @@ class BundleSdf:
     
     keys = [int(item.replace("keyframe_","")) for item in keys]
     keys = np.array(keys)
-    #pdb.set_trace()
     self.bundler.loadKeyframes(keys,5, key_cam_in_obs, K, key_folder,self.bundler.yml)
+    
+    
+    self.cnt = len(keys) - 1
     #pdb.set_trace()
     #logging.info(f"Loaded keyframes#: {len(keyframes)}")
 
