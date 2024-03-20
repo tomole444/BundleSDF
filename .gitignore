@@ -145,4 +145,5 @@ run_used.yml
 #Outputs 
 ownFritz/
 out*/
+own*/
 *.mp4
