@@ -14,7 +14,7 @@ try:
 except:
   pass
 
-OUT_FOLDER = "/home/grass/Documents/Leyh/BundleSDF/outRealtime"
+OUT_FOLDER = "/home/grass/Documents/Leyh/BundleSDF/outFritzCon"
 
 class Visualisations:
 
