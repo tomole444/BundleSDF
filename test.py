@@ -5,8 +5,9 @@ from Utils import draw_xyz_axis
 import imageio
 import logging
 import argparse
-import os,sys
-
+import os,sys, glob
+import time
+import cv2
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -35,7 +36,7 @@ class Visualisations:
         
 
     def run_drawpose(self, color_file,lock):
-        logging.info(f"Saving to {self.pose_out_dir}")
+        #logging.info(f"Saving to {self.pose_out_dir}")
         #lock.acquire()
         # ...
         # release the lock
@@ -46,23 +47,28 @@ class Visualisations:
 
         id_str = os.path.basename(color_file).replace('.png','')
         imageio.imwrite(f'{self.pose_out_dir}/{id_str}.png', vis)
+        vis = None
+        del vis
         logging.info(f"Saving {id_str}.png")
             
 
 if __name__ == "__main__":
-
+    start = time.time()
     viz = Visualisations(OUT_FOLDER)
-
+    PROCESSES = 60
     manager = multiprocessing.Manager()
     lock = multiprocessing.Lock()
     workers = []
-    for color_file in viz.color_files:
-        worker = multiprocessing.Process(target=viz.run_drawpose, args=(color_file, lock))
-        worker.start()
-        workers.append(worker)
-        
-    
-    
-    for worker in workers:
-        worker.join()
+    color_files_split = np.split(viz.color_files, np.arange(PROCESSES, len(viz.color_files), PROCESSES))
+    for color_files_arr in color_files_split:
+        for color_file in color_files_arr:
+            worker = multiprocessing.Process(target=viz.run_drawpose, args=(color_file, lock))
+            worker.start()
+            workers.append(worker)
+        for worker in workers:
+            worker.join()
+        workers = []
+
     print("Finished")
+    stop = time.time()
+    print(f"Took {stop - start}s") # Took 117.49036121368408s for 681 Pictures

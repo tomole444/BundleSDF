@@ -395,7 +395,7 @@ class BundleSdf:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'before_ransac')
 
     self.bundler._fm.runRansacMultiPairGPU(query_pairs)
-
+    pdb.set_trace()
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'after_ransac')
 

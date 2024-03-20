@@ -1,6 +1,8 @@
 python run_custom.py --mode run_video --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/2022-11-18-15-10-24_milk --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/out --use_segmenter 1 --use_gui 1 --debug_level 2
 python run_custom.py --mode run_video --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownFritz2 --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownFritz --use_segmenter 0 --use_gui 1 --debug_level 4
 
+python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/datasets/ownBuch --out_folder /home/grass/Documents/Leyh/BundleSDF/outBuch --use_segmenter 0 --use_gui 1 --debug_level 2
+
 lrwxrwxrwx 1 root root   26 Oct  4 04:28 g++ -> x86_64-conda-linux-gnu-g++
 lrwxrwxrwx 1 root root   26 Oct  4 04:28 c++ -> x86_64-conda-linux-gnu-c++
 
