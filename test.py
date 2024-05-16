@@ -6,6 +6,7 @@ import imageio
 import logging
 import argparse
 import os,sys
+import glob
 
 
 try:
@@ -13,7 +14,7 @@ try:
 except:
   pass
 
-OUT_FOLDER = "/home/grass/Documents/Leyh/BundleSDF/outFritzCon"
+OUT_FOLDER = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuch"
 
 class Visualisations:
 

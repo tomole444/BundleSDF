@@ -36,6 +36,11 @@ lrwxrwxrwx 1 root root   26 Nov  2 04:11 gcc-12 -> x86_64-conda-linux-gnu-gcc
 lrwxrwxrwx 1 root root   26 Nov  2 04:11 cc -> x86_64-conda-linux-gnu-gcc
 lrwxrwxrwx 1 root root   14 Nov 16 01:07 gcc -> /usr/bin/gcc-9                  #neu erstellt
 
+#gcc: fatal error: cannot execute 'cc1plus': execvp: No such file or directory
+find /usr -name "cc1plus"
+ln -s /usr/lib/gcc/x86_64-linux-gnu/9/cc1plus /opt/conda/envs/py38/bin
+
+
 
 #Log console to file
 echo test 2>&1 | tee SomeFile.txt
