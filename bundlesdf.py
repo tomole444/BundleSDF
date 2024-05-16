@@ -308,8 +308,9 @@ class BundleSdf:
     self.p_dict['nerf_num_frames'] = 0
 
     self.p_dict['SPDLOG'] = self.SPDLOG
-    self.p_nerf = multiprocessing.Process(target=run_nerf, args=(self.p_dict, self.kf_to_nerf_list, self.lock, self.cfg_nerf, self.translation, self.sc_factor, start_nerf_keyframes, self.use_gui, self.gui_lock, self.gui_dict, self.debug_dir))
-    self.p_nerf.start()
+    
+    #self.p_nerf = multiprocessing.Process(target=run_nerf, args=(self.p_dict, self.kf_to_nerf_list, self.lock, self.cfg_nerf, self.translation, self.sc_factor, start_nerf_keyframes, self.use_gui, self.gui_lock, self.gui_dict, self.debug_dir))
+    #self.p_nerf.start()
 
     # self.p_dict = {}
     # self.lock = threading.Lock()
@@ -831,6 +832,140 @@ class BundleSdf:
         self.gui_dict['id_str'] = frame._id_str
         self.gui_dict['K'] = self.K
         self.gui_dict['n_keyframe'] = len(self.bundler._keyframes)
+
+  def runNoNerf(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
+    self.cnt += 1
+
+    if self.K is None:
+      self.K = K
+      with self.lock:
+        self.p_dict['K'] = self.K
+
+    if self.use_gui:
+      while 1:
+        with self.gui_lock:
+          started = self.gui_dict['started']
+        if not started:
+          time.sleep(1)
+          logging.info("Waiting for GUI")
+          continue
+        break
+
+    H,W = color.shape[:2]
+
+    percentile = self.cfg_track['depth_processing']["percentile"]
+    print(f"\033[94m depth: {depth.shape} mask: {mask.shape} percentile: {percentile}\033[0m")
+    #percentile = 100
+    if percentile<100:   # Denoise
+      logging.info("percentile denoise start")
+      #logging.info(f"depth: {depth.shape}")
+      valid = (depth>=0.1) & (mask>0)
+
+      #np.savetxt("test.txt", depth, delimiter = ",")
+      #print(f"\033[94m Valid: {valid.shape} \033[0m")
+
+      thres = np.percentile(depth[valid], percentile)
+      depth[depth>=thres] = 0
+      logging.info("percentile denoise done")
+    
+
+    
+    frame = self.make_frame(color, depth, K, id_str, mask, occ_mask, pose_in_model)
+    os.makedirs(f"{self.debug_dir}/{frame._id_str}", exist_ok=True)
+
+    logging.info(f"processNewFrame start {frame._id_str}")
+    # self.bundler.processNewFrame(frame)
+    self.process_new_frame(frame)
+    logging.info(f"processNewFrame done {frame._id_str}")
+
+    if self.bundler._keyframes[-1]==frame and False:
+      logging.info(f"{frame._id_str} prepare data for nerf")
+      #write data for nerf into p_dict
+      with self.lock:
+        self.p_dict['frame_id'] = frame._id_str
+        self.p_dict['running'] = True
+        self.kf_to_nerf_list.append({
+          'rgb': np.array(frame._color).reshape(H,W,3)[...,::-1].copy(),
+          'depth': np.array(frame._depth).reshape(H,W).copy(),
+          'mask': np.array(frame._fg_mask).reshape(H,W).copy(),
+          # 'occ_mask': occ_mask.reshape(H,W),
+          # 'normal_map': np.array(frame._normal_map).copy(),
+          'occ_mask': None,
+          'normal_map': None,
+          })
+        cam_in_obs = []
+        for f in self.bundler._keyframes:
+          cam_in_obs.append(np.array(f._pose_in_model).copy())
+        self.p_dict['cam_in_obs'] = np.array(cam_in_obs)
+
+      if self.SPDLOG>=2:
+        with open(f"{self.debug_dir}/{frame._id_str}/nerf_frames.txt",'w') as ff:
+          for f in self.bundler._keyframes:
+            ff.write(f"{f._id_str}\n")
+
+      ############# Wait for sync
+      while 1:
+        with self.lock:
+          running = self.p_dict['running']
+          nerf_num_frames = self.p_dict['nerf_num_frames']
+        if not running:
+          break
+        if len(self.bundler._keyframes)-nerf_num_frames>=self.cfg_nerf['sync_max_delay']:
+          time.sleep(0.01)
+          # logging.info(f"wait for sync len(self.bundler._keyframes):{len(self.bundler._keyframes)}, nerf_num_frames:{nerf_num_frames}")
+          continue
+        break
+
+    rematch_after_nerf = self.cfg_track["feature_corres"]["rematch_after_nerf"]
+    logging.info(f"rematch_after_nerf: {rematch_after_nerf}")
+    frames_large_update = []
+    with self.lock:
+      if 'optimized_cvcam_in_obs' in self.p_dict:
+        for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
+          if rematch_after_nerf:
+            trans_update = np.linalg.norm(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,3]-self.bundler._keyframes[i_f]._pose_in_model[:3,3])
+            rot_update = geodesic_distance(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,:3], self.bundler._keyframes[i_f]._pose_in_model[:3,:3])
+            if trans_update>=0.005 or rot_update>=5/180.0*np.pi:
+              frames_large_update.append(self.bundler._keyframes[i_f])
+            logging.info(f"{self.bundler._keyframes[i_f]._id_str}, trans_update={trans_update}, rot_update={rot_update}")
+          self.bundler._keyframes[i_f]._pose_in_model = self.p_dict['optimized_cvcam_in_obs'][i_f]
+          self.bundler._keyframes[i_f]._nerfed = True
+        logging.info(f"synced pose from nerf, latest nerf frame {self.bundler._keyframes[len(self.p_dict['optimized_cvcam_in_obs'])-1]._id_str}")
+        del self.p_dict['optimized_cvcam_in_obs']
+
+      if self.use_gui:
+        with self.gui_lock:
+          if 'mesh' in self.p_dict:
+            self.gui_dict['mesh'] = self.p_dict['mesh']
+            del self.p_dict['mesh']
+
+    if rematch_after_nerf:
+      if len(frames_large_update)>0:
+        with self.lock:
+          nerf_num_frames = self.p_dict['nerf_num_frames']
+        logging.info(f"before matches keys: {len(self.bundler._fm._matches)}")
+        ks = list(self.bundler._fm._matches.keys())
+        for k in ks:
+          if k[0] in frames_large_update or k[1] in frames_large_update:
+            del self.bundler._fm._matches[k]
+            logging.info(f"Delete match between {k[0]._id_str} and {k[1]._id_str}")
+        logging.info(f"after matches keys: {len(self.bundler._fm._matches)}")
+
+    self.bundler.saveNewframeResult()
+    if self.SPDLOG>=2 and occ_mask is not None:
+      os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
+      cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
+
+    if self.use_gui:
+      ob_in_cam = np.linalg.inv(frame._pose_in_model)
+      with self.gui_lock:
+        self.gui_dict['color'] = color[...,::-1]
+        self.gui_dict['mask'] = mask
+        self.gui_dict['ob_in_cam'] = ob_in_cam
+        self.gui_dict['id_str'] = frame._id_str
+        self.gui_dict['K'] = self.K
+        self.gui_dict['n_keyframe'] = len(self.bundler._keyframes)
+
 
   def runRealtime(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
 

@@ -13,6 +13,7 @@ import os,sys
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
 from segmentation_utils import Segmenter
+import debugpy
 
 
 def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_folder='/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk/', use_segmenter=False, use_gui=False):
@@ -34,7 +35,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   cfg_bundletrack['feature_corres']['max_normal_no_neighbor'] = 20
   cfg_bundletrack['feature_corres']['map_points'] = True
   cfg_bundletrack['feature_corres']['resize'] = 400
-  cfg_bundletrack['feature_corres']['rematch_after_nerf'] = True
+  #cfg_bundletrack['feature_corres']['rematch_after_nerf'] = True
+  cfg_bundletrack['feature_corres']['rematch_after_nerf'] = False
   cfg_bundletrack['keyframe']['min_rot'] = 5
   cfg_bundletrack['keyframe']['min_trans'] = 0.01
   cfg_bundletrack['ransac']['inlier_dist'] = 0.01
@@ -101,7 +103,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
     K = reader.K.copy()
 
-    tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+    tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
 
   tracker.on_finish()
 
@@ -240,7 +242,15 @@ if __name__=="__main__":
   parser.add_argument('--use_gui', type=int, default=1)
   parser.add_argument('--stride', type=int, default=1, help='interval of frames to run; 1 means using every frame')
   parser.add_argument('--debug_level', type=int, default=2, help='higher means more logging')
+  parser.add_argument('--debug', action="store_true", help="Start in vscode debug mode")
   args = parser.parse_args()
+
+  if args.debug:
+    port = 56789
+    print(f"Waiting for debugger to attach to port {port}")
+    debugpy.listen(port)
+    debugpy.wait_for_client()
+
 
   if args.mode=='run_video':
     run_one_video(video_dir=args.video_dir, out_folder=args.out_folder, use_segmenter=args.use_segmenter, use_gui=args.use_gui)

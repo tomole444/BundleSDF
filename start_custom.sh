@@ -69,6 +69,7 @@ python run_custom.py --mode run_video --video_dir /home/grass/Documents/Leyh/dat
 
 python run_custom.py --mode global_refine --video_dir /home/grass/Documents/Leyh/datasets/ownBookSmall --out_folder /home/grass/Documents/Leyh/BundleSDF/outBookSmall --debug_level 4
 
+python run_custom.py --mode run_video --video_dir /home/thws_robotik/Documents/Leyh/6dpose/datasets/ownBuch --out_folder /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/ownBuch --use_segmenter 0 --use_gui 1 --debug_level 1
 
 
 #Truck
