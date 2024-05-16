@@ -6,7 +6,7 @@ from tqdm import tqdm
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
 from segmentation_utils import Segmenter
-
+import time
 
 def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', key_folder = '/home/grass/Documents/Leyh/BundleSDF/outBookComb720p', out_folder='/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk/', use_segmenter=False, use_gui=False):
   set_seed(0)
@@ -114,6 +114,7 @@ def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', k
 
 
 def draw_pose():
+  start = time.time()
   K = np.loadtxt(f'{args.out_folder}/cam_K.txt').reshape(3,3)
   color_files = sorted(glob.glob(f'{args.out_folder}/color/*'))
   #mesh = trimesh.load(f'{args.out_folder}/textured_mesh.obj')
@@ -133,6 +134,8 @@ def draw_pose():
     id_str = os.path.basename(color_file).replace('.png','')
     imageio.imwrite(f'{out_dir}/{id_str}.png', vis)
     logging.info(f"Saving {id_str}.png")
+  stop = time.time()
+  logging.info(f"Took {stop-start}s") # Takes 192.37s for 681 Pictures
 
 
 
