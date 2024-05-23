@@ -111,3 +111,6 @@ shape:
   max_weight: 100
   truncate_dist: 0.005
 
+pvnet:
+  activated: True # use pvnet
+

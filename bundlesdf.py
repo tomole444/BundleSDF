@@ -20,6 +20,8 @@ from Utils import *
 from loftr_wrapper import LoftrRunner
 import multiprocessing,threading
 import re
+import socket
+import pickle
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -277,6 +279,10 @@ class BundleSdf:
     self.use_gui = use_gui
     self.translation = None
     self.sc_factor = None
+
+    #use nerf
+    self.use_nerf = False
+
     if sc_factor is not None:
       self.translation = translation
       self.sc_factor = sc_factor
@@ -308,9 +314,11 @@ class BundleSdf:
     self.p_dict['nerf_num_frames'] = 0
 
     self.p_dict['SPDLOG'] = self.SPDLOG
-    
-    #self.p_nerf = multiprocessing.Process(target=run_nerf, args=(self.p_dict, self.kf_to_nerf_list, self.lock, self.cfg_nerf, self.translation, self.sc_factor, start_nerf_keyframes, self.use_gui, self.gui_lock, self.gui_dict, self.debug_dir))
-    #self.p_nerf.start()
+
+    if self.use_nerf:
+      self.p_nerf = multiprocessing.Process(target=run_nerf, args=(self.p_dict, self.kf_to_nerf_list, self.lock, self.cfg_nerf, self.translation, self.sc_factor, start_nerf_keyframes, self.use_gui, self.gui_lock, self.gui_dict, self.debug_dir))
+      self.p_nerf.start()
+
 
     # self.p_dict = {}
     # self.lock = threading.Lock()
@@ -325,6 +333,16 @@ class BundleSdf:
     self.cnt = -1
     self.K = None
     self.mesh = None
+
+    #frame-data
+    self.color = []
+    self.depth = []
+
+    #PVNet Server 
+    self.pvnet_host = 'localhost'
+    self.pvnet_port = 11024
+    self.pvnet_socket = None
+    self.pvnet_termination_string = b'\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01'
 
 
   def on_finish(self):
@@ -343,6 +361,13 @@ class BundleSdf:
           self.bundler._keyframes[i_f]._nerfed = True
         del self.p_dict['optimized_cvcam_in_obs']
 
+  def init_conn_pvnet(self):
+    self.pvnet_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.pvnet_socket.connect((self.pvnet_host, self.pvnet_port))
+
+  def close_conn_pvnet(self):
+    if self.pvnet_socket is not None:
+      self.pvnet_socket.close()
 
   def make_frame(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
     H,W = color.shape[:2]
@@ -400,7 +425,17 @@ class BundleSdf:
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'after_ransac')
 
+  def send_image_to_pvnet(self, img):
 
+    # Pickle the object and send it to the server
+    img_pckl = pickle.dumps(img)
+    self.pvnet_socket.sendall(img_pckl)
+    #self.pvnet_socket.sendall(self.pvnet_termination_string)
+
+    data = self.pvnet_socket.recv(4096)
+    tf = pickle.loads(data)
+    logging.info(f"TF from PVNet{tf}")
+    return tf
 
   def process_new_frame(self, frame):
     logging.info(f"process frame {frame._id_str}")
@@ -422,6 +457,139 @@ class BundleSdf:
     if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
       # Scheitert hieran -> gelöst -> zfar erhöhen
       frame.setNewInitCoordinate()
+
+    n_fg = (np.array(frame._fg_mask)>0).sum()
+    if n_fg<100:
+      logging.info(f"Frame {frame._id_str} cloud is empty, marked FAIL, roi={n_fg}")
+      frame._status = my_cpp.Frame.FAIL;
+      self.bundler.forgetFrame(frame)
+      return
+    
+    #Denoising Pointcloud
+    if self.cfg_track["depth_processing"]["denoise_cloud"]:
+      frame.pointCloudDenoise()
+   
+    n_valid = frame.countValidPoints()
+    n_valid_first = self.bundler._firstframe.countValidPoints()
+    if n_valid<n_valid_first/40.0:
+      logging.info(f"frame _cloud_down points#: {n_valid} too small compared to first frame points# {n_valid_first}, mark as FAIL")
+      frame._status = my_cpp.Frame.FAIL
+      self.bundler.forgetFrame(frame)
+      return
+
+    
+    if frame._id==0:
+      self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
+      self.bundler._frames[frame._id] = frame
+      return
+    min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
+
+    #Suche nach korrespondierenden Frames im Memory 
+    self.find_corres([(frame, ref_frame)])
+    matches = self.bundler._fm._matches[(frame, ref_frame)]
+
+    if frame._status==my_cpp.Frame.FAIL:
+      logging.info(f"find corres fail, mark {frame._id_str} as FAIL")
+      self.bundler.forgetFrame(frame)
+      return
+
+    matches = self.bundler._fm._matches[(frame, ref_frame)]
+    if len(matches)<min_match_with_ref:
+      #Falls zu wenige Übereinstimmungen zw. Frame und Ref.-Frame gefunden wurde -> versuche neuen Keyframe mit mehr Übereinstimmungen zu finden
+      visibles = []
+      for kf in self.bundler._keyframes:
+        visible = my_cpp.computeCovisibility(frame, kf)
+        visibles.append(visible)
+      visibles = np.array(visibles)
+      ids = np.argsort(visibles)[::-1]
+      found = False
+      #pdb.set_trace()
+      for id in ids:
+        kf = self.bundler._keyframes[id]
+        logging.info(f"trying new ref frame {kf._id_str}")
+        ref_frame = kf
+        frame._ref_frame_id = kf._id
+        frame._pose_in_model = kf._pose_in_model
+        self.find_corres([(frame, ref_frame)])
+
+        # self.bundler._fm.findCorres(frame, ref_frame)
+
+        if len(self.bundler._fm._matches[(frame,kf)])>=min_match_with_ref:
+          logging.info(f"re-choose new ref frame to {kf._id_str}")
+          found = True
+          break
+
+      if not found:
+        frame._status = my_cpp.Frame.FAIL
+        logging.info(f"frame {frame._id_str} has not suitable ref_frame, mark as FAIL")
+        self.bundler.forgetFrame(frame)
+        return
+
+
+    logging.info(f"frame {frame._id_str} pose update before optimization \n{frame._pose_in_model.round(3)}")
+    offset = self.bundler._fm.procrustesByCorrespondence(frame, ref_frame)
+    #Pose optimieren aufgrund von Keyframeverschiebung
+    frame._pose_in_model = offset@frame._pose_in_model
+    logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
+
+    #Keyframes vergessen, wenn zu viele
+    window_size = self.cfg_track["bundle"]["window_size"]
+    if len(self.bundler._frames)-len(self.bundler._keyframes)>window_size:
+      for k in self.bundler._frames:
+        f = self.bundler._frames[k]
+        isforget = self.bundler.forgetFrame(f)
+        if isforget:
+          logging.info(f"exceed window size, forget frame {f._id_str}")
+          break
+
+    self.bundler._frames[frame._id] = frame
+
+    self.bundler.selectKeyFramesForBA()
+
+    local_frames = self.bundler._local_frames
+
+    pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
+    self.find_corres(pairs)
+    if frame._status==my_cpp.Frame.FAIL:
+      self.bundler.forgetFrame(frame)
+      return
+
+    find_matches = False
+    self.bundler.optimizeGPU(local_frames, find_matches)
+
+    if frame._status==my_cpp.Frame.FAIL:
+      self.bundler.forgetFrame(frame)
+      return
+
+    self.bundler.checkAndAddKeyframe(frame)
+  
+  def process_new_frame_pvnet(self, frame):
+    logging.info(f"process frame {frame._id_str}")
+    
+    self.bundler._newframe = frame
+    os.makedirs(self.debug_dir, exist_ok=True)
+    #ReferenzFrame = letzter Keyframe
+    if frame._id>0:
+      ref_frame = self.bundler._frames[list(self.bundler._frames.keys())[-1]]
+      logging.info(f"Ref Frame: {ref_frame._id}")
+      frame._ref_frame_id = ref_frame._id
+      frame._pose_in_model = ref_frame._pose_in_model
+    else:
+      self.bundler._firstframe = frame
+
+    frame.invalidatePixelsByMask(frame._fg_mask)
+
+    #Initiales KOS festlegen durch PVNet
+    if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
+      # Scheitert hieran -> gelöst -> zfar erhöhen
+      #frame.setNewInitCoordinate()
+      # Set initial frame with pvnet
+      pvnet_pose_in_model = self.send_image_to_pvnet(self.color)
+      frame._pose_in_model = pvnet_pose_in_model
+      
+
+
+      
 
     n_fg = (np.array(frame._fg_mask)>0).sum()
     if n_fg<100:
@@ -835,6 +1003,8 @@ class BundleSdf:
 
   def runNoNerf(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
     self.cnt += 1
+    self.color = color
+    self.depth = depth
 
     if self.K is None:
       self.K = K
@@ -875,96 +1045,14 @@ class BundleSdf:
 
     logging.info(f"processNewFrame start {frame._id_str}")
     # self.bundler.processNewFrame(frame)
-    self.process_new_frame(frame)
+    #self.process_new_frame(frame)
+    self.process_new_frame_pvnet(frame)
     logging.info(f"processNewFrame done {frame._id_str}")
-
-    if self.bundler._keyframes[-1]==frame and False:
-      logging.info(f"{frame._id_str} prepare data for nerf")
-      #write data for nerf into p_dict
-      with self.lock:
-        self.p_dict['frame_id'] = frame._id_str
-        self.p_dict['running'] = True
-        self.kf_to_nerf_list.append({
-          'rgb': np.array(frame._color).reshape(H,W,3)[...,::-1].copy(),
-          'depth': np.array(frame._depth).reshape(H,W).copy(),
-          'mask': np.array(frame._fg_mask).reshape(H,W).copy(),
-          # 'occ_mask': occ_mask.reshape(H,W),
-          # 'normal_map': np.array(frame._normal_map).copy(),
-          'occ_mask': None,
-          'normal_map': None,
-          })
-        cam_in_obs = []
-        for f in self.bundler._keyframes:
-          cam_in_obs.append(np.array(f._pose_in_model).copy())
-        self.p_dict['cam_in_obs'] = np.array(cam_in_obs)
-
-      if self.SPDLOG>=2:
-        with open(f"{self.debug_dir}/{frame._id_str}/nerf_frames.txt",'w') as ff:
-          for f in self.bundler._keyframes:
-            ff.write(f"{f._id_str}\n")
-
-      ############# Wait for sync
-      while 1:
-        with self.lock:
-          running = self.p_dict['running']
-          nerf_num_frames = self.p_dict['nerf_num_frames']
-        if not running:
-          break
-        if len(self.bundler._keyframes)-nerf_num_frames>=self.cfg_nerf['sync_max_delay']:
-          time.sleep(0.01)
-          # logging.info(f"wait for sync len(self.bundler._keyframes):{len(self.bundler._keyframes)}, nerf_num_frames:{nerf_num_frames}")
-          continue
-        break
-
-    rematch_after_nerf = self.cfg_track["feature_corres"]["rematch_after_nerf"]
-    logging.info(f"rematch_after_nerf: {rematch_after_nerf}")
-    frames_large_update = []
-    with self.lock:
-      if 'optimized_cvcam_in_obs' in self.p_dict:
-        for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
-          if rematch_after_nerf:
-            trans_update = np.linalg.norm(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,3]-self.bundler._keyframes[i_f]._pose_in_model[:3,3])
-            rot_update = geodesic_distance(self.p_dict['optimized_cvcam_in_obs'][i_f][:3,:3], self.bundler._keyframes[i_f]._pose_in_model[:3,:3])
-            if trans_update>=0.005 or rot_update>=5/180.0*np.pi:
-              frames_large_update.append(self.bundler._keyframes[i_f])
-            logging.info(f"{self.bundler._keyframes[i_f]._id_str}, trans_update={trans_update}, rot_update={rot_update}")
-          self.bundler._keyframes[i_f]._pose_in_model = self.p_dict['optimized_cvcam_in_obs'][i_f]
-          self.bundler._keyframes[i_f]._nerfed = True
-        logging.info(f"synced pose from nerf, latest nerf frame {self.bundler._keyframes[len(self.p_dict['optimized_cvcam_in_obs'])-1]._id_str}")
-        del self.p_dict['optimized_cvcam_in_obs']
-
-      if self.use_gui:
-        with self.gui_lock:
-          if 'mesh' in self.p_dict:
-            self.gui_dict['mesh'] = self.p_dict['mesh']
-            del self.p_dict['mesh']
-
-    if rematch_after_nerf:
-      if len(frames_large_update)>0:
-        with self.lock:
-          nerf_num_frames = self.p_dict['nerf_num_frames']
-        logging.info(f"before matches keys: {len(self.bundler._fm._matches)}")
-        ks = list(self.bundler._fm._matches.keys())
-        for k in ks:
-          if k[0] in frames_large_update or k[1] in frames_large_update:
-            del self.bundler._fm._matches[k]
-            logging.info(f"Delete match between {k[0]._id_str} and {k[1]._id_str}")
-        logging.info(f"after matches keys: {len(self.bundler._fm._matches)}")
 
     self.bundler.saveNewframeResult()
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
-
-    if self.use_gui:
-      ob_in_cam = np.linalg.inv(frame._pose_in_model)
-      with self.gui_lock:
-        self.gui_dict['color'] = color[...,::-1]
-        self.gui_dict['mask'] = mask
-        self.gui_dict['ob_in_cam'] = ob_in_cam
-        self.gui_dict['id_str'] = frame._id_str
-        self.gui_dict['K'] = self.K
-        self.gui_dict['n_keyframe'] = len(self.bundler._keyframes)
 
 
   def runRealtime(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):

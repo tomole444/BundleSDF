@@ -69,6 +69,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     segmenter = Segmenter()
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
+  tracker.init_conn_pvnet()
 
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
@@ -102,9 +103,9 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     pose_in_model = np.eye(4)
 
     K = reader.K.copy()
-
     tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
 
+  tracker.close_conn_pvnet()
   tracker.on_finish()
 
   run_one_video_global_nerf(out_folder=out_folder)
