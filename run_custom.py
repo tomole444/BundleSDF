@@ -21,7 +21,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   os.system(f'rm -rf {out_folder} && mkdir -p {out_folder}')
 
-  cfg_bundletrack = yaml.load(open(f"{code_dir}/BundleTrack/config_ho3d.yml",'r'))
+  cfg_bundletrack = yaml.load(open(f"{code_dir}/BundleTrack/config_track.yml",'r'))
   cfg_bundletrack['SPDLOG'] = int(args.debug_level)
   cfg_bundletrack['depth_processing']["zfar"] = 1.75
   cfg_bundletrack['depth_processing']["percentile"] = 95
@@ -50,7 +50,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   cfg_track_dir = f'{out_folder}/config_bundletrack.yml'
   yaml.dump(cfg_bundletrack, open(cfg_track_dir,'w'))
 
-  cfg_nerf = yaml.load(open(f"{code_dir}/config.yml",'r'))
+  cfg_nerf = yaml.load(open(f"{code_dir}/config_nerf.yml",'r'))
   cfg_nerf['continual'] = True
   cfg_nerf['trunc_start'] = 0.01
   cfg_nerf['trunc'] = 0.01
@@ -69,7 +69,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     segmenter = Segmenter()
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
-  tracker.init_conn_pvnet()
+  if cfg_bundletrack["pvnet"]["activated"]:
+    tracker.init_conn_pvnet()
 
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)

@@ -270,7 +270,7 @@ def run_nerf(p_dict, kf_to_nerf_list, lock, cfg_nerf, translation, sc_factor, st
 
 
 class BundleSdf:
-  def __init__(self, cfg_track_dir=f"{code_dir}/config_ho3d.yml", cfg_nerf_dir=f'{code_dir}/config.yml', start_nerf_keyframes=10, translation=None, sc_factor=None, use_gui=False):
+  def __init__(self, cfg_track_dir=f"{code_dir}/config_track.yml", cfg_nerf_dir=f'{code_dir}/config_nerf.yml', start_nerf_keyframes=10, translation=None, sc_factor=None, use_gui=False):
     with open(cfg_track_dir,'r') as ff:
       self.cfg_track = yaml.load(ff)
     self.debug_dir = self.cfg_track["debug_dir"]
@@ -342,7 +342,10 @@ class BundleSdf:
     self.pvnet_host = 'localhost'
     self.pvnet_port = 11024
     self.pvnet_socket = None
-    self.pvnet_termination_string = b'\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01\x00\x01'
+    self.T_pvnet_bundle = np.identity(4)
+
+    self.last_tf = np.identity(4)
+    self.movements = []
 
 
   def on_finish(self):
@@ -576,6 +579,7 @@ class BundleSdf:
       frame._pose_in_model = ref_frame._pose_in_model
     else:
       self.bundler._firstframe = frame
+      os.makedirs(os.path.join(self.debug_dir, "movement"), exist_ok=True)
 
     frame.invalidatePixelsByMask(frame._fg_mask)
 
@@ -584,8 +588,14 @@ class BundleSdf:
       # Scheitert hieran -> gelöst -> zfar erhöhen
       #frame.setNewInitCoordinate()
       # Set initial frame with pvnet
-      pvnet_pose_in_model = self.send_image_to_pvnet(self.color)
-      frame._pose_in_model = pvnet_pose_in_model
+      if(self.cfg_track["pvnet"]["activated"]):
+        frame.setNewInitCoordinate()
+        pvnet_pose_in_model = self.send_image_to_pvnet(self.color)
+        self.T_pvnet_bundle = pvnet_pose_in_model @ np.linalg.inv(frame._pose_in_model)
+        #frame._pose_in_model = pvnet_pose_in_model
+      else:
+        frame.setNewInitCoordinate()
+
       
 
 
@@ -1049,7 +1059,17 @@ class BundleSdf:
     self.process_new_frame_pvnet(frame)
     logging.info(f"processNewFrame done {frame._id_str}")
 
+    #correct with pvnet correction
+    orig_pose = np.array(frame._pose_in_model).copy()
+    #frame._pose_in_model = self.T_pvnet_bundle @ frame._pose_in_model
+
     self.bundler.saveNewframeResult()
+    #frame._pose_in_model = orig_pose
+    
+    movement = np.sum(np.abs(orig_pose[:3, 3] - self.last_tf[:3,3]))
+    self.movements.append(movement)
+    np.savetxt(os.path.join(self.debug_dir, "movement", str(frame._id) + ".txt"),np.array(self.movements))
+    self.last_tf = frame._pose_in_model.copy()
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
