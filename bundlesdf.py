@@ -1061,10 +1061,10 @@ class BundleSdf:
 
     #correct with pvnet correction
     orig_pose = np.array(frame._pose_in_model).copy()
-    #frame._pose_in_model = self.T_pvnet_bundle @ frame._pose_in_model
+    frame._pose_in_model = self.T_pvnet_bundle @ frame._pose_in_model
 
     self.bundler.saveNewframeResult()
-    #frame._pose_in_model = orig_pose
+    frame._pose_in_model = orig_pose
     
     movement = np.sum(np.abs(orig_pose[:3, 3] - self.last_tf[:3,3]))
     self.movements.append(movement)
