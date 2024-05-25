@@ -590,8 +590,11 @@ class BundleSdf:
       # Set initial frame with pvnet
       if(self.cfg_track["pvnet"]["activated"]):
         frame.setNewInitCoordinate()
-        pvnet_pose_in_model = self.send_image_to_pvnet(self.color)
-        self.T_pvnet_bundle = pvnet_pose_in_model @ np.linalg.inv(frame._pose_in_model)
+        pvnet_ob_in_cam = self.send_image_to_pvnet(self.color)
+        frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
+        #T_cam_pvnet = pvnet_ob_in_cam
+        #T_cam_bundle = np.linalg.inv(frame._pose_in_model)
+        #self.T_pvnet_bundle = np.linalg.inv(T_cam_pvnet) @ T_cam_bundle
         #frame._pose_in_model = pvnet_pose_in_model
       else:
         frame.setNewInitCoordinate()
@@ -1060,16 +1063,23 @@ class BundleSdf:
     logging.info(f"processNewFrame done {frame._id_str}")
 
     #correct with pvnet correction
-    orig_pose = np.array(frame._pose_in_model).copy()
-    frame._pose_in_model = self.T_pvnet_bundle @ frame._pose_in_model
+    #logging.info(f"Tranformation difference {self.T_pvnet_bundle}")
+    #orig_pose = np.array(frame._pose_in_model).copy()
+    #logging.info(f"BundleSDF Pose {orig_pose}")
+    #logging.info(f"BundleSDF Inverse-Pose {np.linalg.inv(orig_pose)}")
+    #frame._pose_in_model = self.T_pvnet_bundle @ orig_pose #  np.linalg.inv(self.T_pvnet_bundle) 
+    
+    logging.info(f"corrected pose Pose {frame._pose_in_model}")
+    
 
     self.bundler.saveNewframeResult()
-    frame._pose_in_model = orig_pose
+    #frame._pose_in_model = orig_pose
     
-    movement = np.sum(np.abs(orig_pose[:3, 3] - self.last_tf[:3,3]))
+    T_cam_obj = np.linalg.inv(frame._pose_in_model)
+    movement = np.sum(np.abs(T_cam_obj[:3, 3] - self.last_tf[:3,3]))
     self.movements.append(movement)
     np.savetxt(os.path.join(self.debug_dir, "movement", str(frame._id) + ".txt"),np.array(self.movements))
-    self.last_tf = frame._pose_in_model.copy()
+    self.last_tf = np.linalg.inv(frame._pose_in_model).copy()
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
