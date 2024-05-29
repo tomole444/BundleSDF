@@ -280,8 +280,7 @@ class BundleSdf:
     self.translation = None
     self.sc_factor = None
 
-    #use nerf
-    self.use_nerf = False
+
 
     if sc_factor is not None:
       self.translation = translation
@@ -290,6 +289,8 @@ class BundleSdf:
     code_dir = os.path.dirname(os.path.realpath(__file__))
     with open(cfg_nerf_dir,'r') as ff:
       self.cfg_nerf = yaml.load(ff)
+    
+
     self.cfg_nerf['notes'] = ''
     self.cfg_nerf['bounding_box'] = np.array(self.cfg_nerf['bounding_box']).reshape(2,3)
 
@@ -314,8 +315,9 @@ class BundleSdf:
     self.p_dict['nerf_num_frames'] = 0
 
     self.p_dict['SPDLOG'] = self.SPDLOG
-
-    if self.use_nerf:
+    
+    #activate nerf
+    if self.cfg_nerf["activated"]:
       self.p_nerf = multiprocessing.Process(target=run_nerf, args=(self.p_dict, self.kf_to_nerf_list, self.lock, self.cfg_nerf, self.translation, self.sc_factor, start_nerf_keyframes, self.use_gui, self.gui_lock, self.gui_dict, self.debug_dir))
       self.p_nerf.start()
 
