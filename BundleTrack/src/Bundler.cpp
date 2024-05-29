@@ -268,7 +268,7 @@ bool Bundler::checkAndAddKeyframe(std::shared_ptr<Frame> frame)
     SPDLOG("Added frame {} as keyframe, current #keyframe: {}", frame->_id_str, _keyframes.size());
     return true;
   }
-  if (frame->_status!=Frame::OTHER) return false;
+  if (frame->_status != Frame::OTHER) return false;
 
   const int min_interval = (*yml)["keyframe"]["min_interval"].as<int>();
   const int min_feat_num = (*yml)["keyframe"]["min_feat_num"].as<int>();

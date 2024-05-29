@@ -573,6 +573,9 @@ class BundleSdf:
     os.makedirs(self.debug_dir, exist_ok=True)
     #ReferenzFrame = letzter Keyframe
     if frame._id>0:
+      print(f"saved frames {str(list(self.bundler._frames.keys()))}")
+      print(f"saved key-frames {[print(curr_frame._id, ' ',end = '') for curr_frame in self.bundler._keyframes]}")
+
       ref_frame = self.bundler._frames[list(self.bundler._frames.keys())[-1]]
       logging.info(f"Ref Frame: {ref_frame._id}")
       frame._ref_frame_id = ref_frame._id
@@ -598,16 +601,12 @@ class BundleSdf:
         #frame._pose_in_model = pvnet_pose_in_model
       else:
         frame.setNewInitCoordinate()
-
-      
-
-
       
 
     n_fg = (np.array(frame._fg_mask)>0).sum()
     if n_fg<100:
       logging.info(f"Frame {frame._id_str} cloud is empty, marked FAIL, roi={n_fg}")
-      frame._status = my_cpp.Frame.FAIL;
+      frame._status = my_cpp.Frame.FAIL
       self.bundler.forgetFrame(frame)
       return
     
@@ -674,18 +673,18 @@ class BundleSdf:
 
     logging.info(f"frame {frame._id_str} pose update before optimization \n{frame._pose_in_model.round(3)}")
     offset = self.bundler._fm.procrustesByCorrespondence(frame, ref_frame)
-    #Pose optimieren aufgrund von Keyframeverschiebung
+    #Pose optimieren aufgrund von FEature verchiebung
     frame._pose_in_model = offset@frame._pose_in_model
     logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
 
-    #Keyframes vergessen, wenn zu viele
+    #Frames vergessen, wenn zu viele
     window_size = self.cfg_track["bundle"]["window_size"]
     if len(self.bundler._frames)-len(self.bundler._keyframes)>window_size:
-      for k in self.bundler._frames:
-        f = self.bundler._frames[k]
-        isforget = self.bundler.forgetFrame(f)
+      for frame_id in self.bundler._frames:
+        old_frame = self.bundler._frames[frame_id]
+        isforget = self.bundler.forgetFrame(old_frame)
         if isforget:
-          logging.info(f"exceed window size, forget frame {f._id_str}")
+          logging.info(f"exceed window size, forget frame {old_frame._id_str}")
           break
 
     self.bundler._frames[frame._id] = frame
@@ -706,8 +705,11 @@ class BundleSdf:
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
       return
-
+    
+    
     self.bundler.checkAndAddKeyframe(frame)
+    # set upper limit to keyframes / sort out keyframes 
+
 
   def process_new_frame_realtime(self, frame):
     self.bundler._newframe = frame
