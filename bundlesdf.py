@@ -634,7 +634,6 @@ class BundleSdf:
       self.bundler.forgetFrame(frame)
       return
 
-    
     if frame._id==0:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
@@ -728,10 +727,23 @@ class BundleSdf:
     find_matches = False
     self.bundler.optimizeGPU(local_frames, find_matches)
 
+
+    
+    T_cam_obj = np.linalg.inv(frame._pose_in_model)
+    trans_movement = np.sum(np.abs(T_cam_obj[:3, 3] - self.last_tf[:3,3]))
+    
+    rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_tf[:3,:3]))
+
+    self.trans_movements.append(trans_movement)
+    self.rot_movements.append(rot_movement)
+
+    # limit rot movement
+    if rot_movement > self.cfg_track["limits"]["max_rot_movement"]:
+      frame._status = my_cpp.Frame.FAIL
+
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
       return
-    
     
     self.bundler.checkAndAddKeyframe(frame)
     # set upper limit to keyframes / sort out keyframes 
@@ -1103,19 +1115,6 @@ class BundleSdf:
     self.bundler.saveNewframeResult()
     #frame._pose_in_model = orig_pose
     
-    T_cam_obj = np.linalg.inv(frame._pose_in_model)
-    trans_movement = np.sum(np.abs(T_cam_obj[:3, 3] - self.last_tf[:3,3]))
-    
-    
-    rot_mat =  Rotation.from_matrix(T_cam_obj[:3,:3])
-    euler_angles = rot_mat.as_euler("zyx",degrees=True)
-    rot_mat_last = Rotation.from_matrix(self.last_tf[:3,:3])
-    euler_angles_last = rot_mat_last.as_euler("zyx",degrees=True)
-    rot_movement = np.sum(np.abs(euler_angles - euler_angles_last))
-
-
-    self.trans_movements.append(trans_movement)
-    self.rot_movements.append(rot_movement)
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
 

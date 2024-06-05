@@ -4,6 +4,32 @@ import os
 
 import time
 
+def calcRotMovement():
+
+    pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPeriodicPVNet/ob_in_cam"
+    pose_paths = os.listdir(pose_dir)
+    pose_paths.sort()
+    rot_movements = [0]
+    poses = []
+    for idx,pose_file in enumerate(pose_paths):
+        pose = None
+        if pose_file.endswith(".txt"):
+            pose = np.loadtxt(os.path.join(pose_dir, pose_file))
+        elif pose_file.endswith(".npy"):
+            pose = np.load(os.path.join(pose_dir, pose_file))
+        else:
+            continue
+        poses.append(pose)
+        #print(pose.round(decimals=6))
+
+        if idx > 0:
+            old_rot = poses[idx - 1][:3,:3]
+            rot_mat = pose[:3,:3]
+            rot_movement = np.sum(np.abs(old_rot - rot_mat))
+            rot_movements.append(rot_movement)
+
+    return np.array(rot_movements) 
+
 if __name__ == "__main__":
 
 
@@ -73,6 +99,13 @@ if __name__ == "__main__":
     load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_upnp.npy", allow_pickle=True).item()
     add_bundle_periodic_upnp = load_arr["result_y"]
 
+
+    rot_movement = np.load("outBuchVideoRotMovement/rot_movement/1699.npy", allow_pickle=True)
+    trans_movement = np.load("outBuchVideoRotMovement/trans_movement/1699.npy", allow_pickle=True)
+    
+    rot_movement_2 = calcRotMovement()
+
+
     x = load_arr["ids"]
     x_masked = x[mask]
 
@@ -81,7 +114,7 @@ if __name__ == "__main__":
     #plt.hist(a)
     ax = plt.gca()
     ax.set_ylim([0, 1])
-    plt.plot(x_masked,add_pvnet_orig, "-m", label ="ADD PVNet orig")
+    #plt.plot(x_masked,add_pvnet_orig, "-m", label ="ADD PVNet orig")
     # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
     # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
     # plt.plot(x,confidence_kpt_2, label ="Confidences kpt 2")
@@ -96,8 +129,11 @@ if __name__ == "__main__":
     #plt.plot(x,stabw, label ="stabw")
 
     #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
-    plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
+    #plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
+    plt.plot(x, rot_movement, label="Rot movement")
+    plt.plot(x, rot_movement_2, label="Rot 2 movement")
+    plt.plot(x, trans_movement, label="Trans movement")
     plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
-    plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
+    #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
     plt.legend(loc="upper left")
     plt.show()

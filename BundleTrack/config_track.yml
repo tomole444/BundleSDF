@@ -116,3 +116,6 @@ pvnet:
   adjust_every: 60 # get TF from PVNet every x frames
   max_confidence_std: 0.04 # maximum standard deviation of keypoint confidence
   min_confidence_avg: 0.69 # minimum average keypoint confidence
+
+limits:
+  max_rot_movement: 1 # maximum sum rot movement in radians
