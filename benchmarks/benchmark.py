@@ -41,14 +41,6 @@ class Benchmark:
             else:
                 continue
             self.pred_poses.append(pose)
-
-        # ignore poses with identitidy matrix
-        for idx,pose in enumerate(self.pred_poses):
-            rev_index = -2
-            while np.allclose(pose.round(decimals=6), np.identity(4)):
-                pose = self.pred_poses[rev_index]
-                rev_index -= 1
-            self.pred_poses[idx] = pose
         self.pred_poses = np.array(self.pred_poses)
 
         # ground truth poses
@@ -77,6 +69,20 @@ class Benchmark:
         #adi_errs = np.array(adi_errs)
         self.add_errs = np.array(self.add_errs)
         self.result_y = self.add_errs.copy()
+
+        mask = []
+        # ignore poses with identitidy matrix
+        for idx,pose in enumerate(self.pred_poses):
+            if pose.round(decimals=6)[2,3] < 0.001 :
+                mask.append(False)
+            else:
+                mask.append(True)
+        
+        used_add = self.add_errs[mask]
+        good_add = used_add[used_add < (0.1 * self.model_diameter)]
+        print("ADD = ", len(good_add) / len(used_add))
+        print("test")
+
         #ADDS_AUC = compute_auc(adi_errs)*100
         #ADD_AUC = compute_auc(add_errs)*100
     
@@ -107,6 +113,7 @@ class Benchmark:
 
     def plot_results(self):
         y = self.result_y
+
         x = self.ids
         ax = plt.gca()
         ax.set_ylim([0, 1])
@@ -137,12 +144,12 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks",
-                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_hypo",
+    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_upnp/pose",
+                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
-                      model_diameter=None,
+                      model_diameter=0.211,
                       first_pose_adjust= False) 
-    #bench.run_add_pose()
-    bench.run_occlusion()
+    bench.run_add_pose()
+    #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/Occlusion_gt.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_PVNet_upnp.npy")

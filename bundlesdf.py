@@ -341,7 +341,7 @@ class BundleSdf:
     self.depth = []
 
     #PVNet Server 
-    self.pvnet_host = 'localhost'
+    self.pvnet_host = '192.168.99.91'
     self.pvnet_port = 11024
     self.pvnet_socket = None
     self.T_pvnet_bundle = np.identity(4)
@@ -438,9 +438,10 @@ class BundleSdf:
     #self.pvnet_socket.sendall(self.pvnet_termination_string)
 
     data = self.pvnet_socket.recv(4096)
-    tf = pickle.loads(data)
-    logging.info(f"TF from PVNet{tf}")
-    return tf
+    pvnet_info = pickle.loads(data)
+    logging.info(f"TF from PVNet{pvnet_info['pose']}")
+    logging.info(f"Confidence from PVNet{pvnet_info['confidences']}")
+    return pvnet_info
 
   def process_new_frame(self, frame):
     logging.info(f"process frame {frame._id_str}")
@@ -595,7 +596,9 @@ class BundleSdf:
       # Set initial frame with pvnet
       if(self.cfg_track["pvnet"]["activated"]):
         frame.setNewInitCoordinate()
-        pvnet_ob_in_cam = self.send_image_to_pvnet(self.color)
+        pvnet_estimation = self.send_image_to_pvnet(self.color)
+        pvnet_ob_in_cam = pvnet_estimation["pose"]
+        pvnet_confidences = pvnet_estimation["confidences"]
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
         #T_cam_pvnet = pvnet_ob_in_cam
         #T_cam_bundle = np.linalg.inv(frame._pose_in_model)
@@ -603,6 +606,8 @@ class BundleSdf:
         #frame._pose_in_model = pvnet_pose_in_model
       else:
         frame.setNewInitCoordinate()
+    
+
       
 
     n_fg = (np.array(frame._fg_mask)>0).sum()
@@ -629,6 +634,20 @@ class BundleSdf:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
       return
+    elif frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0:   # check if tf needed from pvnet
+      pvnet_estimation = self.send_image_to_pvnet(self.color)
+      pvnet_ob_in_cam = pvnet_estimation["pose"]
+      pvnet_confidences = pvnet_estimation["confidences"].ravel()
+      pvnet_confidences = pvnet_confidences[:-1] # dont use last keypoint
+
+      # check if confidence is ok
+      pvnet_confidences_avg = np.average(pvnet_confidences)
+      pvnet_confidences_std = np.std(pvnet_confidences)
+      if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"]):
+        frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
+        self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
+        self.bundler._frames[frame._id] = frame
+        return
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
 
     #Suche nach korrespondierenden Frames im Memory 
