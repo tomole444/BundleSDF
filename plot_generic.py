@@ -68,8 +68,10 @@ if __name__ == "__main__":
     load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
     add_bundle_orig = load_arr["result_y"]
 
-    load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet.npy", allow_pickle=True).item()
-    add_bundle_periodic = load_arr["result_y"]
+    load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_orig.npy", allow_pickle=True).item()
+    add_bundle_periodic_orig = load_arr["result_y"]
+    load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_upnp.npy", allow_pickle=True).item()
+    add_bundle_periodic_upnp = load_arr["result_y"]
 
     x = load_arr["ids"]
     x_masked = x[mask]
@@ -79,7 +81,7 @@ if __name__ == "__main__":
     #plt.hist(a)
     ax = plt.gca()
     ax.set_ylim([0, 1])
-    #plt.plot(x,add_pvnet_orig, "-m", label ="ADD PVNet orig")
+    plt.plot(x_masked,add_pvnet_orig, "-m", label ="ADD PVNet orig")
     # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
     # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
     # plt.plot(x,confidence_kpt_2, label ="Confidences kpt 2")
@@ -95,6 +97,7 @@ if __name__ == "__main__":
 
     #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
     plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
-    plt.plot(x, add_bundle_periodic, label="ADD BundleSDF periodic")
+    plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
+    plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
     plt.legend(loc="upper left")
     plt.show()

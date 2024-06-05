@@ -22,6 +22,7 @@ import multiprocessing,threading
 import re
 import socket
 import pickle
+from scipy.spatial.transform import Rotation 
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -347,7 +348,10 @@ class BundleSdf:
     self.T_pvnet_bundle = np.identity(4)
 
     self.last_tf = np.identity(4)
-    self.movements = []
+    self.trans_movements = []
+    self.rot_movements = []
+    self.rot_movement_path = os.path.join(self.debug_dir, "rot_movement")
+    self.trans_movement_path = os.path.join(self.debug_dir, "trans_movement")
 
 
   def on_finish(self):
@@ -585,7 +589,8 @@ class BundleSdf:
       frame._pose_in_model = ref_frame._pose_in_model
     else:
       self.bundler._firstframe = frame
-      os.makedirs(os.path.join(self.debug_dir, "movement"), exist_ok=True)
+      os.makedirs(self.trans_movement_path, exist_ok=True)
+      os.makedirs(self.rot_movement_path, exist_ok=True)
 
     frame.invalidatePixelsByMask(frame._fg_mask)
 
@@ -1099,9 +1104,21 @@ class BundleSdf:
     #frame._pose_in_model = orig_pose
     
     T_cam_obj = np.linalg.inv(frame._pose_in_model)
-    movement = np.sum(np.abs(T_cam_obj[:3, 3] - self.last_tf[:3,3]))
-    self.movements.append(movement)
-    np.savetxt(os.path.join(self.debug_dir, "movement", str(frame._id) + ".txt"),np.array(self.movements))
+    trans_movement = np.sum(np.abs(T_cam_obj[:3, 3] - self.last_tf[:3,3]))
+    
+    
+    rot_mat =  Rotation.from_matrix(T_cam_obj[:3,:3])
+    euler_angles = rot_mat.as_euler("zyx",degrees=True)
+    rot_mat_last = Rotation.from_matrix(self.last_tf[:3,:3])
+    euler_angles_last = rot_mat_last.as_euler("zyx",degrees=True)
+    rot_movement = np.sum(np.abs(euler_angles - euler_angles_last))
+
+
+    self.trans_movements.append(trans_movement)
+    self.rot_movements.append(rot_movement)
+    np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
+    np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
+
     self.last_tf = np.linalg.inv(frame._pose_in_model).copy()
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
