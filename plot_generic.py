@@ -6,8 +6,10 @@ import time
 
 if __name__ == "__main__":
 
+
+
     load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_orig.npy", allow_pickle=True).item()
-    add_1 = load_arr["result_y"]
+    add_pvnet_orig = load_arr["result_y"]
     mask = []
     pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239/pose"
     pose_paths = os.listdir(pose_dir)
@@ -27,7 +29,7 @@ if __name__ == "__main__":
             mask.append(True)
 
     mask = np.array(mask)
-    add_1 = add_1[mask]
+    add_pvnet_orig = add_pvnet_orig[mask]
     load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_temp/confidences_indiv.npy", allow_pickle=True).item()
     cov_invs = load_arr["result_y"] 
     confidence_sum = np.sum(np.abs(cov_invs), axis=2)
@@ -60,18 +62,24 @@ if __name__ == "__main__":
 
 
     load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_upnp.npy", allow_pickle=True).item()
-    add_2 = load_arr["result_y"]
-    add_2 = add_2[mask]
+    add_pvnet_upnp = load_arr["result_y"]
+    add_pvnet_upnp = add_pvnet_upnp[mask]
+
+    load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
+    add_bundle_orig = load_arr["result_y"]
+
+    load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet.npy", allow_pickle=True).item()
+    add_bundle_periodic = load_arr["result_y"]
 
     x = load_arr["ids"]
-    x = x[mask]
+    x_masked = x[mask]
 
     
     #x = range(0,len(y))
     #plt.hist(a)
     ax = plt.gca()
     ax.set_ylim([0, 1])
-    plt.plot(x,add_1, "-m", label ="ADD PVNet orig")
+    #plt.plot(x,add_pvnet_orig, "-m", label ="ADD PVNet orig")
     # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
     # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
     # plt.plot(x,confidence_kpt_2, label ="Confidences kpt 2")
@@ -82,9 +90,11 @@ if __name__ == "__main__":
     # plt.plot(x,confidence_kpt_7, label ="Confidences kpt 7")
     # plt.plot(x,confidence_kpt_8, label ="Confidences kpt 8")
     
-    plt.plot(x,avg, label ="avg")
-    plt.plot(x,stabw, label ="stabw")
+    #plt.plot(x,avg, label ="avg")
+    #plt.plot(x,stabw, label ="stabw")
 
-    #plt.plot(x,add_2, "-r",label ="ADD PVNet upnp")
+    #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
+    plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
+    plt.plot(x, add_bundle_periodic, label="ADD BundleSDF periodic")
     plt.legend(loc="upper left")
     plt.show()

@@ -643,7 +643,7 @@ class BundleSdf:
       # check if confidence is ok
       pvnet_confidences_avg = np.average(pvnet_confidences)
       pvnet_confidences_std = np.std(pvnet_confidences)
-      if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"]):
+      if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
         self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
         self.bundler._frames[frame._id] = frame
