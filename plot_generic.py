@@ -137,13 +137,16 @@ if __name__ == "__main__":
     load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_LimitRot.npy", allow_pickle=True).item()
     add_bundle_limit_rot = load_arr["result_y"]
 
+    load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_LimitRotTrans.npy", allow_pickle=True).item()
+    add_bundle_limit_rot_trans = load_arr["result_y"]
+
 
     rot_movement = np.load("outBuchVideoNoLimiting/rot_movement/1699.npy", allow_pickle=True)
 
     trans_movement = np.load("outBuchVideoNoLimiting/trans_movement/1699.npy", allow_pickle=True)
     
-    rot_movement_2 = calcRotMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPeriodicPVNet/ob_in_cam")
-    trans_movement_2 = calcTransMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPeriodicPVNet/ob_in_cam")
+    rot_movement_2 = calcRotMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoLimitMovement/ob_in_cam")
+    trans_movement_2 = calcTransMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoLimitMovement/ob_in_cam")
 
 
 
@@ -152,7 +155,7 @@ if __name__ == "__main__":
     #x = range(0,len(y))
     #plt.hist(a)
     ax = plt.gca()
-    ax.set_ylim([0, 1])
+    ax.set_ylim([0, 10])
     #plt.plot(x_masked,add_pvnet_orig, "-m", label ="ADD PVNet orig")
     # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
     # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
@@ -168,11 +171,12 @@ if __name__ == "__main__":
     #plt.plot(x,stabw, label ="stabw")
 
     #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
-    #plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
-    plt.plot(x, rot_movement_2, label="Rot movement")
-    #plt.plot(x, rot_movement_2, label="Rot 2 movement")
+    plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
+    #plt.plot(x, rot_movement_2, label="Rot movement")
+    plt.plot(x, rot_movement_2, label="Rot 2 movement")
     plt.plot(x, trans_movement_2, label="Trans movement")
-    plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
+    #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
+    plt.plot(x, add_bundle_limit_rot_trans, label="ADD BundleSDF Limit Trans Rot")
     #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
     #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
     plt.legend(loc="upper left")
