@@ -24,6 +24,8 @@ import socket
 import pickle
 from scipy.spatial.transform import Rotation 
 from scipy.spatial import distance
+#import cupoch as cph
+import open3d as o3d
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -276,6 +278,7 @@ class BundleSdf:
     with open(cfg_track_dir,'r') as ff:
       self.cfg_track = yaml.load(ff)
     self.debug_dir = self.cfg_track["debug_dir"]
+    self.dataset_dir = self.cfg_track["dataset_dir"]
     self.SPDLOG = self.cfg_track["SPDLOG"]
     self.start_nerf_keyframes = start_nerf_keyframes
     self.use_gui = use_gui
@@ -338,6 +341,8 @@ class BundleSdf:
     self.K = None
     self.mesh = None
 
+    self.model_pcd = o3d.io.read_point_cloud(os.path.join(self.dataset_dir,"model_icp.ply"))
+    self.model_pcd.estimate_normals()
     #frame-data
     self.color = []
     self.depth = []
@@ -750,6 +755,10 @@ class BundleSdf:
     # limit rot and trans movement
     if rot_movement > self.cfg_track["limits"]["max_rot_movement"] or trans_movement > self.cfg_track["limits"]["max_t_vec_movement"]:
       frame._status = my_cpp.Frame.FAIL
+
+    # Do icp opitmization
+    T_optPose_initialPose = self.optimizeICP(frame)
+    frame._pose_in_model = T_optPose_initialPose @ frame._pose_in_model
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
@@ -1422,7 +1431,52 @@ class BundleSdf:
     mesh = mesh_to_real_world(mesh, pose_offset=offset, translation=self.cfg_nerf['translation'], sc_factor=self.cfg_nerf['sc_factor'])
     mesh.export(f'{self.debug_dir}/textured_mesh.obj')
 
+  def optimizeICP(self, frame):
+    
+    
+    intial_pose = np.linalg.inv(frame._pose_in_model)
+    mask_img = np.array(frame._fg_mask)
+    depth_img = np.array(frame._depth)
+    mask_img = mask_img.reshape((mask_img.shape[0],-1))
+    depth_img = depth_img.reshape((depth_img.shape[0],-1))
 
+    sem_out = np.where(mask_img>0.8,1,0)
+    #sem_out = np.where(radial_out<=max_radii_dm[keypoint_count-1], sem_out,0)
+
+    depth_map = depth_img * sem_out
+    xyz_m = rgbd_to_point_cloud(self.K,depth_map)
+    #xyz_m = xyz_mm / 1e3
+    depth_scene_pcd = o3d.geometry.PointCloud()
+    depth_scene_pcd.points = o3d.utility.Vector3dVector(xyz_m)#cph.utility.Vector3fVector(xyz_mm)
+
+    
+    #model_pcd.transform(pose)
+
+    self.model_pcd.paint_uniform_color([0, 0.651, 0.929])
+    depth_scene_pcd.paint_uniform_color([1, 0.706, 0])
+    depth_scene_pcd.estimate_normals()
+
+
+    criteria = o3d.pipelines.registration.ICPConvergenceCriteria()
+    threshold = self.cfg_track["icp"]["threshold"]
+    reg_result = None
+    if (self.cfg_track["icp"]["type"] == "p2p"):
+      reg_result = o3d.pipelines.registration.registration_icp(
+            self.model_pcd, depth_scene_pcd, threshold, intial_pose,
+            o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+            criteria)
+    elif (self.cfg_track["icp"]["type"] == "p2l"):
+      reg_result = o3d.pipelines.registration.registration_icp(
+            self.model_pcd, depth_scene_pcd, threshold, intial_pose,
+            o3d.pipelines.registration.TransformationEstimationPointToPlane())
+    optimzed_pose = reg_result.transformation
+    T_optPose_initialPose = np.linalg.inv(optimzed_pose) @ intial_pose
+
+    if (self.use_gui):
+        self.model_pcd.transform(np.linalg.inv(T_optPose_initialPose @ frame._pose_in_model))
+        o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd])
+        self.model_pcd.transform(T_optPose_initialPose @ frame._pose_in_model)
+    return T_optPose_initialPose
 
 
 

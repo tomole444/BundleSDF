@@ -551,3 +551,13 @@ def draw_posed_3d_box(K, img, ob_in_cam, bbox, line_color=(0,255,0), linewidth=2
       img = draw_line3d(start,end,img)
 
   return img
+
+def rgbd_to_point_cloud(K, depth):
+  vs, us = depth.nonzero()
+  zs = depth[vs, us]
+  #print(zs.min())
+  #print(zs.max())
+  xs = ((us - K[0, 2]) * zs) / float(K[0, 0])
+  ys = ((vs - K[1, 2]) * zs) / float(K[1, 1])
+  pts = np.array([xs, ys, zs]).T
+  return pts

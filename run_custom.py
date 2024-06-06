@@ -27,6 +27,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   #cfg_bundletrack['depth_processing']["percentile"] = 98
   cfg_bundletrack['erode_mask'] = 3
   cfg_bundletrack['debug_dir'] = out_folder+'/'
+  cfg_bundletrack['dataset_dir'] = video_dir
   cfg_bundletrack['bundle']['max_BA_frames'] = 10
   cfg_bundletrack['bundle']['max_optimized_feature_loss'] = 0.03
   cfg_bundletrack['feature_corres']['max_dist_neighbor'] = 0.02
