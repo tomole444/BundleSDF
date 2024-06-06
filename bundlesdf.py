@@ -23,6 +23,7 @@ import re
 import socket
 import pickle
 from scipy.spatial.transform import Rotation 
+from scipy.spatial import distance
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -730,16 +731,16 @@ class BundleSdf:
 
     
     T_cam_obj = np.linalg.inv(frame._pose_in_model)
-    trans_movement = np.sum(np.abs(T_cam_obj[:3, 3] - self.last_tf[:3,3]))
+    trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_tf[:3,3])
     
     rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_tf[:3,:3]))
 
     self.trans_movements.append(trans_movement)
     self.rot_movements.append(rot_movement)
 
-    # limit rot movement
-    #if rot_movement > self.cfg_track["limits"]["max_rot_movement"]:
-    #  frame._status = my_cpp.Frame.FAIL
+    # limit rot and trans movement
+    if rot_movement > self.cfg_track["limits"]["max_rot_movement"] or trans_movement > self.cfg_track["limits"]["max_t_vec_movement"]:
+      frame._status = my_cpp.Frame.FAIL
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)

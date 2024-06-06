@@ -119,3 +119,4 @@ pvnet:
 
 limits:
   max_rot_movement: 1 # maximum sum rot movement in radians
+  max_t_vec_movement: 0.1 # maximum sum rot movement in radians

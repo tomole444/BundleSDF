@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from math import dist
 
 import time
 
@@ -30,6 +31,34 @@ def calcRotMovement(pose_dir):
 
     return np.array(rot_movements) 
 
+
+def calcTransMovement(pose_dir):
+
+    
+    pose_paths = os.listdir(pose_dir)
+    pose_paths.sort()
+    trans_movements = [0]
+    poses = []
+    for idx,pose_file in enumerate(pose_paths):
+        pose = None
+        if pose_file.endswith(".txt"):
+            pose = np.loadtxt(os.path.join(pose_dir, pose_file))
+        elif pose_file.endswith(".npy"):
+            pose = np.load(os.path.join(pose_dir, pose_file))
+        else:
+            continue
+        poses.append(pose)
+        #print(pose.round(decimals=6))
+
+        if idx > 0:
+            old_t_vec = poses[idx - 1][:3,3]
+            t_vec = pose[:3,3]
+            trans_movement = dist(old_t_vec, t_vec)
+            trans_movements.append(trans_movement)
+
+    return np.array(trans_movements) 
+
+
 if __name__ == "__main__":
 
 
@@ -55,6 +84,11 @@ if __name__ == "__main__":
             mask.append(True)
 
     mask = np.array(mask)
+    
+    x = load_arr["ids"]
+    x_masked = x[mask]
+
+
     add_pvnet_orig = add_pvnet_orig[mask]
     load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_temp/confidences_indiv.npy", allow_pickle=True).item()
     cov_invs = load_arr["result_y"] 
@@ -96,6 +130,7 @@ if __name__ == "__main__":
 
     load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_orig.npy", allow_pickle=True).item()
     add_bundle_periodic_orig = load_arr["result_y"]
+    
     load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_upnp.npy", allow_pickle=True).item()
     add_bundle_periodic_upnp = load_arr["result_y"]
 
@@ -103,15 +138,15 @@ if __name__ == "__main__":
     add_bundle_limit_rot = load_arr["result_y"]
 
 
+    rot_movement = np.load("outBuchVideoNoLimiting/rot_movement/1699.npy", allow_pickle=True)
 
-    rot_movement = np.load("outBuchVideoRotMovement/rot_movement/1699.npy", allow_pickle=True)
-    trans_movement = np.load("outBuchVideoRotMovement/trans_movement/1699.npy", allow_pickle=True)
+    trans_movement = np.load("outBuchVideoNoLimiting/trans_movement/1699.npy", allow_pickle=True)
     
     rot_movement_2 = calcRotMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPeriodicPVNet/ob_in_cam")
+    trans_movement_2 = calcTransMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPeriodicPVNet/ob_in_cam")
 
 
-    x = load_arr["ids"]
-    x_masked = x[mask]
+
 
     
     #x = range(0,len(y))
@@ -134,11 +169,11 @@ if __name__ == "__main__":
 
     #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
     #plt.plot(x, add_bundle_orig, label="ADD BundleSDF original")
-    #plt.plot(x, rot_movement, label="Rot movement")
-    plt.plot(x, rot_movement_2, label="Rot 2 movement")
-    plt.plot(x, trans_movement, label="Trans movement")
+    plt.plot(x, rot_movement_2, label="Rot movement")
+    #plt.plot(x, rot_movement_2, label="Rot 2 movement")
+    plt.plot(x, trans_movement_2, label="Trans movement")
     plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
-    plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
+    #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
     #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
     plt.legend(loc="upper left")
     plt.show()
