@@ -119,8 +119,8 @@ pvnet:
   min_confidence_avg: 0.69 # minimum average keypoint confidence
 
 icp:
-  threshold: 0.01 # icp threshold
-  type: p2p # p2p = point to point p2l = point to plane
+  threshold: 0.005 # icp threshold
+  type: p2l # p2p = point to point p2l = point to plane
 
 limits:
   max_rot_movement: 1 # maximum sum rot movement in radians

@@ -1458,8 +1458,7 @@ class BundleSdf:
     
     #model_pcd.transform(pose)
 
-    self.model_pcd.paint_uniform_color([0, 0.651, 0.929])
-    depth_scene_pcd.paint_uniform_color([1, 0.706, 0])
+
     depth_scene_pcd.estimate_normals()
 
 
@@ -1479,9 +1478,13 @@ class BundleSdf:
     T_optPose_initialPose = np.linalg.inv(optimzed_pose) @ intial_pose
 
     if (self.use_gui):
-        self.model_pcd.transform(np.linalg.inv(T_optPose_initialPose @ frame._pose_in_model))
-        o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd])
-        self.model_pcd.transform(T_optPose_initialPose @ frame._pose_in_model)
+      self.model_pcd.paint_uniform_color([0, 0.651, 0.929])
+      depth_scene_pcd.paint_uniform_color([1, 0.706, 0])
+
+      self.model_pcd.transform(np.linalg.inv(T_optPose_initialPose @ frame._pose_in_model))
+      o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd])
+      self.model_pcd.transform(T_optPose_initialPose @ frame._pose_in_model)
+      
     return T_optPose_initialPose
 
 
