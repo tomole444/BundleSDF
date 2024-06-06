@@ -648,10 +648,19 @@ class BundleSdf:
       # check if confidence is ok
       pvnet_confidences_avg = np.average(pvnet_confidences)
       pvnet_confidences_std = np.std(pvnet_confidences)
-      if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001):
+      
+      T_cam_obj = pvnet_ob_in_cam.copy()
+      trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_tf[:3,3])
+      
+      rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_tf[:3,:3]))
+
+      if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001)\
+          and (rot_movement < self.cfg_track["limits"]["max_rot_movement"] and trans_movement < self.cfg_track["limits"]["max_t_vec_movement"]):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
         self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
         self.bundler._frames[frame._id] = frame
+        self.trans_movements.append(trans_movement)
+        self.rot_movements.append(rot_movement)
         return
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
 
