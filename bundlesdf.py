@@ -611,6 +611,9 @@ class BundleSdf:
         pvnet_ob_in_cam = pvnet_estimation["pose"]
         pvnet_confidences = pvnet_estimation["confidences"]
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
+        # Do icp opitmization
+        T_optPose_initialPose = self.optimizeICP(frame)
+        frame._pose_in_model = T_optPose_initialPose @ frame._pose_in_model
         #T_cam_pvnet = pvnet_ob_in_cam
         #T_cam_bundle = np.linalg.inv(frame._pose_in_model)
         #self.T_pvnet_bundle = np.linalg.inv(T_cam_pvnet) @ T_cam_bundle
@@ -662,6 +665,9 @@ class BundleSdf:
       if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001)\
           and (rot_movement < self.cfg_track["limits"]["max_rot_movement"] and trans_movement < self.cfg_track["limits"]["max_t_vec_movement"]):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
+        # Do icp opitmization
+        T_optPose_initialPose = self.optimizeICP(frame)
+        frame._pose_in_model = T_optPose_initialPose @ frame._pose_in_model
         self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
         self.bundler._frames[frame._id] = frame
         self.trans_movements.append(trans_movement)
