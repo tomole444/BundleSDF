@@ -738,8 +738,8 @@ class BundleSdf:
     self.rot_movements.append(rot_movement)
 
     # limit rot movement
-    if rot_movement > self.cfg_track["limits"]["max_rot_movement"]:
-      frame._status = my_cpp.Frame.FAIL
+    #if rot_movement > self.cfg_track["limits"]["max_rot_movement"]:
+    #  frame._status = my_cpp.Frame.FAIL
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
