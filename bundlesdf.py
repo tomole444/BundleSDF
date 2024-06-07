@@ -353,7 +353,7 @@ class BundleSdf:
     self.pvnet_socket = None
     self.T_pvnet_bundle = np.identity(4)
 
-    self.last_tf = np.identity(4)
+    self.last_valid_tf = np.identity(4)
     self.trans_movements = []
     self.rot_movements = []
     self.rot_movement_path = os.path.join(self.debug_dir, "rot_movement")
@@ -658,9 +658,9 @@ class BundleSdf:
       pvnet_confidences_std = np.std(pvnet_confidences)
       
       T_cam_obj = pvnet_ob_in_cam.copy()
-      trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_tf[:3,3])
+      trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_valid_tf[:3,3])
       
-      rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_tf[:3,:3]))
+      rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_valid_tf[:3,:3]))
 
       if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001)\
           and (rot_movement < self.cfg_track["limits"]["max_rot_movement"] and trans_movement < self.cfg_track["limits"]["max_t_vec_movement"]):
@@ -751,9 +751,9 @@ class BundleSdf:
 
     
     T_cam_obj = np.linalg.inv(frame._pose_in_model)
-    trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_tf[:3,3])
+    trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_valid_tf[:3,3])
     
-    rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_tf[:3,:3]))
+    rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_valid_tf[:3,:3]))
 
     self.trans_movements.append(trans_movement)
     self.rot_movements.append(rot_movement)
@@ -768,6 +768,7 @@ class BundleSdf:
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
+      frame._pose_in_model = np.identity(4)
       return
     
     self.bundler.checkAndAddKeyframe(frame)
@@ -1142,8 +1143,8 @@ class BundleSdf:
     
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
-
-    self.last_tf = np.linalg.inv(frame._pose_in_model).copy()
+    if frame._status != my_cpp.Frame.FAIL:
+      self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
