@@ -61,7 +61,8 @@ if __name__ == "__main__":
     
     reg_p2l = o3d.pipelines.registration.registration_icp(
             model_pcd, depth_scene_pcd, threshold, trans_init,
-            o3d.pipelines.registration.TransformationEstimationPointToPlane())
+            o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+            criteria)
     model_pcd.transform(reg_p2l.transformation)
     model_pcd_2.transform(pose_gt)
     model_pcd_3.transform(pose_icp)

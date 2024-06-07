@@ -1462,7 +1462,7 @@ class BundleSdf:
     depth_scene_pcd.estimate_normals()
 
 
-    criteria = o3d.pipelines.registration.ICPConvergenceCriteria()
+    criteria = o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration = 2_000)
     threshold = self.cfg_track["icp"]["threshold"]
     reg_result = None
     if (self.cfg_track["icp"]["type"] == "p2p"):
@@ -1473,7 +1473,9 @@ class BundleSdf:
     elif (self.cfg_track["icp"]["type"] == "p2l"):
       reg_result = o3d.pipelines.registration.registration_icp(
             self.model_pcd, depth_scene_pcd, threshold, intial_pose,
-            o3d.pipelines.registration.TransformationEstimationPointToPlane())
+            o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+            criteria)
+    print(reg_result)
     optimzed_pose = reg_result.transformation
     T_optPose_initialPose = np.linalg.inv(optimzed_pose) @ intial_pose
 
@@ -1481,10 +1483,10 @@ class BundleSdf:
       self.model_pcd.paint_uniform_color([0, 0.651, 0.929])
       depth_scene_pcd.paint_uniform_color([1, 0.706, 0])
 
-      self.model_pcd.transform(np.linalg.inv(T_optPose_initialPose @ frame._pose_in_model))
+      self.model_pcd.transform(optimzed_pose)
       o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd])
-      self.model_pcd.transform(T_optPose_initialPose @ frame._pose_in_model)
-      
+      self.model_pcd.transform(np.linalg.inv(optimzed_pose))
+
     return T_optPose_initialPose
 
 
