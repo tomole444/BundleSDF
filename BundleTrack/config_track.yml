@@ -121,6 +121,7 @@ pvnet:
 icp:
   threshold: 0.01 # icp threshold
   type: p2l # p2p = point to point p2l = point to plane
+  max_iterations: 2000 # maximum iterations for icp resolver
 
 limits:
   max_rot_movement: 1 # maximum sum rot movement in radians

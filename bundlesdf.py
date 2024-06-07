@@ -668,7 +668,9 @@ class BundleSdf:
         self.bundler._frames[frame._id] = frame
         return
 
-    if(len(frame._fg_mask[frame._fg_mask > 0]) < self.cfg_track["limits"]["min_mask_pixels"]):
+
+    mask = np.array(frame._fg_mask)
+    if(len(mask[ mask> 0]) < self.cfg_track["limits"]["min_mask_pixels"]):
       self.previous_occluded += 1
     else:
       self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
@@ -1453,7 +1455,7 @@ class BundleSdf:
     depth_scene_pcd.estimate_normals()
 
 
-    criteria = o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration = 2_000)
+    criteria = o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration = self.cfg_track["icp"]["max_iterations"])
     threshold = self.cfg_track["icp"]["threshold"]
     reg_result = None
     if (self.cfg_track["icp"]["type"] == "p2p"):
@@ -1482,7 +1484,7 @@ class BundleSdf:
 
   def checkMovement(self, frame, T_cam_obj = None):
     ret = True
-    if T_cam_obj == None:
+    if T_cam_obj is None:
       T_cam_obj = np.linalg.inv(frame._pose_in_model)
     trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_valid_tf[:3,3])
     
@@ -1492,7 +1494,7 @@ class BundleSdf:
     if rot_movement > self.cfg_track["limits"]["max_rot_movement"] or trans_movement > self.cfg_track["limits"]["max_t_vec_movement"]:
       ret = False
 
-    if(T_cam_obj == None) or (T_cam_obj != None and ret): 
+    if(T_cam_obj is None) or (T_cam_obj is not None and ret): 
       self.trans_movements.append(trans_movement)
       self.rot_movements.append(rot_movement)
     return ret
