@@ -14,7 +14,7 @@ code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
 from segmentation_utils import Segmenter
 import debugpy
-
+import traceback
 
 def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_folder='/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk/', use_segmenter=False, use_gui=False):
   set_seed(0)
@@ -229,7 +229,11 @@ def draw_pose():
     #logging.info(f"Pose: {pose}")
     #pose = pose@np.linalg.inv(to_origin)
     #vis = draw_posed_3d_box(K, color, ob_in_cam=pose, bbox=bbox, line_color=(255,255,0))
-    vis = draw_xyz_axis(color, ob_in_cam=pose, K = K, is_input_rgb = False)
+    try:
+      vis = draw_xyz_axis(color, ob_in_cam=pose, K = K, is_input_rgb = False)
+    except:
+      vis = color
+      traceback.print_exc()
     #vis = draw_posed_3d_box(K, color, ob_in_cam=pose, bbox=bbox, line_color=(255,255,0))
     id_str = os.path.basename(color_file).replace('.png','')
     imageio.imwrite(f'{out_dir}/{id_str}.png', vis)

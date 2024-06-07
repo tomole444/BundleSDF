@@ -152,4 +152,4 @@ if __name__ == "__main__":
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_ICP.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_Test.npy")

@@ -327,12 +327,6 @@ class BundleSdf:
       self.p_nerf.start()
 
 
-    # self.p_dict = {}
-    # self.lock = threading.Lock()
-    # self.p_dict['running'] = False
-    # self.p_dict['join'] = False
-    # self.p_nerf = threading.Thread(target=self.run_nerf, args=(self.p_dict, self.lock))
-    # self.p_nerf.start()
 
     yml = my_cpp.YamlLoadFile(cfg_track_dir)
     self.bundler = my_cpp.Bundler(yml)
@@ -341,8 +335,10 @@ class BundleSdf:
     self.K = None
     self.mesh = None
 
+    #Load Model pointcloud for ICP
     self.model_pcd = o3d.io.read_point_cloud(os.path.join(self.dataset_dir,"model_icp.ply"))
     self.model_pcd.estimate_normals()
+    
     #frame-data
     self.color = []
     self.depth = []
@@ -353,11 +349,16 @@ class BundleSdf:
     self.pvnet_socket = None
     self.T_pvnet_bundle = np.identity(4)
 
+
+    # Data for rotation and translation limitation
     self.last_valid_tf = np.identity(4)
     self.trans_movements = []
     self.rot_movements = []
     self.rot_movement_path = os.path.join(self.debug_dir, "rot_movement")
     self.trans_movement_path = os.path.join(self.debug_dir, "trans_movement")
+    self.previous_occluded = 0 # count of previous frames, that have been occluded
+
+
 
 
   def on_finish(self):
@@ -656,26 +657,24 @@ class BundleSdf:
       # check if confidence is ok
       pvnet_confidences_avg = np.average(pvnet_confidences)
       pvnet_confidences_std = np.std(pvnet_confidences)
-      
-      T_cam_obj = pvnet_ob_in_cam.copy()
-      trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_valid_tf[:3,3])
-      
-      rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_valid_tf[:3,:3]))
 
       if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001)\
-          and (rot_movement < self.cfg_track["limits"]["max_rot_movement"] and trans_movement < self.cfg_track["limits"]["max_t_vec_movement"]):
+          and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.previous_occluded > 0):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
         # Do icp opitmization
         T_optPose_initialPose = self.optimizeICP(frame)
         frame._pose_in_model = T_optPose_initialPose @ frame._pose_in_model
         self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
         self.bundler._frames[frame._id] = frame
-        self.trans_movements.append(trans_movement)
-        self.rot_movements.append(rot_movement)
         return
-    min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
 
-    #Suche nach korrespondierenden Frames im Memory 
+    if(len(frame._fg_mask[frame._fg_mask > 0]) < self.cfg_track["limits"]["min_mask_pixels"]):
+      self.previous_occluded += 1
+    else:
+      self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
+
+    #search for corresponding frame in memory 
+    min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     self.find_corres([(frame, ref_frame)])
     matches = self.bundler._fm._matches[(frame, ref_frame)]
 
@@ -749,17 +748,8 @@ class BundleSdf:
     self.bundler.optimizeGPU(local_frames, find_matches)
 
 
-    
-    T_cam_obj = np.linalg.inv(frame._pose_in_model)
-    trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_valid_tf[:3,3])
-    
-    rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_valid_tf[:3,:3]))
-
-    self.trans_movements.append(trans_movement)
-    self.rot_movements.append(rot_movement)
-
     # limit rot and trans movement
-    if rot_movement > self.cfg_track["limits"]["max_rot_movement"] or trans_movement > self.cfg_track["limits"]["max_t_vec_movement"]:
+    if not self.checkMovement(frame) and self.previous_occluded == 0:
       frame._status = my_cpp.Frame.FAIL
 
     # Do icp opitmization
@@ -1490,6 +1480,22 @@ class BundleSdf:
 
     return T_optPose_initialPose
 
+  def checkMovement(self, frame, T_cam_obj = None):
+    ret = True
+    if T_cam_obj == None:
+      T_cam_obj = np.linalg.inv(frame._pose_in_model)
+    trans_movement = distance.euclidean(T_cam_obj[:3, 3], self.last_valid_tf[:3,3])
+    
+    rot_movement = np.sum(np.abs(T_cam_obj[:3, :3] - self.last_valid_tf[:3,:3]))
+
+    # limit rot and trans movement
+    if rot_movement > self.cfg_track["limits"]["max_rot_movement"] or trans_movement > self.cfg_track["limits"]["max_t_vec_movement"]:
+      ret = False
+
+    if(T_cam_obj == None) or (T_cam_obj != None and ret): 
+      self.trans_movements.append(trans_movement)
+      self.rot_movements.append(rot_movement)
+    return ret
 
 
 if __name__=="__main__":
