@@ -75,6 +75,9 @@ class ResultPlotter:
         self.add_bundle_icp_masked = self.add_bundle_icp[self.mask]
         self.x_masked = self.x[self.mask]
 
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware.npy", allow_pickle=True).item()
+        self.add_bundle_occ_aware = load_arr["result_y"]
+
 
         #rot_movement = np.load("outBuchVideoNoLimiting/rot_movement/1699.npy", allow_pickle=True)
 
@@ -105,12 +108,13 @@ class ResultPlotter:
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
         plt.plot(self.x, self.add_bundle_orig, label="ADD BundleSDF original")
         #plt.plot(x, rot_movement_2, label="Rot movement")
-        plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
-        plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
+        #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
+        #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
         plt.plot(self.x, self.add_bundle_limit_rot, label="ADD BundleSDF Limit Trans Rot")
         #plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
         plt.plot(self.x_masked, self.add_bundle_icp_masked, label="ADD BundleSDF ICP Masked")
+        plt.plot(self.x, self.add_bundle_occ_aware, label="ADD BundleSDF Occlusion aware")
         #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
         #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
         plt.legend(loc="upper left")

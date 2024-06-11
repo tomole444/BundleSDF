@@ -110,8 +110,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   tracker.close_conn_pvnet()
   tracker.on_finish()
-
-  run_one_video_global_nerf(out_folder=out_folder)
+  if(cfg_nerf["activated"]):
+    run_one_video_global_nerf(out_folder=out_folder)
 
 
 

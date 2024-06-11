@@ -672,9 +672,6 @@ class BundleSdf:
         self.bundler._frames[frame._id] = frame
         return
 
-
-    
-
     #search for corresponding frame in memory 
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     self.find_corres([(frame, ref_frame)])
