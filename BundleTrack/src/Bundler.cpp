@@ -969,7 +969,7 @@ void Bundler::saveNewframeResult()
 }
 void Bundler::saveNewframeResult(const std::string &debug_dir)
 {
-  SPDLOG("Welcome saveNewframeResult");
+  //SPDLOG("Welcome saveNewframeResult");
   std::string K_file = fmt::format("{}/cam_K.txt",(*yml)["debug_dir"].as<std::string>());
   const std::string out_dir = debug_dir+_newframe->_id_str+"/";
   const std::string pose_out_dir = debug_dir+"ob_in_cam/";
@@ -1117,7 +1117,7 @@ void Bundler::saveNewframeResult(const std::string &debug_dir)
     pcl::io::savePLYFile(out_dir+"cloud_world_gt.ply",*cloud_world_gt);
   }
 
-  SPDLOG("saveNewframeResult done");
+  //SPDLOG("saveNewframeResult done");
 }
 
 

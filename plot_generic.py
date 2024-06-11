@@ -22,7 +22,7 @@ class ResultPlotter:
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_temp/confidences_indiv.npy", allow_pickle=True).item()
         cov_invs = load_arr["result_y"] 
         confidence_sum = np.sum(np.abs(cov_invs), axis=2)
-        confidence_sum = np.sum(confidence_sum, axis=2)
+        #confidence_sum = np.sum(confidence_sum, axis=2)
         confidence_sum = 1-(confidence_sum / 5)
         confidence_kpt_0 = confidence_sum[:,0] #1 - (confidence_sum[:,0]/ 5)
         confidence_kpt_1 = confidence_sum[:,1] #1 - (confidence_sum[:,1]/ 5)
@@ -168,6 +168,8 @@ class ResultPlotter:
                 trans_movements.append(trans_movement)
 
         return np.array(trans_movements)
+    
+    #calculates a mask array for valid poses only
     @staticmethod
     def calcMask(pose_dir):
         mask = []

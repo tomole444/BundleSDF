@@ -369,13 +369,14 @@ class BundleSdf:
 
     with self.lock:
       self.p_dict['join'] = True
-    self.p_nerf.join()
-    with self.lock:
-      if self.p_dict['running']==False and 'optimized_cvcam_in_obs' in self.p_dict:
-        for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
-          self.bundler._keyframes[i_f]._pose_in_model = self.p_dict['optimized_cvcam_in_obs'][i_f]
-          self.bundler._keyframes[i_f]._nerfed = True
-        del self.p_dict['optimized_cvcam_in_obs']
+    if self.cfg_nerf["activated"]:
+      self.p_nerf.join()
+      with self.lock:
+        if self.p_dict['running']==False and 'optimized_cvcam_in_obs' in self.p_dict:
+          for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
+            self.bundler._keyframes[i_f]._pose_in_model = self.p_dict['optimized_cvcam_in_obs'][i_f]
+            self.bundler._keyframes[i_f]._nerfed = True
+          del self.p_dict['optimized_cvcam_in_obs']
 
   def init_conn_pvnet(self):
     self.pvnet_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -587,8 +588,8 @@ class BundleSdf:
     os.makedirs(self.debug_dir, exist_ok=True)
     #ReferenzFrame = letzter Keyframe
     if frame._id>0:
-      print(f"saved frames {str(list(self.bundler._frames.keys()))}")
-      print(f"saved key-frames {[print(curr_frame._id, ' ',end = '') for curr_frame in self.bundler._keyframes]}")
+      #print(f"saved frames {str(list(self.bundler._frames.keys()))}")
+      #print(f"saved key-frames {[print(curr_frame._id, ' ',end = '') for curr_frame in self.bundler._keyframes]}")
 
       ref_frame = self.bundler._frames[list(self.bundler._frames.keys())[-1]]
       logging.info(f"Ref Frame: {ref_frame._id}")
@@ -600,6 +601,9 @@ class BundleSdf:
       os.makedirs(self.rot_movement_path, exist_ok=True)
 
     frame.invalidatePixelsByMask(frame._fg_mask)
+
+    if(frame._id == 180):
+      print("here")
 
     #Initiales KOS festlegen durch PVNet
     if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
@@ -622,15 +626,15 @@ class BundleSdf:
       else:
         frame.setNewInitCoordinate()
     
-
-      
-
     n_fg = (np.array(frame._fg_mask)>0).sum()
-    if n_fg<100:
+    if n_fg < self.cfg_track["limits"]["min_mask_pixels"]:
+      self.previous_occluded += 1
       logging.info(f"Frame {frame._id_str} cloud is empty, marked FAIL, roi={n_fg}")
       frame._status = my_cpp.Frame.FAIL
       self.bundler.forgetFrame(frame)
       return
+    else:
+      self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
     
     #Denoising Pointcloud
     if self.cfg_track["depth_processing"]["denoise_cloud"]:
@@ -669,11 +673,7 @@ class BundleSdf:
         return
 
 
-    mask = np.array(frame._fg_mask)
-    if(len(mask[ mask> 0]) < self.cfg_track["limits"]["min_mask_pixels"]):
-      self.previous_occluded += 1
-    else:
-      self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
+    
 
     #search for corresponding frame in memory 
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
@@ -1127,7 +1127,7 @@ class BundleSdf:
     #logging.info(f"BundleSDF Inverse-Pose {np.linalg.inv(orig_pose)}")
     #frame._pose_in_model = self.T_pvnet_bundle @ orig_pose #  np.linalg.inv(self.T_pvnet_bundle) 
     
-    logging.info(f"corrected pose Pose {frame._pose_in_model}")
+    #logging.info(f"corrected pose Pose {frame._pose_in_model}")
     
 
     self.bundler.saveNewframeResult()

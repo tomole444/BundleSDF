@@ -78,10 +78,12 @@ class Benchmark:
             else:
                 mask.append(True)
         
-        used_add = self.add_errs[mask]
-        good_add = used_add[used_add < (0.1 * self.model_diameter)]
-        print("ADD = ", len(good_add) / len(used_add))
-        print("test")
+        calced_add = self.add_errs[mask]
+        good_add = calced_add[calced_add < (0.1 * self.model_diameter)]
+        if len(calced_add) > 0:
+            print("ADD = ", len(good_add) / len(calced_add))
+        else:
+            print("ADD = 0")
 
         #ADDS_AUC = compute_auc(adi_errs)*100
         #ADD_AUC = compute_auc(add_errs)*100
@@ -116,7 +118,7 @@ class Benchmark:
 
         x = self.ids
         ax = plt.gca()
-        ax.set_ylim([0, 1])
+        ax.set_ylim([0, 10])
         plt.plot(x,y)
         plt.show()
 
@@ -144,7 +146,7 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam",
+    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideo/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -152,4 +154,4 @@ if __name__ == "__main__":
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_Test.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware.npy")
