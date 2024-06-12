@@ -75,10 +75,19 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware.npy", allow_pickle=True).item()
         self.add_bundle_occ_aware = load_arr["result_y"]
-        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoOcclusion/ob_in_cam")
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_check_limit.npy", allow_pickle=True).item()
+        self.add_bundle_occ_aware_check_limit = load_arr["result_y"]
+        self.add_bundle_occ_aware_check_limit_trans_err = load_arr["trans_err"]
+        self.add_bundle_occ_aware_check_limit_rot_err = load_arr["rot_err"]
+        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoCheckLimit/ob_in_cam")
         self.add_bundle_occ_aware_masked = self.add_bundle_icp[self.mask]
         self.x_masked = self.x[self.mask]
+
+
         self.err_detections = np.where(self.mask, 0, 0.8)
+
+
 
         #self.mask_count = ResultPlotter.countVisablePixels("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
         #np.save("benchmarks/BuchVideo/mask_visib_pixels.npy", self.mask_count)
@@ -95,7 +104,7 @@ class ResultPlotter:
         #x = range(0,len(y))
         #plt.hist(a)
         ax = plt.gca()
-        ax.set_ylim([0, 2000])
+        ax.set_ylim([0, 1])
         #plt.plot(x_masked,add_pvnet_orig, "-m", label ="ADD PVNet orig")
         # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
         # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
@@ -116,18 +125,21 @@ class ResultPlotter:
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
-        plt.plot(self.x, self.add_bundle_limit_rot, label="ADD BundleSDF Limit Trans Rot")
+        #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="ADD BundleSDF Limit Trans Rot")
         #plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
-        plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
+        plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
+        plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
+        plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
 
-        jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
-        print("jumps at", jumps)
-        plt.plot(self.x_masked, self.add_bundle_occ_aware_masked, label="ADD BundleSDF Occlusion aware masked")
+
+        #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
+        #print("jumps at", jumps)
+        #plt.plot(self.x_masked, self.add_bundle_occ_aware_masked, label="ADD BundleSDF Occlusion aware masked")
 
         plt.plot(self.x, self.err_detections, "-r", label = "No Detections")
         #634 problematic
 
-        plt.plot(self.x, self.mask_count, label = "Mask visib Pixels")
+        #plt.plot(self.x, self.mask_count, label = "Mask visib Pixels")
 
         #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
         #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")

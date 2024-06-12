@@ -19,6 +19,8 @@ class Benchmark:
         self.first_pose_adjust = first_pose_adjust
 
         self.add_errs = []
+        self.trans_errs = []
+        self.rot_errs = []
         self.gt_poses = []
         self.pred_poses = []
         self.ids = []
@@ -63,12 +65,16 @@ class Benchmark:
 
         for i in range(len(self.pred_poses)):
             #adi = adi_err(pred_poses[i],gt_poses[i],mesh.vertices.copy())
-            add = self.calc_add_error(self.pred_poses[i],self.gt_poses[i])
+            add, trans_err, rot_err = self.calc_add_error(self.pred_poses[i],self.gt_poses[i])
             #adi_errs.append(adi)
             self.add_errs.append(add)
+            self.trans_errs.append(trans_err)
+            self.rot_errs.append(rot_err)
 
         #adi_errs = np.array(adi_errs)
         self.add_errs = np.array(self.add_errs)
+        self.trans_errs = np.array(self.trans_errs)
+        self.rot_errs = np.array(self.rot_errs)
         self.result_y = self.add_errs.copy()
 
         mask = []
@@ -126,6 +132,8 @@ class Benchmark:
     def save_results(self, path):
         save_arr = dict()
         save_arr["result_y"] = self.result_y 
+        save_arr["trans_err"] = self.trans_errs
+        save_arr["rot_err"] = self.rot_errs
         save_arr["ids"] = self.ids
         save_arr = np.array(save_arr, dtype=object)
         np.save(path,save_arr, allow_pickle=True)
@@ -141,9 +149,25 @@ class Benchmark:
         projected_model_points_pred = (T_pred@model_points_hom.T).T[:,:3]
         projected_model_points_gt = (T_gt@model_points_hom.T).T[:,:3]
 
-        add_err = np.linalg.norm(projected_model_points_gt - projected_model_points_pred, axis=1).mean()
+        T_pred_trans = np.identity(4)
+        T_pred_trans[:3,3] = T_pred[:3,3]
+        T_gt_trans = np.identity(4)
+        T_gt_trans[:3,3] = T_gt[:3,3]
+        projected_model_points_pred_trans = (T_pred_trans@model_points_hom.T).T[:,:3]
+        projected_model_points_gt_trans = (T_gt_trans@model_points_hom.T).T[:,:3]
 
-        return add_err
+        T_pred_rot = np.identity(4)
+        T_pred_rot[:3,:3] = T_pred[:3,:3]
+        T_gt_rot = np.identity(4)
+        T_gt_rot[:3,:3] = T_gt[:3,:3]
+        projected_model_points_pred_rot = (T_pred_rot@model_points_hom.T).T[:,:3]
+        projected_model_points_gt_rot = (T_gt_rot@model_points_hom.T).T[:,:3]
+
+        add_err = np.linalg.norm(projected_model_points_gt - projected_model_points_pred, axis=1).mean()
+        trans_err = np.linalg.norm(projected_model_points_gt_trans - projected_model_points_pred_trans, axis=1).mean()
+        rot_err = np.linalg.norm(projected_model_points_gt_rot - projected_model_points_pred_rot, axis=1).mean()
+
+        return add_err, trans_err, rot_err
 
 
 if __name__ == "__main__":

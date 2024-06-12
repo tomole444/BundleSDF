@@ -648,8 +648,7 @@ class BundleSdf:
       frame._status = my_cpp.Frame.FAIL
       self.bundler.forgetFrame(frame)
       return
-    else:
-      self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
+   
     
     #Denoising Pointcloud
     if self.cfg_track["depth_processing"]["denoise_cloud"]:
@@ -667,7 +666,7 @@ class BundleSdf:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
       return
-    elif frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0:   # check if tf needed from pvnet
+    elif frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.previous_occluded > 0:   # check if tf needed from pvnet
       
       pvnet_ob_in_cam = self.get_pose_from_pvnet()
 
@@ -747,6 +746,10 @@ class BundleSdf:
 
     pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
     self.find_corres(pairs)
+
+    if n_fg > self.cfg_track["limits"]["min_mask_pixels"]:
+      self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
+
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
       return

@@ -1,10 +1,11 @@
 import numpy as np
 import cv2
 import os
-import open3d as o3d
+import trimesh
 from scipy.spatial.transform import Rotation as R
 
-def estimateMaskPosition(poses, pose_idx, model_pcd, K, use_last_frames = 10):
+def estimateMaskPosition(poses, pose_idx, model, K, resolution, use_last_frames = 10):
+
 
     rot_mats = poses[pose_idx - use_last_frames: pose_idx,:3,:3]
     trans_vecs = poses[pose_idx - use_last_frames: pose_idx,:3,3]
@@ -36,7 +37,42 @@ def estimateMaskPosition(poses, pose_idx, model_pcd, K, use_last_frames = 10):
 
     print(est_pose)
     print(poses[pose_idx])
+    points_2d = get_points_2d(est_pose,K,model.vertices.copy())
+    points_2d = points_2d.astype(np.int16)
+    mask_est = np.zeros(resolution)
+    mask_est[points_2d[:,0],points_2d[:,1]] = 255
+    #close gaps
+    kernel = np.ones((2, 2), np.uint8)
+    mask_est = cv2.dilate(mask_est, kernel, iterations=1)
+    mask_est = cv2.erode(mask_est, kernel, iterations=1)
 
+    return mask_est
+    #model_pcd.transform(est_pose)
+
+def get_points_2d(T, K, points):
+    # unit is m
+    #T = np.identity(4)
+    #T[:3,3] = np.array([0.083,-0.3442,-1.097])
+    rot_mat = T[:3,:3]
+    rotV, _ = cv2.Rodrigues(rot_mat)
+    tVec = T[:3,3]
+    points_2d, _ = cv2.projectPoints(points, rotV, tVec, K, (0, 0, 0, 0))
+    points_2d = points_2d.reshape(-1,2)
+    return points_2d
+
+def draw_axis(img, T, K):
+    # unit is m
+    #T = np.identity(4)
+    #T[:3,3] = np.array([0.083,-0.3442,-1.097])
+    rot_mat = T[:3,:3]
+    rotV, _ = cv2.Rodrigues(rot_mat)
+    tVec = T[:3,3]
+    points = np.float32([[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1], [0, 0, 0]]).reshape(-1, 3)
+    axisPoints, _ = cv2.projectPoints(points, rotV, tVec, K, (0, 0, 0, 0))
+    img = cv2.line(img, tuple(np.array(axisPoints[3].ravel(), dtype=np.int16)), tuple(np.array(axisPoints[0].ravel(), dtype=np.int16)), (0,0,255), 3)
+    img = cv2.line(img, tuple(np.array(axisPoints[3].ravel(), dtype=np.int16)), tuple(np.array(axisPoints[1].ravel(), dtype=np.int16)), (0,255,0), 3)
+    img = cv2.line(img, tuple(np.array(axisPoints[3].ravel(), dtype=np.int16)), tuple(np.array(axisPoints[2].ravel(), dtype=np.int16)), (255,0,0), 3)
+    return img
 
 def compare_masks(mask_gt,mask_est):
     mask_gt_bool = mask_gt > 0
@@ -65,6 +101,11 @@ if __name__ == "__main__":
     K_path = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/cam_K.txt"
 
     K = np.loadtxt(K_path)
-    model = o3d.io.read_point_cloud("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model_icp.ply")
+    model = trimesh.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply")#o3d.io.read_point_cloud("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model_icp.ply")
     poses = loadPoses(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose")
-    estimateMaskPosition(poses= poses, pose_idx= 80,model_pcd=model, K =K, use_last_frames= 20)
+    mask_est = estimateMaskPosition(poses= poses, pose_idx= 80,model=model, K =K, resolution= (720, 1280), use_last_frames= 20)
+    mask_gt = cv2.imread("")
+    pose_img = cv2.imread("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/rgb/00079.png")
+    pose_img = draw_axis(pose_img, poses[80], K)
+    cv2.imwrite("mask_prediction/out_mask.jpg", mask_est)
+    cv2.imwrite("mask_prediction/out_pose.jpg", pose_img)
