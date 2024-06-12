@@ -4,7 +4,8 @@ import os
 import open3d as o3d
 from scipy.spatial.transform import Rotation as R
 
-def estimateMaskPosition(poses, pose_idx, use_last_frames = 10):
+def estimateMaskPosition(poses, pose_idx, model_pcd, K, use_last_frames = 10):
+
     rot_mats = poses[pose_idx - use_last_frames: pose_idx,:3,:3]
     trans_vecs = poses[pose_idx - use_last_frames: pose_idx,:3,3]
     # Convert the matrix to Euler angles (in degrees)
@@ -37,7 +38,6 @@ def estimateMaskPosition(poses, pose_idx, use_last_frames = 10):
     print(poses[pose_idx])
 
 
-
 def compare_masks(mask_gt,mask_est):
     mask_gt_bool = mask_gt > 0
     mask_est_bool = mask_est > 0 
@@ -62,6 +62,9 @@ def loadPoses(pose_dir):
     return np.array(poses).reshape((-1,4,4))
 
 if __name__ == "__main__":
+    K_path = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/cam_K.txt"
+
+    K = np.loadtxt(K_path)
     model = o3d.io.read_point_cloud("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model_icp.ply")
     poses = loadPoses(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose")
-    estimateMaskPosition(poses= poses, pose_idx= 80, use_last_frames= 20)
+    estimateMaskPosition(poses= poses, pose_idx= 80,model_pcd=model, K =K, use_last_frames= 20)
