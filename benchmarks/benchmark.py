@@ -41,7 +41,9 @@ class Benchmark:
             else:
                 continue
             self.pred_poses.append(pose)
+            self.ids.append(idx)
         self.pred_poses = np.array(self.pred_poses)
+        self.ids = np.array(self.ids)
 
         # ground truth poses
 
@@ -49,9 +51,8 @@ class Benchmark:
         pose_gt_files.sort()
         for idx, pose_file in enumerate(pose_gt_files):
             self.gt_poses.append(np.load(os.path.join(self.pose_gt_dir, pose_file)))
-            self.ids.append(idx)
         self.gt_poses = np.array(self.gt_poses)
-        self.ids = np.array(self.ids)
+        
 
         #print(pred_poses.shape)
         #Align first frame to match gt frame 
@@ -118,7 +119,7 @@ class Benchmark:
 
         x = self.ids
         ax = plt.gca()
-        ax.set_ylim([0, 10])
+        ax.set_ylim([0, 1])
         plt.plot(x,y)
         plt.show()
 
@@ -146,7 +147,7 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoOcclusion/ob_in_cam",
+    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoCheckLimit/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -154,4 +155,4 @@ if __name__ == "__main__":
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_check_limit.npy")

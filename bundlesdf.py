@@ -1446,6 +1446,8 @@ class BundleSdf:
 
   def optimizeICP(self, frame):
     
+    if (not self.cfg_track["icp"]["activated"]):
+      return np.identity(4)
     
     intial_pose = np.linalg.inv(frame._pose_in_model)
     mask_img = np.array(frame._fg_mask)

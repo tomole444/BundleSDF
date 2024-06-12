@@ -1,10 +1,41 @@
 import numpy as np
 import cv2
 import os
-import o3d
+import open3d as o3d
+from scipy.spatial.transform import Rotation as R
 
-def estimateMaskPosition(poses, pose_idx):
-    
+def estimateMaskPosition(poses, pose_idx, use_last_frames = 10):
+    rot_mats = poses[pose_idx - use_last_frames: pose_idx,:3,:3]
+    trans_vecs = poses[pose_idx - use_last_frames: pose_idx,:3,3]
+    # Convert the matrix to Euler angles (in degrees)
+    r = R.from_matrix(rot_mats)
+    angles = r.as_euler("zyx",)
+    rot_velocities = []
+    for idx, t_vec in enumerate(angles):
+        if idx > 0:
+            vel = t_vec - angles[idx-1]
+            rot_velocities.append(vel)
+    trans_velocities = []
+    for idx, t_vec in enumerate(trans_vecs):
+        if idx > 0:
+            vel = t_vec - trans_vecs[idx-1]
+            trans_velocities.append(vel)
+
+    average_rot_vel = np.average(rot_velocities, axis = 0)
+    average_trans_vel = np.average(trans_velocities, axis = 0)
+
+
+    est_angle = angles[-1] + average_rot_vel
+    est_rot_mat = R.from_euler("zyx", est_angle).as_matrix()
+    est_trans_vec = trans_vecs[-1] + average_trans_vel
+
+    est_pose = np.identity(4)
+    est_pose[:3,:3] = est_rot_mat
+    est_pose[:3,3] = est_trans_vec
+
+    print(est_pose)
+    print(poses[pose_idx])
+
 
 
 def compare_masks(mask_gt,mask_est):
@@ -28,8 +59,9 @@ def loadPoses(pose_dir):
         else:
             continue
         poses.append(pose)
-    return poses
+    return np.array(poses).reshape((-1,4,4))
 
 if __name__ == "__main__":
     model = o3d.io.read_point_cloud("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model_icp.ply")
     poses = loadPoses(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose")
+    estimateMaskPosition(poses= poses, pose_idx= 80, use_last_frames= 20)
