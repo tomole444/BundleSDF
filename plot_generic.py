@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from math import dist
-
+import cv2
 import time
 
 
@@ -71,13 +71,18 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_ICP.npy", allow_pickle=True).item()
         self.add_bundle_icp = load_arr["result_y"]
-        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
-        self.add_bundle_icp_masked = self.add_bundle_icp[self.mask]
-        self.x_masked = self.x[self.mask]
+
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware.npy", allow_pickle=True).item()
         self.add_bundle_occ_aware = load_arr["result_y"]
+        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoOcclusion/ob_in_cam")
+        self.add_bundle_occ_aware_masked = self.add_bundle_icp[self.mask]
+        self.x_masked = self.x[self.mask]
+        self.err_detections = np.where(self.mask, 0, 0.8)
 
+        #self.mask_count = ResultPlotter.countVisablePixels("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
+        #np.save("benchmarks/BuchVideo/mask_visib_pixels.npy", self.mask_count)
+        self.mask_count = np.load("benchmarks/BuchVideo/mask_visib_pixels.npy")
 
         #rot_movement = np.load("outBuchVideoNoLimiting/rot_movement/1699.npy", allow_pickle=True)
 
@@ -90,7 +95,7 @@ class ResultPlotter:
         #x = range(0,len(y))
         #plt.hist(a)
         ax = plt.gca()
-        ax.set_ylim([0, 1])
+        ax.set_ylim([0, 2000])
         #plt.plot(x_masked,add_pvnet_orig, "-m", label ="ADD PVNet orig")
         # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
         # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
@@ -113,8 +118,17 @@ class ResultPlotter:
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
         plt.plot(self.x, self.add_bundle_limit_rot, label="ADD BundleSDF Limit Trans Rot")
         #plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
-        plt.plot(self.x_masked, self.add_bundle_icp_masked, label="ADD BundleSDF ICP Masked")
-        plt.plot(self.x, self.add_bundle_occ_aware, label="ADD BundleSDF Occlusion aware")
+        plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
+
+        jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
+        print("jumps at", jumps)
+        plt.plot(self.x_masked, self.add_bundle_occ_aware_masked, label="ADD BundleSDF Occlusion aware masked")
+
+        plt.plot(self.x, self.err_detections, "-r", label = "No Detections")
+        #634 problematic
+
+        plt.plot(self.x, self.mask_count, label = "Mask visib Pixels")
+
         #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
         #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
         plt.legend(loc="upper left")
@@ -173,6 +187,30 @@ class ResultPlotter:
 
         return np.array(trans_movements)
     
+    def countVisablePixels(mask_dir):
+        mask_paths = os.listdir(mask_dir)
+        mask_paths.sort()
+        mask_count = []
+        for idx,mask_file in enumerate(mask_paths):
+            print("loading ", mask_file)
+            mask = cv2.imread(os.path.join(mask_dir,mask_file), cv2.IMREAD_GRAYSCALE)
+            mask_count.append(len(mask[mask > 1]))
+
+        return np.array(mask_count)
+    @staticmethod
+    def getJumps(masked_add_arr, x_masked, threshold = 0.2):
+        last_avg = 0
+        last_four = np.array([0,0,0,0])
+        jumps = []
+        for idx, add_metric in enumerate(masked_add_arr):
+            if(np.abs(add_metric - last_avg) > threshold):
+                jumps.append(x_masked[idx])
+            last_four = np.roll(last_four,1)
+            last_four[0] = add_metric
+            last_avg = np.average(last_four)
+        return np.array(jumps) 
+
+
     #calculates a mask array for valid poses only
     @staticmethod
     def calcMask(pose_dir):

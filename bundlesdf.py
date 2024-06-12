@@ -358,6 +358,8 @@ class BundleSdf:
     self.trans_movement_path = os.path.join(self.debug_dir, "trans_movement")
     self.previous_occluded = 0 # count of previous frames, that have been occluded
 
+    self.continous_discarded_frames = 0 # count of continously discarded frames
+
 
 
 
@@ -395,6 +397,19 @@ class BundleSdf:
     if occ_mask is not None:
       frame._occ_mask = my_cpp.cvMat(occ_mask)
     return frame
+
+  def get_pose_from_pvnet(self):
+    pvnet_estimation = self.send_image_to_pvnet(self.color)
+    pvnet_ob_in_cam = pvnet_estimation["pose"]
+    pvnet_confidences = pvnet_estimation["confidences"].ravel()
+    pvnet_confidences = pvnet_confidences[:-1] # dont use last keypoint
+
+    # check if confidence is ok
+    pvnet_confidences_avg = np.average(pvnet_confidences)
+    pvnet_confidences_std = np.std(pvnet_confidences)
+    if not(pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001):
+      pvnet_ob_in_cam = None
+    return pvnet_ob_in_cam
 
 
   def find_corres(self, frame_pairs):
@@ -602,8 +617,8 @@ class BundleSdf:
 
     frame.invalidatePixelsByMask(frame._fg_mask)
 
-    if(frame._id == 180):
-      print("here")
+    #if(frame._id == 180):
+    #  print("here")
 
     #Initiales KOS festlegen durch PVNet
     if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
@@ -653,17 +668,10 @@ class BundleSdf:
       self.bundler._frames[frame._id] = frame
       return
     elif frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0:   # check if tf needed from pvnet
-      pvnet_estimation = self.send_image_to_pvnet(self.color)
-      pvnet_ob_in_cam = pvnet_estimation["pose"]
-      pvnet_confidences = pvnet_estimation["confidences"].ravel()
-      pvnet_confidences = pvnet_confidences[:-1] # dont use last keypoint
+      
+      pvnet_ob_in_cam = self.get_pose_from_pvnet()
 
-      # check if confidence is ok
-      pvnet_confidences_avg = np.average(pvnet_confidences)
-      pvnet_confidences_std = np.std(pvnet_confidences)
-
-      if (pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001)\
-          and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.previous_occluded > 0):
+      if pvnet_ob_in_cam is not None and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.previous_occluded > 0):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
         # Do icp opitmization
         T_optPose_initialPose = self.optimizeICP(frame)
@@ -748,8 +756,14 @@ class BundleSdf:
 
 
     # limit rot and trans movement
-    if not self.checkMovement(frame) and self.previous_occluded == 0:
+    if not self.checkMovement(frame) and self.previous_occluded == 0 and self.continous_discarded_frames < self.cfg_track["limits"]["force_pvnet_after"]:
       frame._status = my_cpp.Frame.FAIL
+    elif self.continous_discarded_frames >= self.cfg_track["limits"]["force_pvnet_after"]:
+      pvnet_ob_in_cam = self.get_pose_from_pvnet()
+      if pvnet_ob_in_cam is not None:
+        frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
+      else:
+        frame._status = my_cpp.Frame.FAIL
 
     # Do icp opitmization
     T_optPose_initialPose = self.optimizeICP(frame)
@@ -1134,6 +1148,9 @@ class BundleSdf:
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
     if frame._status != my_cpp.Frame.FAIL:
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
+      self.continous_discarded_frames = 0
+    else:
+      self.continous_discarded_frames += 1
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
