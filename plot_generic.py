@@ -86,6 +86,9 @@ class ResultPlotter:
         self.add_bundle_occ_aware_force_pvnet_masked = self.add_bundle_occ_aware_force_pvnet[self.mask]
         self.x_masked = self.x[self.mask]
 
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_feature_matching_spike.npy", allow_pickle=True).item()
+        self.add_bundle_feature_matching_spike = load_arr["result_y"]
+
 
         self.err_detections = np.where(self.mask, 0, 0.8)
 
@@ -107,7 +110,7 @@ class ResultPlotter:
         #plt.hist(a)
         ax = plt.gca()
         ax.set_ylim([0, 1])
-        plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
+        #plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
         # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
         # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
         # plt.plot(x,confidence_kpt_2, label ="Confidences kpt 2")
@@ -133,7 +136,7 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
         plt.plot(self.x_masked, self.add_bundle_occ_aware_force_pvnet_masked, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
-
+        plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD BundleSDF feature matching spike prevention")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)
