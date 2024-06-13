@@ -646,6 +646,7 @@ class BundleSdf:
       self.previous_occluded += 1
       logging.info(f"Frame {frame._id_str} cloud is empty, marked FAIL, roi={n_fg}")
       frame._status = my_cpp.Frame.FAIL
+      frame._pose_in_model = np.identity(4) #assign invalid pose
       self.bundler.forgetFrame(frame)
       return
    
@@ -687,6 +688,7 @@ class BundleSdf:
     if frame._status==my_cpp.Frame.FAIL:
       logging.info(f"find corres fail, mark {frame._id_str} as FAIL")
       self.bundler.forgetFrame(frame)
+      frame._pose_in_model = np.identity(4) #assign invalid pose
       return
 
     matches = self.bundler._fm._matches[(frame, ref_frame)]
@@ -730,7 +732,7 @@ class BundleSdf:
     if distance > self.cfg_track["limits"]["max_feature_matching_offset"]:
       #spike detected -> invalidate frame
       frame._status = my_cpp.Frame.FAIL
-      frame._pose_in_model = np.identity(4)
+      frame._pose_in_model = np.identity(4) #assign invalid pose
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
@@ -759,6 +761,7 @@ class BundleSdf:
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
+      frame._pose_in_model = np.identity(4) #assign invalid pose
       return
 
     find_matches = False
