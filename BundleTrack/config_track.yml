@@ -129,4 +129,4 @@ limits:
   max_t_vec_movement: 0.1 # maximum sum rot movement in radians
   force_pvnet_after: 15 #number of frames that need to be discarded before pvnet is utilized
   min_mask_pixels: 100 #minimum number of pixels of the object that needs to be seen
-  #max_feature_matching_offset: 0.2 # maximum feature matching offset
+  max_feature_matching_offset: 0.2 # maximum feature matching translation offset

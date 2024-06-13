@@ -724,8 +724,15 @@ class BundleSdf:
 
     logging.info(f"frame {frame._id_str} pose update before optimization \n{frame._pose_in_model.round(3)}")
     offset = self.bundler._fm.procrustesByCorrespondence(frame, ref_frame)
-    #Pose optimieren aufgrund von FEature verchiebung
-    frame._pose_in_model = offset@frame._pose_in_model
+    #pose optimization resulting from feature matching -> eliminate spikes 
+    feature_matching_optimized_pose = offset@frame._pose_in_model
+    distance = np.linalg.norm(feature_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
+    if distance > self.cfg_track["limits"]["max_feature_matching_offset"]:
+      #spike detected -> invalidate frame
+      frame._status = my_cpp.Frame.FAIL
+      frame._pose_in_model = np.identity(4)
+    else:
+      frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
 
     #Frames vergessen, wenn zu viele
