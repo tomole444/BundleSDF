@@ -26,6 +26,7 @@ from scipy.spatial.transform import Rotation
 from scipy.spatial import distance
 #import cupoch as cph
 import open3d as o3d
+from velocity_pose_regression import VelocityPoseRegression
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -275,11 +276,13 @@ def run_nerf(p_dict, kf_to_nerf_list, lock, cfg_nerf, translation, sc_factor, st
 
 class BundleSdf:
   def __init__(self, cfg_track_dir=f"{code_dir}/config_track.yml", cfg_nerf_dir=f'{code_dir}/config_nerf.yml', start_nerf_keyframes=10, translation=None, sc_factor=None, use_gui=False):
+    
     with open(cfg_track_dir,'r') as ff:
       self.cfg_track = yaml.load(ff)
     self.debug_dir = self.cfg_track["debug_dir"]
     self.dataset_dir = self.cfg_track["dataset_dir"]
     self.SPDLOG = self.cfg_track["SPDLOG"]
+    self.model_pcd_path = os.path.join(self.dataset_dir,"model_pcd.ply")
     self.start_nerf_keyframes = start_nerf_keyframes
     self.use_gui = use_gui
     self.translation = None
@@ -336,7 +339,7 @@ class BundleSdf:
     self.mesh = None
 
     #Load Model pointcloud for ICP
-    self.model_pcd = o3d.io.read_point_cloud(os.path.join(self.dataset_dir,"model_icp.ply"))
+    self.model_pcd = o3d.io.read_point_cloud(self.model_pcd_path)
     self.model_pcd.estimate_normals()
     
     #frame-data
@@ -359,6 +362,9 @@ class BundleSdf:
     self.previous_occluded = 0 # count of previous frames, that have been occluded
 
     self.continous_discarded_frames = 0 # count of continously discarded frames
+
+    # Velocity pose estimator
+    self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path)
 
 
 

@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation, FFMpegWriter
 import os
 from math import dist
 import cv2
@@ -7,6 +8,11 @@ import time
 
 
 class ResultPlotter:
+    graph1 = None 
+    graph2 = None 
+    x = None 
+    y1 = None 
+    y2 = None 
     def __init__(self):
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_orig.npy", allow_pickle=True).item()
         self.add_pvnet_orig = load_arr["result_y"]
@@ -82,12 +88,13 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_force_pvnet.npy", allow_pickle=True).item()
         self.add_bundle_occ_aware_force_pvnet = load_arr["result_y"]
-        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoCheckLimit_force_pvnet/ob_in_cam")
-        self.add_bundle_occ_aware_force_pvnet_masked = self.add_bundle_occ_aware_force_pvnet[self.mask]
-        self.x_masked = self.x[self.mask]
+
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_feature_matching_spike.npy", allow_pickle=True).item()
         self.add_bundle_feature_matching_spike = load_arr["result_y"]
+        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoFeatureOffsetSpike/ob_in_cam")
+        self.add_bundle_feature_matching_spike_masked = self.add_bundle_feature_matching_spike[self.mask]
+        self.x_masked = self.x[self.mask]
 
 
         self.err_detections = np.where(self.mask, 0, 0.8)
@@ -108,8 +115,27 @@ class ResultPlotter:
     def plotResults(self):
         #x = range(0,len(y))
         #plt.hist(a)
+        #matplotlib                3.7.1
+        #matplotlib-inline         0.1.7
+        import os
+
+        os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
+        #plt.switch_backend('QTAgg')
+        plt.switch_backend('TkAgg')
+
+        plt.rc ('font', size = 30)
+        fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
         ax.set_ylim([0, 1])
+        ax.set_xlim([0, len(self.x)])
+
+        ResultPlotter.x = self.x
+        ResultPlotter.y1 = self.add_bundle_orig
+        ResultPlotter.y2 = self.add_bundle_feature_matching_spike
+
+        ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
+        ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
+
         #plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
         # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
         # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
@@ -124,19 +150,20 @@ class ResultPlotter:
         #plt.plot(x,avg, label ="avg")
         #plt.plot(x,stabw, label ="stabw")
 
+
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
-        plt.plot(self.x, self.add_bundle_orig, label="ADD BundleSDF original")
+        ##plt.plot(self.x, self.add_bundle_orig, label="BundleSDF original")
         #plt.plot(x, rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
         #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="ADD BundleSDF Limit Trans Rot")
         #plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
-        plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
+        #plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
-        plt.plot(self.x_masked, self.add_bundle_occ_aware_force_pvnet_masked, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
-        plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD BundleSDF feature matching spike prevention")
+        #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
+        ##plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Current Implementation")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)
@@ -149,8 +176,34 @@ class ResultPlotter:
 
         #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
         #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
+
+
         plt.legend(loc="upper left")
+        ax.set_xlabel("Frame")
+        ax.set_ylabel("ADD")
+        ax.grid(True)
+        
+        ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
+        
+        manager = plt.get_current_fig_manager()
+        #manager.window.state('zoomed')
+        #manager.window.showMaximized()
+
+        fps = 25
+
+        ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
+        writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
+        ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
         plt.show()
+    
+    @staticmethod
+    def animate(frame):
+        ResultPlotter.graph1.set_xdata(ResultPlotter.x[:frame])
+        ResultPlotter.graph2.set_xdata(ResultPlotter.x[:frame])
+        ResultPlotter.graph1.set_ydata(ResultPlotter.y1[:frame])
+        ResultPlotter.graph2.set_ydata(ResultPlotter.y2[:frame])
+
+        return ResultPlotter.graph1, ResultPlotter.graph2
 
     @staticmethod
     def loadPoses(pose_dir):
