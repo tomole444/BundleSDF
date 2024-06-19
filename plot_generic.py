@@ -117,10 +117,8 @@ class ResultPlotter:
         #plt.hist(a)
         #matplotlib                3.7.1
         #matplotlib-inline         0.1.7
-        import os
 
-        os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH")
-        #plt.switch_backend('QTAgg')
+
         plt.switch_backend('TkAgg')
 
         plt.rc ('font', size = 30)
@@ -133,8 +131,8 @@ class ResultPlotter:
         ResultPlotter.y1 = self.add_bundle_orig
         ResultPlotter.y2 = self.add_bundle_feature_matching_spike
 
-        ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
-        ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
+        #ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
+        #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
         #plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
         # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
@@ -152,7 +150,7 @@ class ResultPlotter:
 
 
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
-        ##plt.plot(self.x, self.add_bundle_orig, label="BundleSDF original")
+        plt.plot(self.x, self.add_bundle_orig, label="BundleSDF original")
         #plt.plot(x, rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
@@ -163,7 +161,7 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
-        ##plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Current Implementation")
+        plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Current Implementation")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)
@@ -184,16 +182,12 @@ class ResultPlotter:
         ax.grid(True)
         
         ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
-        
-        manager = plt.get_current_fig_manager()
-        #manager.window.state('zoomed')
-        #manager.window.showMaximized()
 
-        fps = 25
+        #fps = 25
 
-        ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
-        writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
-        ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
+        #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
+        #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
+        #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
         plt.show()
     
     @staticmethod

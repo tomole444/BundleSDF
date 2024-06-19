@@ -22,6 +22,7 @@ import multiprocessing,threading
 import re
 import socket
 import pickle
+import time
 from scipy.spatial.transform import Rotation 
 from scipy.spatial import distance
 #import cupoch as cph
@@ -365,6 +366,14 @@ class BundleSdf:
 
     # Velocity pose estimator
     self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path)
+    self.last_tfs = []
+    self.last_time_stamp = None
+    #self.last_euler_angle = None
+    self.last_euler_velocities = []
+    self.last_euler_accelerations = []
+    self.last_trans_velocities = []
+    self.last_trans_accelerations = []
+
 
 
 
@@ -487,6 +496,11 @@ class BundleSdf:
       logging.info(f"Ref Frame: {ref_frame._id}")
       frame._ref_frame_id = ref_frame._id
       frame._pose_in_model = ref_frame._pose_in_model
+      #check if eligible for faster pose istimation
+      if frame._id % self.cfg_track["estimation"]["use_every"] == 0:
+        if pose_from_estimator := self.get_Estimation() != None:
+          frame._pose_in_model = np.linalg.inv(pose_from_estimator)
+          return
     else:
       self.bundler._firstframe = frame
 
@@ -1176,7 +1190,6 @@ class BundleSdf:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
 
-
   def runRealtime(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
 
     self.cnt += 1
@@ -1531,11 +1544,44 @@ class BundleSdf:
     if rot_movement > self.cfg_track["limits"]["max_rot_movement"] or trans_movement > self.cfg_track["limits"]["max_t_vec_movement"]:
       ret = False
 
+    
+
     if(T_cam_obj is None) or (T_cam_obj is not None and ret): 
       self.trans_movements.append(trans_movement)
       self.rot_movements.append(rot_movement)
+
+      if len(self.last_tfs) != 0 and self.last_time_stamp is not None:
+        current_time = time.time()
+        r = Rotation.from_matrix(T_cam_obj[:3,:3])
+        current_angles = r.as_euler("zyx",)
+        r = Rotation.from_matrix(self.last_tfs[-1][:3,:3])
+        last_angles = r.as_euler("zyx",)
+        vel_angle = (current_angles - last_angles) / (current_time - self.last_time_stamp)
+        vel_trans = (T_cam_obj[:3,3] - self.last_tfs[-1][:3,3]) / (current_time - self.last_time_stamp)
+
+        if len(self.last_euler_velocities) != 0:
+          acc_angle = (vel_angle - self.last_euler_velocities[-1]) / (current_time - self.last_time_stamp)
+          acc_trans = (vel_trans - self.last_trans_velocities[-1]) / (current_time - self.last_time_stamp)
+          self.last_euler_accelerations.append(acc_angle)
+          self.last_trans_accelerations.append(acc_trans)
+
+
+
+        self.last_euler_velocities.append(vel_angle)
+        self.last_trans_velocities.append(vel_trans)
+
+      self.last_tfs.append(T_cam_obj)
+      self.last_time_stamp = time.time()
     return ret
 
+  def get_Estimation(self):
+    ret = None
+    last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_stabw_use_last"] :]
+    last_acc_std = np.std(last_accs)
+    if np.all(last_acc_std < self.cfg_nerf["estimation"]["max_acceleration_stabw"]):
+      ret = self.velocity_pose_regression.predictPose(self.last_tfs[ len(self.last_tfs) - self.cfg_track["estimation"]["use_last"]:])
+    
+    return ret
 
 if __name__=="__main__":
   set_seed(0)

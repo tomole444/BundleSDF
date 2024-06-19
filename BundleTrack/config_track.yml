@@ -130,3 +130,9 @@ limits:
   force_pvnet_after: 15 #number of frames that need to be discarded before pvnet is utilized
   min_mask_pixels: 100 #minimum number of pixels of the object that needs to be seen
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
+
+estimation: # estimation through velocity regression 
+  use_every: 5 # use estimation every x frames
+  use_last: 10 # use last x frames for the estimation
+  max_acceleration_stabw: 0.1 # maximum acceleration changes -> if too much fluctuation, dont use estimation
+  max_acceleration_stabw_use_last: 20 # use last x frames for the acceleration limit test
