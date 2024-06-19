@@ -1584,7 +1584,7 @@ class BundleSdf:
   def get_Estimation(self):
     ret = None
     last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
-    last_acc_std = np.std(last_accs)  
+    last_acc_std = np.std(last_accs, axis = 0)  
     if np.all(last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]):
       last_tfs = np.array(self.last_tfs)[ len(self.last_tfs) - (self.cfg_track["estimation"]["use_last"] - 1) : len(self.last_tfs)]
       last_tfs = np.array(last_tfs)
