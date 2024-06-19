@@ -112,7 +112,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     #tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
 
   run_time = time.time() - start_time
-  np.savetxt(os.path.join(out_folder, "runtime.txt"),np.array(run_time))
+  np.savetxt(os.path.join(out_folder, "runtime.txt"),np.array([run_time]))
   
   tracker.close_conn_pvnet()
   tracker.on_finish()

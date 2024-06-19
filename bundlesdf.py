@@ -375,9 +375,7 @@ class BundleSdf:
     self.last_trans_velocities = []
     self.last_trans_accelerations = []
 
-
-
-
+    set_logging_format(log_path= os.path.join(self.debug_dir,"console.log"))
 
 
 
