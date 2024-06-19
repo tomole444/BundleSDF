@@ -499,12 +499,6 @@ class BundleSdf:
       logging.info(f"Ref Frame: {ref_frame._id}")
       frame._ref_frame_id = ref_frame._id
       frame._pose_in_model = ref_frame._pose_in_model
-      #check if eligible for faster pose estimation
-      if frame._id % self.cfg_track["estimation"]["use_every"] == 0 and self.last_valid_frames_count >= self.cfg_track["estimation"]["use_last"]:
-        if pose_from_estimator := self.get_Estimation() != None:
-          frame._pose_in_model = np.linalg.inv(pose_from_estimator)
-          logging.info("using estimator")
-          return
     else:
       self.bundler._firstframe = frame
 
@@ -634,6 +628,12 @@ class BundleSdf:
       logging.info(f"Ref Frame: {ref_frame._id}")
       frame._ref_frame_id = ref_frame._id
       frame._pose_in_model = ref_frame._pose_in_model
+      #check if eligible for faster pose estimation
+      if frame._id % self.cfg_track["estimation"]["use_every"] == 0 and self.last_valid_frames_count >= self.cfg_track["estimation"]["use_last"]:
+        if pose_from_estimator := self.get_Estimation() != None:
+          frame._pose_in_model = np.linalg.inv(pose_from_estimator)
+          logging.info("using estimator")
+          return
     else:
       self.bundler._firstframe = frame
       os.makedirs(self.trans_movement_path, exist_ok=True)
