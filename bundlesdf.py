@@ -1582,9 +1582,9 @@ class BundleSdf:
 
   def get_Estimation(self):
     ret = None
-    last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_stabw_use_last"] :]
+    last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
     last_acc_std = np.std(last_accs)
-    if np.all(last_acc_std < self.cfg_nerf["estimation"]["max_acceleration_stabw"]):
+    if np.all(last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]):
       ret = self.velocity_pose_regression.predictPose(self.last_tfs[ len(self.last_tfs) - self.cfg_track["estimation"]["use_last"]:])
     
     return ret
