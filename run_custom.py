@@ -15,6 +15,7 @@ sys.path.append(code_dir)
 from segmentation_utils import Segmenter
 import debugpy
 import traceback
+import time
 
 def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_folder='/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk/', use_segmenter=False, use_gui=False):
   set_seed(0)
@@ -76,6 +77,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
 
+  start_time = time.time()
+
   for i in range(0,len(reader.color_files),args.stride):
     color_file = reader.color_files[i]
     color = cv2.imread(color_file)
@@ -108,11 +111,15 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     #tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
 
+  run_time = time.time() - start_time
+  np.savetxt(os.path.join(out_folder, "runtime.txt"),np.array(run_time))
+  
   tracker.close_conn_pvnet()
   tracker.on_finish()
   if(cfg_nerf["activated"]):
     run_one_video_global_nerf(out_folder=out_folder)
 
+  
 
 
 def run_one_video_global_nerf(out_folder='/home/bowen/debug/bundlesdf_scan_coffee_415'):

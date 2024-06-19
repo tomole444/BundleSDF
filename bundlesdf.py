@@ -378,6 +378,8 @@ class BundleSdf:
 
 
 
+
+
   def on_finish(self):
     if self.use_gui:
       with self.gui_lock:
@@ -496,7 +498,7 @@ class BundleSdf:
       logging.info(f"Ref Frame: {ref_frame._id}")
       frame._ref_frame_id = ref_frame._id
       frame._pose_in_model = ref_frame._pose_in_model
-      #check if eligible for faster pose istimation
+      #check if eligible for faster pose estimation
       if frame._id % self.cfg_track["estimation"]["use_every"] == 0:
         if pose_from_estimator := self.get_Estimation() != None:
           frame._pose_in_model = np.linalg.inv(pose_from_estimator)
