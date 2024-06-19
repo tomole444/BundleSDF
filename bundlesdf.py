@@ -363,6 +363,7 @@ class BundleSdf:
     self.previous_occluded = 0 # count of previous frames, that have been occluded
 
     self.continous_discarded_frames = 0 # count of continously discarded frames
+    self.last_valid_frames_count = 0 # count of last valid frames
 
     # Velocity pose estimator
     self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path)
@@ -499,9 +500,10 @@ class BundleSdf:
       frame._ref_frame_id = ref_frame._id
       frame._pose_in_model = ref_frame._pose_in_model
       #check if eligible for faster pose estimation
-      if frame._id % self.cfg_track["estimation"]["use_every"] == 0:
+      if frame._id % self.cfg_track["estimation"]["use_every"] == 0 and self.last_valid_frames_count >= self.cfg_track["estimation"]["use_last"]:
         if pose_from_estimator := self.get_Estimation() != None:
           frame._pose_in_model = np.linalg.inv(pose_from_estimator)
+          logging.info("using estimator")
           return
     else:
       self.bundler._firstframe = frame
@@ -1186,8 +1188,10 @@ class BundleSdf:
     if frame._status != my_cpp.Frame.FAIL:
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
       self.continous_discarded_frames = 0
+      self.last_valid_frames_count += 1
     else:
       self.continous_discarded_frames += 1
+      self.last_valid_frames_count = 0
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
