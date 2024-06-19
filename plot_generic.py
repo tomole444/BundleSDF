@@ -96,6 +96,8 @@ class ResultPlotter:
         self.add_bundle_feature_matching_spike_masked = self.add_bundle_feature_matching_spike[self.mask]
         self.x_masked = self.x[self.mask]
 
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression.npy", allow_pickle=True).item()
+        self.add_bundle_pose_regression = load_arr["result_y"]
 
         self.err_detections = np.where(self.mask, 0, 0.8)
 
@@ -150,7 +152,7 @@ class ResultPlotter:
 
 
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
-        plt.plot(self.x, self.add_bundle_orig, label="BundleSDF original")
+        #plt.plot(self.x, self.add_bundle_orig, label="BundleSDF original")
         #plt.plot(x, rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
@@ -161,7 +163,8 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
-        plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Current Implementation")
+        plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
+        plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)
