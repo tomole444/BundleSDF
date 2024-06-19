@@ -132,7 +132,7 @@ limits:
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 
 estimation: # estimation through velocity regression 
-  use_every: 2 # use estimation every x frames
+  use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames
   use_last: 10 # use last x frames for the estimation
   max_acceleration_std: 0.1 # maximum acceleration changes -> if too much fluctuation, dont use estimation
   max_acceleration_std_use_last: 20 # use last x frames for the acceleration limit test
