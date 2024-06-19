@@ -630,7 +630,7 @@ class BundleSdf:
       frame._pose_in_model = ref_frame._pose_in_model
       #check if eligible for faster pose estimation
       if frame._id % self.cfg_track["estimation"]["use_every"] == 0 and self.last_valid_frames_count >= self.cfg_track["estimation"]["use_last"]:
-        if pose_from_estimator := self.get_Estimation() != None:
+        if pose_from_estimator := self.get_Estimation() is not None:
           frame._pose_in_model = np.linalg.inv(pose_from_estimator)
           logging.info("using estimator")
           return
@@ -1583,9 +1583,11 @@ class BundleSdf:
   def get_Estimation(self):
     ret = None
     last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
-    last_acc_std = np.std(last_accs)
+    last_acc_std = np.std(last_accs)  
     if np.all(last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]):
-      ret = self.velocity_pose_regression.predictPose(self.last_tfs[ len(self.last_tfs) - self.cfg_track["estimation"]["use_last"]:])
+      last_tfs = np.array(self.last_tfs)[ len(self.last_tfs) - (self.cfg_track["estimation"]["use_last"] - 1) : len(self.last_tfs)]
+      last_tfs = np.array(last_tfs)
+      ret = self.velocity_pose_regression.predictPose(np.array(last_tfs))
     
     return ret
 
