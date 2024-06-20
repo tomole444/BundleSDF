@@ -997,6 +997,13 @@ void Bundler::saveNewframeResult(const std::string &debug_dir)
   Eigen::Matrix4f cur_in_model = _newframe->_pose_in_model;
   Eigen::Matrix4f ob_in_cam = cur_in_model.inverse();
 
+  if ((*yml)["SPDLOG"].as<int>() == 0)
+  {
+    std::ofstream ff(pose_out_dir+_newframe->_id_str+".txt");
+    ff<<std::setprecision(10)<<ob_in_cam<<std::endl;
+    ff.close();
+  }
+
   if ((*yml)["SPDLOG"].as<int>()>=1)
   {
     std::ofstream ff(pose_out_dir+_newframe->_id_str+".txt");
@@ -1102,6 +1109,7 @@ void Bundler::saveNewframeResult(const std::string &debug_dir)
     }
     ff.close();
   }
+
 
 
   if ((*yml)["SPDLOG"].as<int>()>=4)
