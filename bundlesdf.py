@@ -794,7 +794,8 @@ class BundleSdf:
     self.bundler.selectKeyFramesForBA()
 
     local_frames = self.bundler._local_frames
-
+    
+    self.time_keeper.add("getFeatureMatchPairs",frame._id)
     pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
     self.find_corres(pairs)
 
