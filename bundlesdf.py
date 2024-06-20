@@ -28,6 +28,7 @@ from scipy.spatial import distance
 #import cupoch as cph
 import open3d as o3d
 from velocity_pose_regression import VelocityPoseRegression
+from TimeAnalyser import TimeAnalyser
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -377,6 +378,9 @@ class BundleSdf:
 
     set_logging_format(log_path= os.path.join(self.debug_dir,"console.log"))
 
+    #time analysis
+    self.time_keeper = TimeAnalyser()
+
 
 
   def on_finish(self):
@@ -646,6 +650,7 @@ class BundleSdf:
       os.makedirs(self.trans_movement_path, exist_ok=True)
       os.makedirs(self.rot_movement_path, exist_ok=True)
 
+    self.time_keeper.add("invalidatePixelsByMask",frame._id)
     frame.invalidatePixelsByMask(frame._fg_mask)
 
     #if(frame._id == 180):
@@ -683,6 +688,7 @@ class BundleSdf:
    
     
     #Denoising Pointcloud
+    self.time_keeper.add("denoise_cloud",frame._id)
     if self.cfg_track["depth_processing"]["denoise_cloud"]:
       frame.pointCloudDenoise()
    
@@ -694,6 +700,7 @@ class BundleSdf:
       self.bundler.forgetFrame(frame)
       return
 
+    self.time_keeper.add("pvnet adjust_every",frame._id)
     if frame._id==0:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
@@ -712,6 +719,7 @@ class BundleSdf:
         return
 
     #search for corresponding frame in memory 
+    self.time_keeper.add("find_corres",frame._id)
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     self.find_corres([(frame, ref_frame)])
     matches = self.bundler._fm._matches[(frame, ref_frame)]
@@ -782,6 +790,7 @@ class BundleSdf:
 
     self.bundler._frames[frame._id] = frame
 
+    self.time_keeper.add("selectKeyFramesForBA",frame._id)
     self.bundler.selectKeyFramesForBA()
 
     local_frames = self.bundler._local_frames
@@ -798,6 +807,8 @@ class BundleSdf:
       return
 
     find_matches = False
+
+    self.time_keeper.add("optimizeGPU",frame._id)
     self.bundler.optimizeGPU(local_frames, find_matches)
 
 
@@ -1174,7 +1185,9 @@ class BundleSdf:
     logging.info(f"processNewFrame start {frame._id_str}")
     # self.bundler.processNewFrame(frame)
     #self.process_new_frame(frame)
+    self.time_keeper.add("process_new_frame_pvnet",frame._id)
     self.process_new_frame_pvnet(frame)
+    self.time_keeper.add("process_new_frame_pvnet done",frame._id)
     logging.info(f"processNewFrame done {frame._id_str}")
 
     #correct with pvnet correction
@@ -1202,6 +1215,8 @@ class BundleSdf:
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
+    self.time_keeper.add("runNoNerf done",frame._id)
+    
 
   def runRealtime(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
 

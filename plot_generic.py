@@ -92,12 +92,63 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_feature_matching_spike.npy", allow_pickle=True).item()
         self.add_bundle_feature_matching_spike = load_arr["result_y"]
-        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoFeatureOffsetSpike/ob_in_cam")
-        self.add_bundle_feature_matching_spike_masked = self.add_bundle_feature_matching_spike[self.mask]
+        
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
+        self.add_bundle_pose_regression = load_arr["result_y"]
+
+
+        #BuchVideo2
+
+
+        load_arr = np.load("benchmarks/BuchVideo2/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
+        self.add_bundle_orig_buch_2 = load_arr["result_y"]
+
+        load_arr = np.load("benchmarks/BuchVideo2/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
+        self.add_bundle_pose_regression_buch_2 = load_arr["result_y"]
+
+        load_arr = np.load("benchmarks/BuchVideo2/ADD_PVNet_upnp_Big_dataset.npy", allow_pickle=True).item()
+        self.add_pvnet_orig_buch_2 = load_arr["result_y"]
+        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/pose")
         self.x_masked = self.x[self.mask]
 
-        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression.npy", allow_pickle=True).item()
-        self.add_bundle_pose_regression = load_arr["result_y"]
+        load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/confidences_indiv.npy", allow_pickle=True).item()
+        cov_invs = load_arr["result_y"] 
+        self.confidence_sum = np.sum(np.abs(cov_invs), axis=2)
+        #confidence_sum = np.sum(confidence_sum, axis=2)
+        self.confidence_sum = 1-(self.confidence_sum / 5)
+        self.confidence_kpt_0 = self.confidence_sum[:,0] #1 - (confidence_sum[:,0]/ 5)
+        self.confidence_kpt_1 = self.confidence_sum[:,1] #1 - (confidence_sum[:,1]/ 5)
+        self.confidence_kpt_2 = self.confidence_sum[:,2] #1 - (confidence_sum[:,2]/ 5)
+        self.confidence_kpt_3 = self.confidence_sum[:,3] #1 - (confidence_sum[:,3]/ 5)
+        self.confidence_kpt_4 = self.confidence_sum[:,4] #1 - (confidence_sum[:,4]/ 5)
+        self.confidence_kpt_5 = self.confidence_sum[:,5] #1 - (confidence_sum[:,5]/ 5)
+        self.confidence_kpt_6 = self.confidence_sum[:,6] #1 - (confidence_sum[:,6]/ 5)
+        self.confidence_kpt_7 = self.confidence_sum[:,7] #1 - (confidence_sum[:,7]/ 5)
+        self.confidence_kpt_8 = self.confidence_sum[:,8] #1 - (confidence_sum[:,8]/ 5)
+        self.confidence_kpt_0 = np.append(self.confidence_kpt_0,0)
+        self.confidence_kpt_1 = np.append(self.confidence_kpt_1,0)
+        self.confidence_kpt_2 = np.append(self.confidence_kpt_2,0)
+        self.confidence_kpt_3 = np.append(self.confidence_kpt_3,0)
+        self.confidence_kpt_4 = np.append(self.confidence_kpt_4,0)
+        self.confidence_kpt_5 = np.append(self.confidence_kpt_5,0)
+        self.confidence_kpt_6 = np.append(self.confidence_kpt_6,0)
+        self.confidence_kpt_7 = np.append(self.confidence_kpt_7,0)
+        self.confidence_kpt_8 = np.append(self.confidence_kpt_8,0)
+        self.confidence_kpt_0 = self.confidence_kpt_0[self.mask]
+        self.confidence_kpt_1 = self.confidence_kpt_1[self.mask]
+        self.confidence_kpt_2 = self.confidence_kpt_2[self.mask]
+        self.confidence_kpt_3 = self.confidence_kpt_3[self.mask]
+        self.confidence_kpt_4 = self.confidence_kpt_4[self.mask]
+        self.confidence_kpt_5 = self.confidence_kpt_5[self.mask]
+        self.confidence_kpt_6 = self.confidence_kpt_6[self.mask]
+        self.confidence_kpt_7 = self.confidence_kpt_7[self.mask]
+        self.confidence_kpt_8 = self.confidence_kpt_8[self.mask]
+
+        confidence_sum_no_last = confidence_sum[:,:-1]
+        self.stabw = np.std(confidence_sum_no_last,axis = 1)[self.mask]
+        #stabw = np.sqrt(stabw)
+        self.avg = np.average(confidence_sum_no_last,axis = 1)[self.mask]
 
         self.err_detections = np.where(self.mask, 0, 0.8)
 
@@ -123,7 +174,7 @@ class ResultPlotter:
 
         plt.switch_backend('TkAgg')
 
-        plt.rc ('font', size = 30)
+        #plt.rc ('font', size = 30)
         fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
         ax.set_ylim([0, 1])
@@ -137,18 +188,18 @@ class ResultPlotter:
         #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
         #plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
-        # plt.plot(x,confidence_kpt_0, label ="Confidences kpt 0")
-        # plt.plot(x,confidence_kpt_1, label ="Confidences kpt 1")
-        # plt.plot(x,confidence_kpt_2, label ="Confidences kpt 2")
-        # plt.plot(x,confidence_kpt_3, label ="Confidences kpt 3")
-        # plt.plot(x,confidence_kpt_4, label ="Confidences kpt 4")
-        # plt.plot(x,confidence_kpt_5, label ="Confidences kpt 5")
-        # plt.plot(x,confidence_kpt_6, label ="Confidences kpt 6")
-        # plt.plot(x,confidence_kpt_7, label ="Confidences kpt 7")
-        # plt.plot(x,confidence_kpt_8, label ="Confidences kpt 8")
+        plt.plot(self.x_masked, self.confidence_kpt_0, label ="Confidences kpt 0")
+        plt.plot(self.x_masked, self.confidence_kpt_1, label ="Confidences kpt 1")
+        plt.plot(self.x_masked, self.confidence_kpt_2, label ="Confidences kpt 2")
+        plt.plot(self.x_masked, self.confidence_kpt_3, label ="Confidences kpt 3")
+        plt.plot(self.x_masked, self.confidence_kpt_4, label ="Confidences kpt 4")
+        plt.plot(self.x_masked, self.confidence_kpt_5, label ="Confidences kpt 5")
+        plt.plot(self.x_masked, self.confidence_kpt_6, label ="Confidences kpt 6")
+        plt.plot(self.x_masked, self.confidence_kpt_7, label ="Confidences kpt 7")
+        plt.plot(self.x_masked, self.confidence_kpt_8, label ="Confidences kpt 8")
         
-        #plt.plot(x,avg, label ="avg")
-        #plt.plot(x,stabw, label ="stabw")
+        plt.plot(self.x_masked, self.avg, label ="avg")
+        plt.plot(self.x_masked, self.stabw, label ="stabw")
 
 
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
@@ -163,8 +214,15 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
-        plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
-        plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
+        #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
+        #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
+
+
+
+
+        plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
+        plt.plot(self.x,self.add_bundle_pose_regression_buch_2, label = "ADD BundleSDF pose_regression BuchVideo2")
+        plt.plot(self.x,self.add_pvnet_orig_buch_2, label = "ADD PVNet BuchVideo2")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)

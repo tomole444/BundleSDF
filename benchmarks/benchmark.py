@@ -34,6 +34,7 @@ class Benchmark:
         #preditcted poses
         pose_pred_files = os.listdir(self.pose_pred_dir)
         pose_pred_files.sort()
+        shape = (4,4)
         for idx,pose_file in enumerate(pose_pred_files):
             pose = None
             if pose_file.endswith(".txt"):
@@ -42,8 +43,13 @@ class Benchmark:
                 pose = np.load(os.path.join(self.pose_pred_dir, pose_file))
             else:
                 continue
+            if(pose.shape != shape):
+                print(f"new shape {pose.shape} at {idx} -> forgetting last row")
+                shape = pose.shape
+                pose = pose[:4, :4]
             self.pred_poses.append(pose)
             self.ids.append(idx)
+
         self.pred_poses = np.array(self.pred_poses)
         self.ids = np.array(self.ids)
 
@@ -171,12 +177,12 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression/ob_in_cam",
-                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
-                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
+    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239/pose",
+                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/pose",
+                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/model.ply",
                       model_diameter=0.211,
                       first_pose_adjust= False) 
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression.npy")
+    bench.save_results("benchmarks/BuchVideo2/ADD_PVNet_Big_dataset.npy")
