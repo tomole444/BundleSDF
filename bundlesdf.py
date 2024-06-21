@@ -804,6 +804,7 @@ class BundleSdf:
     
     self.time_keeper.add("getFeatureMatchPairs",frame._id)
     pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
+    self.time_keeper.add("find_corres",frame._id)
     self.find_corres(pairs)
 
     if n_fg > self.cfg_track["limits"]["min_mask_pixels"]:
