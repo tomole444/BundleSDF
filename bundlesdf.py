@@ -503,7 +503,8 @@ class BundleSdf:
       frame._pose_in_model = ref_frame._pose_in_model
     else:
       self.bundler._firstframe = frame
-
+    
+    self.time_keeper.add("invalidatePixelsByMask",frame._id)
     frame.invalidatePixelsByMask(frame._fg_mask)
 
     #Initiales KOS festlegen
@@ -519,6 +520,7 @@ class BundleSdf:
       return
     
     #Denoising Pointcloud
+    self.time_keeper.add("pointCloudDenoise",frame._id)
     if self.cfg_track["depth_processing"]["denoise_cloud"]:
       frame.pointCloudDenoise()
    
@@ -538,6 +540,7 @@ class BundleSdf:
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
 
     #Suche nach korrespondierenden Frames im Memory 
+    self.time_keeper.add("find_corres",frame._id)
     self.find_corres([(frame, ref_frame)])
     matches = self.bundler._fm._matches[(frame, ref_frame)]
 
@@ -547,6 +550,7 @@ class BundleSdf:
       return
 
     matches = self.bundler._fm._matches[(frame, ref_frame)]
+    self.time_keeper.add("len(matches)<min_match_with_ref",frame._id)
     if len(matches)<min_match_with_ref:
       #Falls zu wenige Übereinstimmungen zw. Frame und Ref.-Frame gefunden wurde -> versuche neuen Keyframe mit mehr Übereinstimmungen zu finden
       visibles = []
@@ -580,6 +584,7 @@ class BundleSdf:
 
 
     logging.info(f"frame {frame._id_str} pose update before optimization \n{frame._pose_in_model.round(3)}")
+    self.time_keeper.add("procrustesByCorrespondence",frame._id)
     offset = self.bundler._fm.procrustesByCorrespondence(frame, ref_frame)
     #Pose optimieren aufgrund von Keyframeverschiebung
     frame._pose_in_model = offset@frame._pose_in_model
@@ -596,11 +601,11 @@ class BundleSdf:
           break
 
     self.bundler._frames[frame._id] = frame
-
+    self.time_keeper.add("selectKeyFramesForBA",frame._id)
     self.bundler.selectKeyFramesForBA()
 
     local_frames = self.bundler._local_frames
-
+    self.time_keeper.add("getFeatureMatchPairs",frame._id)
     pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
     self.find_corres(pairs)
     if frame._status==my_cpp.Frame.FAIL:
@@ -608,11 +613,13 @@ class BundleSdf:
       return
 
     find_matches = False
+    self.time_keeper.add("optimizeGPU",frame._id)
     self.bundler.optimizeGPU(local_frames, find_matches)
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
       return
+    self.time_keeper.add("checkAndAddKeyframe",frame._id)
 
     self.bundler.checkAndAddKeyframe(frame)
   
