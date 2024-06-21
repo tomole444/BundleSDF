@@ -79,6 +79,8 @@ class TimeAnalyser:
         time_pair_7 = ("optimizeGPU", "process_new_frame_pvnet done")
         time_pair_8 = ("process_new_frame_pvnet done", "runNoNerf done")
 
+        time_pair_process = ("process_new_frame_pvnet", "process_new_frame_pvnet done")
+
         time_pair_1_ids, time_pair_1_execution_times = self.getSyncTimeByFrameID(time_pair_1) 
         time_pair_2_ids, time_pair_2_execution_times = self.getSyncTimeByFrameID(time_pair_2)
         time_pair_3_ids, time_pair_3_execution_times = self.getSyncTimeByFrameID(time_pair_3)
@@ -88,6 +90,9 @@ class TimeAnalyser:
         time_pair_6_ids, time_pair_6_execution_times = self.getSyncTimeByFrameID(time_pair_6)
         time_pair_7_ids, time_pair_7_execution_times = self.getSyncTimeByFrameID(time_pair_7)
         time_pair_8_ids, time_pair_8_execution_times = self.getSyncTimeByFrameID(time_pair_8)
+
+        time_pair_process_ids, time_pair_process_execution_times = self.getSyncTimeByFrameID(time_pair_process)
+
 
 
         plt.plot(time_pair_1_ids, time_pair_1_execution_times, label = "process_new_frame_pvnet, invalidatePixelsByMask")
@@ -99,6 +104,7 @@ class TimeAnalyser:
         plt.plot(time_pair_6_ids, time_pair_6_execution_times, label = "getFeatureMatchPairs, optimizeGPU")
         plt.plot(time_pair_7_ids, time_pair_7_execution_times, label = "optimizeGPU, process_new_frame_pvnet done")
         plt.plot(time_pair_8_ids, time_pair_8_execution_times, label = "process_new_frame_pvnet done, runNoNerf done")
+        plt.plot(time_pair_process_ids, time_pair_process_execution_times, label = "whole process")
 
 if __name__ == "__main__":
     timer = TimeAnalyser()
@@ -120,6 +126,7 @@ if __name__ == "__main__":
     timer.load("benchmarks/BuchVideo/time_analysis/timing_pose_regression.npy")
 
     keys = timer.time_save.keys()
+    print(keys)
     
     timer.visualizeProcessPVNet()
 

@@ -1057,9 +1057,12 @@ class BundleSdf:
 
     logging.info(f"processNewFrame start {frame._id_str}")
     # self.bundler.processNewFrame(frame)
+    self.time_keeper.add("process_new_frame",frame._id)
     self.process_new_frame(frame)
+    self.time_keeper.add("process_new_frame_done",frame._id)
     logging.info(f"processNewFrame done {frame._id_str}")
-
+    
+    self.time_keeper.add("nerf_start",frame._id)
     if self.bundler._keyframes[-1]==frame:
       logging.info(f"{frame._id_str} prepare data for nerf")
 
@@ -1098,9 +1101,12 @@ class BundleSdf:
           continue
         break
 
+    self.time_keeper.add("nerf_end",frame._id)
     rematch_after_nerf = self.cfg_track["feature_corres"]["rematch_after_nerf"]
     logging.info(f"rematch_after_nerf: {rematch_after_nerf}")
     frames_large_update = []
+    self.time_keeper.add("nerf_pose_adaptation",frame._id)
+
     with self.lock:
       if 'optimized_cvcam_in_obs' in self.p_dict:
         for i_f in range(len(self.p_dict['optimized_cvcam_in_obs'])):
@@ -1121,6 +1127,9 @@ class BundleSdf:
             self.gui_dict['mesh'] = self.p_dict['mesh']
             del self.p_dict['mesh']
 
+    self.time_keeper.add("nerf_pose_adaptation_end",frame._id)
+    self.time_keeper.add("rematch_after_nerf",frame._id)
+    
     if rematch_after_nerf:
       if len(frames_large_update)>0:
         with self.lock:
@@ -1132,6 +1141,7 @@ class BundleSdf:
             del self.bundler._fm._matches[k]
             logging.info(f"Delete match between {k[0]._id_str} and {k[1]._id_str}")
         logging.info(f"after matches keys: {len(self.bundler._fm._matches)}")
+    self.time_keeper.add("rematch_after_nerf_end",frame._id)
 
     self.bundler.saveNewframeResult()
     if self.SPDLOG>=2 and occ_mask is not None:
