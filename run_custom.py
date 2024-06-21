@@ -78,7 +78,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   reader = YcbineoatReader(video_dir=video_dir)
 
   start_time = time.time()
-  tracker.time_keeper.add("run", 0)
+  tracker.time_keeper.add("whole_runtime", 0)
 
   for i in range(0,len(reader.color_files),args.stride):
     color_file = reader.color_files[i]
@@ -109,9 +109,11 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     pose_in_model = np.eye(4)
 
     K = reader.K.copy()
+    tracker.time_keeper.add("run", 0)
     tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     #tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
-  tracker.time_keeper.add("run done", id_str)
+    tracker.time_keeper.save(os.path.join(out_folder, "timing.npy"))
+  tracker.time_keeper.add("whole_runtime_done", int(id_str))
   tracker.time_keeper.save(os.path.join(out_folder, "timing.npy"))
   run_time = time.time() - start_time
   np.savetxt(os.path.join(out_folder, "runtime.txt"),np.array([run_time]))
