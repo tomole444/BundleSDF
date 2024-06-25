@@ -707,12 +707,12 @@ class BundleSdf:
       self.bundler.forgetFrame(frame)
       return
 
-    self.time_keeper.add("pvnet adjust_every",frame._id)
+    self.time_keeper.add("pvnet_adjust_every",frame._id)
     if frame._id==0:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
       return
-    elif frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.previous_occluded > 0:   # check if tf needed from pvnet
+    elif (frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.previous_occluded > 0) and self.cfg_track["pvnet"]["activated"]:   # check if tf needed from pvnet
       
       pvnet_ob_in_cam = self.get_pose_from_pvnet()
 

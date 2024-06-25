@@ -96,6 +96,9 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
         self.add_bundle_pose_regression = load_arr["result_y"]
+        
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_cutie_segmentation.npy", allow_pickle=True).item()
+        self.add_bundle_cutie_segmentation = load_arr["result_y"]
 
 
         #BuchVideo2
@@ -114,6 +117,7 @@ class ResultPlotter:
 
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/confidences_indiv.npy", allow_pickle=True).item()
         cov_invs = load_arr["result_y"] 
+
         self.confidence_sum = np.sum(np.abs(cov_invs), axis=2)
         #confidence_sum = np.sum(confidence_sum, axis=2)
         self.confidence_sum = 1-(self.confidence_sum / 5)
@@ -188,18 +192,18 @@ class ResultPlotter:
         #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
         #plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
-        plt.plot(self.x_masked, self.confidence_kpt_0, label ="Confidences kpt 0")
-        plt.plot(self.x_masked, self.confidence_kpt_1, label ="Confidences kpt 1")
-        plt.plot(self.x_masked, self.confidence_kpt_2, label ="Confidences kpt 2")
-        plt.plot(self.x_masked, self.confidence_kpt_3, label ="Confidences kpt 3")
-        plt.plot(self.x_masked, self.confidence_kpt_4, label ="Confidences kpt 4")
-        plt.plot(self.x_masked, self.confidence_kpt_5, label ="Confidences kpt 5")
-        plt.plot(self.x_masked, self.confidence_kpt_6, label ="Confidences kpt 6")
-        plt.plot(self.x_masked, self.confidence_kpt_7, label ="Confidences kpt 7")
-        plt.plot(self.x_masked, self.confidence_kpt_8, label ="Confidences kpt 8")
+        # plt.plot(self.x_masked, self.confidence_kpt_0, label ="Confidences kpt 0")
+        # plt.plot(self.x_masked, self.confidence_kpt_1, label ="Confidences kpt 1")
+        # plt.plot(self.x_masked, self.confidence_kpt_2, label ="Confidences kpt 2")
+        # plt.plot(self.x_masked, self.confidence_kpt_3, label ="Confidences kpt 3")
+        # plt.plot(self.x_masked, self.confidence_kpt_4, label ="Confidences kpt 4")
+        # plt.plot(self.x_masked, self.confidence_kpt_5, label ="Confidences kpt 5")
+        # plt.plot(self.x_masked, self.confidence_kpt_6, label ="Confidences kpt 6")
+        # plt.plot(self.x_masked, self.confidence_kpt_7, label ="Confidences kpt 7")
+        # plt.plot(self.x_masked, self.confidence_kpt_8, label ="Confidences kpt 8")
         
-        plt.plot(self.x_masked, self.avg, label ="avg")
-        plt.plot(self.x_masked, self.stabw, label ="stabw")
+        # plt.plot(self.x_masked, self.avg, label ="avg")
+        # plt.plot(self.x_masked, self.stabw, label ="stabw")
 
 
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
@@ -216,13 +220,15 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
+        plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression 2")
+        plt.plot(self.x,self.add_bundle_cutie_segmentation, label = "ADD Cutie segmentation")
 
 
 
 
-        plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
-        plt.plot(self.x,self.add_bundle_pose_regression_buch_2, label = "ADD BundleSDF pose_regression BuchVideo2")
-        plt.plot(self.x,self.add_pvnet_orig_buch_2, label = "ADD PVNet BuchVideo2")
+        # plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
+        # plt.plot(self.x,self.add_bundle_pose_regression_buch_2, label = "ADD BundleSDF pose_regression BuchVideo2")
+        # plt.plot(self.x,self.add_pvnet_orig_buch_2, label = "ADD PVNet BuchVideo2")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)

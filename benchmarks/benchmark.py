@@ -177,12 +177,12 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239/pose",
-                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/pose",
-                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/model.ply",
+    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoCutieSegmenter/ob_in_cam",
+                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
+                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
                       first_pose_adjust= False) 
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo2/ADD_PVNet_Big_dataset.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_cutie_segmentation.npy")
