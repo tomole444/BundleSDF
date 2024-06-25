@@ -17,7 +17,7 @@ import pickle
 class Segmenter():
     def __init__(self):
         self.host= "192.168.99.91"#'localhost'
-        self.port= 15323
+        self.port= 15324
         self.buffer_size = 4096
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
@@ -30,19 +30,28 @@ class Segmenter():
         send_data = dict()
         if first_mask_img is not None:
             send_data["mask"] = first_mask_img
+        else:
+            send_data["mask"] = None
         send_data["rgb"] = color_img
 
         send_data_pckl = pickle.dumps(send_data)
         self.socket.sendall(send_data_pckl)
         #self.pvnet_socket.sendall(self.pvnet_termination_string)
-        rec_data = b''
-        while True:
-            part = self.socket.recv(self.buffer_size)
-            if not part: break
-            rec_data += part
-            # if len(part) < self.buffer_size:
-            #     # End of data (less than buffer_size means no more data left)
-            #     break
-        
-        data = pickle.loads(rec_data)
+        #receiving datalength
+        data_len = int.from_bytes(self.socket.recv(4), byteorder='big')
+        #rec_data = b''
+        data = b''
+        while len(data) < data_len:
+            part = self.socket.recv(data_len - len(data))
+            data += part
+        # while True:
+        #     part = self.socket.recv(self.buffer_size)
+        #     # if not part: break
+        #     rec_data += part
+        #     print(len(part))
+        #     if len(part) < self.buffer_size:
+        #         # End of data (less than buffer_size means no more data left)
+        #         break
+        print("received length",len(data))
+        data = pickle.loads(data)
         return data
