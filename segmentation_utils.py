@@ -52,6 +52,8 @@ class Segmenter():
         #     if len(part) < self.buffer_size:
         #         # End of data (less than buffer_size means no more data left)
         #         break
-        print("received length",len(data))
+        
+        
+        #print("received length",len(data))
         data = pickle.loads(data)
         return data
