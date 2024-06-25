@@ -122,8 +122,10 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     K = reader.K.copy()
     tracker.time_keeper.add("preprocessing_done", int(id_str))
     tracker.time_keeper.add("run", int(id_str))
-    tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
-    #tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+    if(cfg_nerf["activated"]):
+      tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+    else:
+      tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     tracker.time_keeper.add("run_done", int(id_str))
     tracker.time_keeper.save(os.path.join(out_folder, "timing.npy"))
 

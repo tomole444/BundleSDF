@@ -113,7 +113,7 @@ shape:
   truncate_dist: 0.005
 
 pvnet:
-  activated: True # use pvnet
+  activated: False # use pvnet
   adjust_every: 60 # get TF from PVNet every x frames
   max_confidence_std: 0.04 # maximum standard deviation of keypoint confidence
   min_confidence_avg: 0.69 # minimum average keypoint confidence
@@ -132,7 +132,7 @@ limits:
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 
 estimation: # estimation through velocity regression 
-  use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
+  use_every: 0 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
   use_last: 10 # use last x frames for the estimation
   max_acceleration_std: 0.1 # maximum acceleration changes -> if too much fluctuation, dont use estimation
   max_acceleration_std_use_last: 20 # use last x frames for the acceleration limit test
