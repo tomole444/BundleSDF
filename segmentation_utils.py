@@ -38,10 +38,11 @@ class Segmenter():
         rec_data = b''
         while True:
             part = self.socket.recv(self.buffer_size)
+            if not part: break
             rec_data += part
-            if len(part) < self.buffer_size:
-                # End of data (less than buffer_size means no more data left)
-                break
+            # if len(part) < self.buffer_size:
+            #     # End of data (less than buffer_size means no more data left)
+            #     break
         
         data = pickle.loads(rec_data)
         return data
