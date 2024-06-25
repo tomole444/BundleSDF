@@ -79,7 +79,9 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   first_mask = cv2.imread(os.path.join(video_dir, "first_mask.png"), cv2.IMREAD_GRAYSCALE)
   first_mask = np.where(first_mask >= 1, 1, 0)
   if use_segmenter:
-    segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
+    #segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
+    rec_data = segmenter.runClient(color_img= cv2.imread(reader.color_files[0]), first_mask_img=first_mask)
+    logging.info(f"Segmenter return: {rec_data['success']}")
 
   start_time = time.time()
   tracker.time_keeper.add("whole_runtime", 0)
@@ -99,11 +101,13 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
       mask = cv2.resize(mask, (W,H), interpolation=cv2.INTER_NEAREST)
       if use_segmenter:
         #mask = segmenter.run(color_file.replace('rgb','masks'))
-        mask = segmenter.runCutie(color)
+        rec_data = segmenter.runClient(color)
+        mask = rec_data["mask"]
     else:
       if use_segmenter:
         #mask = segmenter.run(color_file.replace('rgb','masks'))
-        mask = segmenter.runCutie(color)
+        rec_data = segmenter.runClient(color)
+        mask = rec_data["mask"]
       else:
         mask = reader.get_mask(i)
         mask = cv2.resize(mask, (W,H), interpolation=cv2.INTER_NEAREST)
