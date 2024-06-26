@@ -113,7 +113,9 @@ shape:
   truncate_dist: 0.005
 
 pvnet:
-  activated: False # use pvnet
+  activated: True # use pvnet
+  ip_addr: "192.168.99.91" #address of the inference server
+  port: 11024 #port number of the server 
   adjust_every: 60 # get TF from PVNet every x frames
   max_confidence_std: 0.04 # maximum standard deviation of keypoint confidence
   min_confidence_avg: 0.69 # minimum average keypoint confidence
@@ -132,7 +134,13 @@ limits:
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 
 estimation: # estimation through velocity regression 
-  use_every: 0 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
+  use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
   use_last: 10 # use last x frames for the estimation
   max_acceleration_std: 0.1 # maximum acceleration changes -> if too much fluctuation, dont use estimation
   max_acceleration_std_use_last: 20 # use last x frames for the acceleration limit test
+
+segmenter: #online cutie segmenter server
+  activated: True #use one online -> True / offline -> False
+  ip_addr: "192.168.99.91" #address of the inference server
+  port: 15324 #port number of the server 
+  use_first_mask_offline: False # use first_mask.png in dataset as offline mask / get mask from pvnet

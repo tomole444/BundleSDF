@@ -15,12 +15,11 @@ import socket
 import pickle
 
 class Segmenter():
-    def __init__(self):
-        self.host= "192.168.99.91"#'localhost'
-        self.port= 15324
-        self.buffer_size = 4096
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((self.host, self.port))
+    def __init__(self, host = "localhost", port = 15324):
+        self.host= host
+        self.port= port
+        self.segmenter_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.segmenter_socket.connect((self.host, self.port))
 
     def run(self, mask_file=None):
         return (cv2.imread(mask_file, -1)>0).astype(np.uint8)
@@ -35,24 +34,19 @@ class Segmenter():
         send_data["rgb"] = color_img
 
         send_data_pckl = pickle.dumps(send_data)
-        self.socket.sendall(send_data_pckl)
+        #sending length first
+        self.segmenter_socket.sendall(len(send_data_pckl).to_bytes(4, byteorder='big'))
+        self.segmenter_socket.sendall(send_data_pckl)
+
+
         #self.pvnet_socket.sendall(self.pvnet_termination_string)
         #receiving datalength
-        data_len = int.from_bytes(self.socket.recv(4), byteorder='big')
+        data_len = int.from_bytes(self.segmenter_socket.recv(4), byteorder='big')
         #rec_data = b''
         data = b''
         while len(data) < data_len:
-            part = self.socket.recv(data_len - len(data))
+            part = self.segmenter_socket.recv(data_len - len(data))
             data += part
-        # while True:
-        #     part = self.socket.recv(self.buffer_size)
-        #     # if not part: break
-        #     rec_data += part
-        #     print(len(part))
-        #     if len(part) < self.buffer_size:
-        #         # End of data (less than buffer_size means no more data left)
-        #         break
-        
         
         #print("received length",len(data))
         data = pickle.loads(data)

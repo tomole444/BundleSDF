@@ -67,8 +67,10 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   cfg_nerf_dir = f'{out_folder}/config_nerf.yml'
   yaml.dump(cfg_nerf, open(cfg_nerf_dir,'w'))
 
+  use_segmenter = cfg_bundletrack["segmenter"]["activated"]
+
   if use_segmenter:
-    segmenter = Segmenter()
+    segmenter = Segmenter(host = cfg_bundletrack["segmenter"]["ip_addr"], port = cfg_bundletrack["segmenter"]["port"])
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
   if cfg_bundletrack["pvnet"]["activated"]:
@@ -76,8 +78,13 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
-  first_mask = cv2.imread(os.path.join(video_dir, "first_mask.png"), cv2.IMREAD_GRAYSCALE)
-  first_mask = np.where(first_mask >= 1, 1, 0)
+  if cfg_bundletrack["segmenter"]["use_first_mask_offline"] and use_segmenter:
+    first_mask = cv2.imread(os.path.join(video_dir, "first_mask.png"), cv2.IMREAD_GRAYSCALE)
+    first_mask = np.where(first_mask >= 1, 1, 0)
+  elif use_segmenter:
+    #getting first mask from pvnet
+    pvnet_info = tracker.send_image_to_pvnet(img = cv2.imread(reader.color_files[0]), request_mask= True)
+    first_mask = pvnet_info["mask"]
   if use_segmenter:
     #segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
     rec_data = segmenter.runClient(color_img= cv2.imread(reader.color_files[0]), first_mask_img=first_mask)
@@ -288,7 +295,7 @@ if __name__=="__main__":
 
 
   if args.mode=='run_video':
-    run_one_video(video_dir=args.video_dir, out_folder=args.out_folder, use_segmenter=args.use_segmenter, use_gui=args.use_gui)
+    run_one_video(video_dir=args.video_dir, out_folder=args.out_folder, use_gui=args.use_gui)
   elif args.mode=='global_refine':
     run_one_video_global_nerf(out_folder=args.out_folder)
   elif args.mode=='get_mesh':

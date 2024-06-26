@@ -349,8 +349,8 @@ class BundleSdf:
     self.depth = []
 
     #PVNet Server 
-    self.pvnet_host = '192.168.99.91'
-    self.pvnet_port = 11024
+    self.pvnet_host = self.cfg_track["pvnet"]["ip_addr"]
+    self.pvnet_port = self.cfg_track["pvnet"]["port"]
     self.pvnet_socket = None
     self.T_pvnet_bundle = np.identity(4)
 
@@ -477,17 +477,36 @@ class BundleSdf:
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'after_ransac')
 
-  def send_image_to_pvnet(self, img):
+  def send_image_to_pvnet(self, img, request_mask = False):
 
     # Pickle the object and send it to the server
-    img_pckl = pickle.dumps(img)
-    self.pvnet_socket.sendall(img_pckl)
-    #self.pvnet_socket.sendall(self.pvnet_termination_string)
+    send_data = dict()
+    send_data["rgb"] = img
+    send_data["request_mask"] = request_mask
 
-    data = self.pvnet_socket.recv(4096)
+    
+    send_data_pckl = pickle.dumps(send_data)
+    
+    #sending length first
+    self.pvnet_socket.sendall(len(send_data_pckl).to_bytes(4, byteorder='big'))
+    self.pvnet_socket.sendall(send_data_pckl)
+
+    ###sending done
+    ###receiving start
+
+    #receive datalength
+    data_len = int.from_bytes(self.pvnet_socket.recv(4), byteorder='big')
+    data = b''
+    #receive data
+    while len(data) < data_len:
+        part = self.pvnet_socket.recv(data_len - len(data))
+        data += part
+
+    #data = self.pvnet_socket.recv(4096)
     pvnet_info = pickle.loads(data)
     logging.info(f"TF from PVNet{pvnet_info['pose']}")
     logging.info(f"Confidence from PVNet{pvnet_info['confidences']}")
+    logging.info(f"Mask received? {pvnet_info['mask'] is not None}")
     return pvnet_info
 
   def process_new_frame(self, frame):
