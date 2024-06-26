@@ -85,6 +85,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     #getting first mask from pvnet
     pvnet_info = tracker.send_image_to_pvnet(img = cv2.imread(reader.color_files[0]), request_mask= True)
     first_mask = pvnet_info["mask"]
+    first_mask = np.squeeze(first_mask) 
+    first_mask = np.where(first_mask >= 1, 1, 0)
   if use_segmenter:
     #segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
     rec_data = segmenter.runClient(color_img= cv2.imread(reader.color_files[0]), first_mask_img=first_mask)

@@ -177,7 +177,7 @@ class Benchmark:
 
 
 if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoOrigCutieSegmenter/ob_in_cam",
+    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoOrigXMemSegmenter/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -185,4 +185,4 @@ if __name__ == "__main__":
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_orig_cutie_segmentation.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_orig_xmem_segmentation.npy")

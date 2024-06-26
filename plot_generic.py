@@ -103,6 +103,9 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig_cutie_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_orig_cutie_segmentation = load_arr["result_y"]
 
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig_xmem_segmentation.npy", allow_pickle=True).item()
+        self.add_bundle_orig_xmem_segmentation = load_arr["result_y"]
+
 
         #BuchVideo2
 
@@ -226,6 +229,7 @@ class ResultPlotter:
         plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression 2")
         plt.plot(self.x,self.add_bundle_cutie_segmentation, label = "ADD Cutie segmentation")
         plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
+        plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
 
 
 

@@ -15,15 +15,20 @@ import socket
 import pickle
 
 class Segmenter():
-    def __init__(self, host = "localhost", port = 15324):
+    def __init__(self, host = "localhost", port = 15324, use_pvnet_exclusively = False):
         self.host= host
         self.port= port
-        self.segmenter_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.segmenter_socket.connect((self.host, self.port))
+        self.use_pvnet_exclusively = use_pvnet_exclusively
+        if not use_pvnet_exclusively:
+            self.segmenter_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.segmenter_socket.connect((self.host, self.port))
 
     def run(self, mask_file=None):
         return (cv2.imread(mask_file, -1)>0).astype(np.uint8)
     
+    def getMask(self, color_img, irst_mask_img = None):
+        pass
+
     def runClient(self, color_img, first_mask_img = None):
         # Pickle the object and send it to the server
         send_data = dict()
