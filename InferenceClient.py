@@ -39,7 +39,7 @@ class InferenceClient():
             self.cutie_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.cutie_socket.connect((self.cutie_host, self.cutie_port))
         if self.pvnet_activated:
-            logging.info(f"Connecting to PVNet Server {(self.pvnet_socket, self.pvnet_port)}... ")
+            logging.info(f"Connecting to PVNet Server {(self.pvnet_host, self.pvnet_port)}... ")
             self.pvnet_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.pvnet_socket.connect((self.pvnet_host, self.pvnet_port))
 
