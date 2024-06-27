@@ -72,12 +72,18 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
+
+  first_color_img = None
+
+  if use_segmenter:
+    first_color_img = cv2.imread(reader.color_files[0])
+
   if cfg_bundletrack["segmenter"]["use_first_mask_offline"] and use_segmenter:
     first_mask = cv2.imread(os.path.join(video_dir, "first_mask.png"), cv2.IMREAD_GRAYSCALE)
     first_mask = np.where(first_mask >= 1, 1, 0)
   elif cfg_bundletrack["pvnet"]["activated"] and use_segmenter:
     #getting first mask from pvnet
-    pvnet_req_data = tracker.inference_client.sendPVNetReq()
+    pvnet_req_data = tracker.inference_client.sendPVNetReq(color_img= first_color_img, request_mask= True)
     first_mask = np.squeeze(pvnet_req_data["mask"]) 
     first_mask = np.where(first_mask >= 1, 1, 0)
   elif use_segmenter:
@@ -85,7 +91,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   if use_segmenter:
     #segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
-    rec_data = tracker.inference_client.getMask(color_img= cv2.imread(reader.color_files[0]), first_mask_img=first_mask)
+    rec_data = tracker.inference_client.getMask(color_img= first_color_img, first_mask_img=first_mask)
     #logging.info(f"Segmenter first return: {rec_data['success']}")
 
   start_time = time.time()
