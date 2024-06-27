@@ -6,7 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 
-class Benchmark:
+class BenchmarkADD:
 
     def __init__(self, pose_pred_dir, pose_gt_dir, model_path, model_diameter, first_pose_adjust = True):
         self.pose_pred_dir = pose_pred_dir
@@ -176,8 +176,145 @@ class Benchmark:
         return add_err, trans_err, rot_err
 
 
-if __name__ == "__main__":
-    bench = Benchmark(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchTest/ob_in_cam",
+class BenchmarkSegmentation:
+
+    def __init__(self, masks_est_dir, masks_gt_dir) -> None:
+        self.masks_est_dir = masks_est_dir
+        self.masks_gt_dir = masks_gt_dir
+        
+        
+        self.mask_est_paths = os.listdir(masks_est_dir)
+        self.mask_est_paths.sort()
+        self.mask_gt_paths = os.listdir(masks_gt_dir)
+        self.mask_gt_paths.sort()
+
+        if len(self.mask_gt_paths) != len(self.mask_est_paths):
+            raise RuntimeError("Masks dont line up")
+        
+        self.iou_arr = []
+        self.pixel_acc_arr = []
+        self.precision_arr = []
+        self.recall_arr = []
+
+        self.ids = []
+    
+    @staticmethod
+    def calc_iou( mask_est, mask_gt):
+        intersection = np.logical_and(mask_est, mask_gt)
+        union = np.logical_or(mask_est, mask_gt)
+        if np.sum(union) != 0:
+            # print (f"sum1 {np.sum(intersection)} sum2 {np.sum(union)}")
+            iou = np.sum(intersection) / np.sum(union)
+        else:
+            iou = -1
+        # print(iou)
+        return iou
+    
+    @staticmethod
+    def calc_pixel_acc(mask_est, mask_gt):
+        confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
+        denominator = (confusion["tp"] + confusion["tn"] + confusion["fp"] + confusion["fn"])
+        if denominator != 0:
+            pixel_acc = (confusion["tp"] + confusion["tn"]) / denominator
+        else:
+            pixel_acc = -1
+        return pixel_acc
+    
+    @staticmethod
+    def calc_precision(mask_est, mask_gt):
+        confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
+        denominator = (confusion["tp"] + confusion["fp"])
+        if denominator != 0:
+            precision = (confusion["tp"]) / denominator
+        else:
+            precision = -1
+        return precision
+    
+    @staticmethod
+    def calc_recall(mask_est, mask_gt):
+        confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
+        denominator = (confusion["tp"] + confusion["fn"])
+        if denominator != 0:
+            recall = (confusion["tp"]) / denominator
+        else:
+            recall = -1
+        return recall
+
+    @staticmethod
+    def calc_confusion(mask_est, mask_gt):
+        tp = np.sum(np.logical_and(mask_est, mask_gt))
+        tn = np.sum(np.logical_and(np.logical_not(mask_est), np.logical_not(mask_gt)))
+        fp = np.sum(np.logical_and(mask_est, np.logical_not(mask_gt)))
+        fn = np.sum(np.logical_and(np.logical_not(mask_est), mask_gt))
+        confusion = {
+                    "tp":tp,
+                    "tn":tn,
+                    "fp":fp,
+                    "fn":fn
+                    }
+        return confusion
+
+    def calc_metrics(self):
+        for idx, mask_est_path in enumerate(self.mask_est_paths):
+            print(f"calulating metrics for {mask_est_path}")
+            mask_est_path = os.path.join(self.masks_est_dir, mask_est_path)
+            mask_est = cv2.imread(mask_est_path, cv2.IMREAD_GRAYSCALE)
+
+            mask_gt_path = os.path.join(self.masks_gt_dir, self.mask_gt_paths[idx])
+            mask_gt = cv2.imread(mask_gt_path, cv2.IMREAD_GRAYSCALE)
+
+            mask_est = np.where(mask_est >= 1, 1, 0)
+            mask_gt = np.where(mask_gt >= 1, 1, 0)
+
+            # if idx == 160:
+            #     print("te")
+            iou = BenchmarkSegmentation.calc_iou(mask_est, mask_gt)
+            pixel_acc = BenchmarkSegmentation.calc_pixel_acc(mask_est, mask_gt)
+            precision = BenchmarkSegmentation.calc_precision(mask_est, mask_gt)
+            recall = BenchmarkSegmentation.calc_recall(mask_est, mask_gt)
+
+            self.iou_arr.append(iou)
+            self.pixel_acc_arr.append(pixel_acc)
+            self.precision_arr.append(precision)
+            self.recall_arr.append(recall)
+            
+            self.ids.append(idx)
+        
+        self.iou_arr = np.array(self.iou_arr)
+        self.pixel_acc_arr = np.array(self.pixel_acc_arr)
+        self.precision_arr = np.array(self.precision_arr)
+        self.recall_arr = np.array(self.recall_arr)
+        self.ids = np.array(self.ids)
+    
+    def plot_results(self):
+        ax = plt.gca()
+        #ax.set_ylim([0, 1])
+        
+        plt.plot(self.ids, self.iou_arr, label = "IOU")
+        plt.plot(self.ids, self.pixel_acc_arr, label = "Pixel Acc")
+        plt.plot(self.ids, self.precision_arr, label = "Precision")
+        plt.plot(self.ids, self.recall_arr, label = "Recall")
+
+        plt.legend(loc="upper right")
+        ax.set_title(self.masks_est_dir, fontsize = 32, fontweight ='bold')
+
+
+        plt.show()
+
+    def save_results(self, path):
+        save_arr = dict()
+        save_arr["iou"] = self.iou_arr 
+        save_arr["pixel_acc"] = self.pixel_acc_arr 
+        save_arr["precision"] = self.precision_arr 
+        save_arr["recall"] = self.recall_arr 
+
+        save_arr["ids"] = self.ids
+        save_arr = np.array(save_arr, dtype=object)
+        np.save(path, save_arr, allow_pickle=True)
+
+
+def calcADD():
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPVNetSegOnly/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -185,4 +322,16 @@ if __name__ == "__main__":
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_Test.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_pvnet_segmentation_only.npy")
+
+def calcMaskMetrics():
+    bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_xmem_first_pvnet",
+                                  masks_gt_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
+    bench.calc_metrics()
+    bench.plot_results()
+    bench.save_results("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy")
+
+
+if __name__ == "__main__":
+    #calcADD()
+    calcMaskMetrics()

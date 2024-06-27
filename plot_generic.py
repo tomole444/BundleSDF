@@ -14,6 +14,11 @@ class ResultPlotter:
     y1 = None 
     y2 = None 
     def __init__(self):
+        self.loadADDResults()
+        self.loadMaskResults()
+
+
+    def loadADDResults(self):
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_orig.npy", allow_pickle=True).item()
         self.add_pvnet_orig = load_arr["result_y"]
 
@@ -114,6 +119,10 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_first_pvnet_cutie_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_first_pvnet_cutie_segmentation = load_arr["result_y"]
 
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pvnet_segmentation_only.npy", allow_pickle=True).item()
+        self.add_bundle_pvnet_seg_only = load_arr["result_y"]
+
+
 
         #BuchVideo2
 
@@ -182,8 +191,39 @@ class ResultPlotter:
         
         self.rot_movement_2 = ResultPlotter.calcRotMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
         self.trans_movement_2 = ResultPlotter.calcTransMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
+    
+    def loadMaskResults(self):
+        load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_pvnet.npy", allow_pickle=True).item()
+        self.iou_pvnet = load_arr["iou"]
 
-    def plotResults(self):
+        load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_cutie.npy", allow_pickle=True).item()
+        self.iou_first_mask_pvnet_cutie = load_arr["iou"]
+
+        load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy", allow_pickle=True).item()
+        self.iou_first_mask_pvnet_xmem = load_arr["iou"]
+
+    
+    def plotMaskResults(self):
+        plt.switch_backend('TkAgg')
+        #plt.rc ('font', size = 30)
+        fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
+        ax = plt.gca()
+        #ax.set_ylim([0, 1])
+        ax.set_xlim([0, len(self.x)])
+
+        plt.plot(self.x, self.iou_pvnet, label = "IOU Pure PVNet")
+        plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IOU First PVNet Cutie")
+        plt.plot(self.x, self.iou_first_mask_pvnet_xmem, label = "IOU First PVNet XMem")
+
+        plt.legend(loc="upper right")
+        ax.set_xlabel("Frame")
+        ax.set_ylabel("IOU")
+        ax.grid(True)
+        
+        ax.set_title('IOU comparison', fontsize = 40, fontweight ='bold')
+        plt.show()
+
+    def plotADDResults(self):
         #x = range(0,len(y))
         #plt.hist(a)
         #matplotlib                3.7.1
@@ -235,11 +275,11 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression 2")
-        plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD Cutie segmentation")
-        plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
+        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD Cutie segmentation")
+        #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
         plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
-        plt.plot(self.x,self.add_test, label = "ADD Test")
+        plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
 
 
 
@@ -261,7 +301,7 @@ class ResultPlotter:
         #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
 
 
-        plt.legend(loc="upper left")
+        plt.legend(loc="upper right")
         ax.set_xlabel("Frame")
         ax.set_ylabel("ADD")
         ax.grid(True)
@@ -377,4 +417,5 @@ class ResultPlotter:
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
-    result_plot.plotResults()
+    result_plot.plotADDResults()
+    #result_plot.plotMaskResults()
