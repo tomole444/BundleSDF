@@ -659,6 +659,9 @@ class BundleSdf:
       frame._pose_in_model = np.identity(4) #assign invalid pose
       self.bundler.forgetFrame(frame)
       return
+    else
+      # reset occlusion counter
+      self.previous_occluded = 0
    
     
     #Denoising Pointcloud
@@ -690,6 +693,8 @@ class BundleSdf:
         frame._pose_in_model = T_optPose_initialPose @ frame._pose_in_model
         self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
         self.bundler._frames[frame._id] = frame
+        logging.info(f"Set pose successfully from PVNet for frame {frame._id_str}")
+
         return
 
     #search for corresponding frame in memory 
@@ -747,7 +752,7 @@ class BundleSdf:
       #spike detected -> dont use frame#invalidate frame
       #frame._status = my_cpp.Frame.FAIL
       #frame._pose_in_model = np.identity(4) #assign invalid pose
-      pass
+      logging.info(f"Did not use frame {frame._id_str} feature_matching_optimization (too big of an offset)")
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
@@ -774,8 +779,8 @@ class BundleSdf:
     self.time_keeper.add("find_corres",frame._id)
     self.find_corres(pairs)
 
-    if n_fg > self.cfg_track["limits"]["min_mask_pixels"]:
-      self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
+    # if n_fg > self.cfg_track["limits"]["min_mask_pixels"]:
+    #   self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
@@ -790,12 +795,14 @@ class BundleSdf:
 
     # limit rot and trans movement
     if not self.checkMovement(frame) and self.previous_occluded == 0 and self.continous_discarded_frames < self.cfg_track["limits"]["force_pvnet_after"]:
+      logging.info(f"Did not use frame {frame._id_str} because MovementLimit")
       frame._status = my_cpp.Frame.FAIL
     elif self.continous_discarded_frames >= self.cfg_track["limits"]["force_pvnet_after"]:
       pvnet_ob_in_cam = self.inference_client.getPVNetPose(self.color)
       if pvnet_ob_in_cam is not None:
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
       else:
+        logging.info(f"Frames previous to frame {frame._id_str} have been discarded, but not using pvnet_pose bc its too unsafe!")
         frame._status = my_cpp.Frame.FAIL
 
     # Do icp opitmization
@@ -1192,6 +1199,7 @@ class BundleSdf:
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
     if frame._status != my_cpp.Frame.FAIL:
+      logging.info(f"Frame {id_str} marked as FAILED -> invalidating pose")
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
       self.continous_discarded_frames = 0
       self.last_valid_frames_count += 1
