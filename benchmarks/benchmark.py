@@ -314,7 +314,7 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPVNetSegOnly/ob_in_cam",
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoFirstMaskPVNet/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -322,7 +322,7 @@ def calcADD():
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_pvnet_segmentation_only.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_Test.npy")
 
 def calcMaskMetrics():
     bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_xmem_first_pvnet",
@@ -333,5 +333,5 @@ def calcMaskMetrics():
 
 
 if __name__ == "__main__":
-    #calcADD()
-    calcMaskMetrics()
+    calcADD()
+    #calcMaskMetrics()

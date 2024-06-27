@@ -275,11 +275,12 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression 2")
-        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD Cutie segmentation")
+        plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD First Offline Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
         plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
-        plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
+        #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
+        plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
 
 
 
