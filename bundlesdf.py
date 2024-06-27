@@ -659,7 +659,7 @@ class BundleSdf:
       frame._pose_in_model = np.identity(4) #assign invalid pose
       self.bundler.forgetFrame(frame)
       return
-    else
+    else:
       # reset occlusion counter
       self.previous_occluded = 0
    
