@@ -50,7 +50,7 @@ class InferenceClient():
         data = None
         mask = None
         if(self.use_pvnet_exclusively):
-            data = self.sendPVNetReq(img = color_img, request_mask= True)
+            data = self.sendPVNetReq(color_img= color_img, request_mask= True)
         else:
             data = self.sendCutieReq(color_img= color_img, first_mask_img= first_mask_img)
         if first_mask_img is None:

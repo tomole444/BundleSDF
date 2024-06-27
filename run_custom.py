@@ -142,7 +142,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   run_time = time.time() - start_time
   np.savetxt(os.path.join(out_folder, "runtime.txt"),np.array([run_time]))
   
-  tracker.close_conn_pvnet()
+  tracker.inference_client.closeConnections()
   tracker.on_finish()
   if(cfg_nerf["activated"]):
     run_one_video_global_nerf(out_folder=out_folder)

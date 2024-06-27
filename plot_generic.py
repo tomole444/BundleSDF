@@ -19,6 +19,8 @@ class ResultPlotter:
 
         pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239/pose"
         self.mask = ResultPlotter.calcMask(pose_dir=pose_dir)
+
+
         
         self.x = load_arr["ids"]
 
@@ -61,6 +63,9 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
         self.add_bundle_orig = load_arr["result_y"]
+        
+        load_arr = np.load("benchmarks/BuchVideo/ADD_Test.npy", allow_pickle=True).item()
+        self.add_test = load_arr["result_y"]
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_orig.npy", allow_pickle=True).item()
         self.add_bundle_periodic_orig = load_arr["result_y"]
@@ -234,6 +239,7 @@ class ResultPlotter:
         plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
         plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
+        plt.plot(self.x,self.add_test, label = "ADD Test")
 
 
 
