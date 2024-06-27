@@ -90,9 +90,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     raise RuntimeError("Activate either pvnet or offline mask in config!")
 
   if use_segmenter:
-    #segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
-    rec_data = tracker.inference_client.getMask(color_img= first_color_img, first_mask_img=first_mask)
-    #logging.info(f"Segmenter first return: {rec_data['success']}")
+    #set first mask for cutie -> if pvnet exclusively -> ignored
+    tracker.inference_client.getMask(color_img= first_color_img, first_mask_img=first_mask)
 
   start_time = time.time()
   tracker.time_keeper.add("whole_runtime", 0)

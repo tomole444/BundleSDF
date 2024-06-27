@@ -48,15 +48,16 @@ class InferenceClient():
     
     def getMask(self, color_img, first_mask_img = None):
         data = None
+        mask = None
         if(self.use_pvnet_exclusively):
             data = self.sendPVNetReq(img = color_img, request_mask= True)
         else:
             data = self.sendCutieReq(color_img= color_img, first_mask_img= first_mask_img)
-
-        mask = data["mask"]
-        if(mask.ndim != 2):
-            mask = np.squeeze(mask) 
-        mask = np.where(mask >= 1, 1, 0)
+        if first_mask_img is None:
+            mask = data["mask"]
+            if(mask.ndim != 2):
+                mask = np.squeeze(mask) 
+            mask = np.where(mask >= 1, 1, 0)
         return mask
 
     def getPVNetPose(self, color_img):
