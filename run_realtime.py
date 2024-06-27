@@ -5,7 +5,7 @@ import os,sys
 from tqdm import tqdm
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
-from segmentation_utils import Segmenter
+from InferenceClient import InferenceClient
 import time
 
 def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', key_folder = '/home/grass/Documents/Leyh/BundleSDF/outBookComb720p', out_folder='/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk/', use_segmenter=False, use_gui=False):
@@ -69,7 +69,7 @@ def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', k
   yaml.dump(cfg_nerf, open(cfg_nerf_dir,'w'))
 
   if use_segmenter:
-    segmenter = Segmenter()
+    segmenter = InferenceClient()
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
   tracker.loadKeyFrames(key_folder)
@@ -90,10 +90,10 @@ def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', k
       mask = reader.get_mask(0)
       mask = cv2.resize(mask, (W,H), interpolation=cv2.INTER_NEAREST)
       if use_segmenter:
-        mask = segmenter.run(color_file.replace('rgb','masks'))
+        mask = segmenter.runOffline(color_file.replace('rgb','masks'))
     else:
       if use_segmenter:
-        mask = segmenter.run(color_file.replace('rgb','masks'))
+        mask = segmenter.runOffline(color_file.replace('rgb','masks'))
       else:
         mask = reader.get_mask(i)
         mask = cv2.resize(mask, (W,H), interpolation=cv2.INTER_NEAREST)

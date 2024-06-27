@@ -29,6 +29,7 @@ from scipy.spatial import distance
 import open3d as o3d
 from velocity_pose_regression import VelocityPoseRegression
 from TimeAnalyser import TimeAnalyser
+from InferenceClient import InferenceClient
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -349,10 +350,11 @@ class BundleSdf:
     self.depth = []
 
     #PVNet Server 
-    self.pvnet_host = self.cfg_track["pvnet"]["ip_addr"]
-    self.pvnet_port = self.cfg_track["pvnet"]["port"]
-    self.pvnet_socket = None
-    self.T_pvnet_bundle = np.identity(4)
+    self.inference_client = InferenceClient(self.cfg_track)
+    # self.pvnet_host = self.cfg_track["pvnet"]["ip_addr"]
+    # self.pvnet_port = self.cfg_track["pvnet"]["port"]
+    # self.pvnet_socket = None
+    # self.T_pvnet_bundle = np.identity(4)
 
 
     # Data for rotation and translation limitation
@@ -400,14 +402,6 @@ class BundleSdf:
             self.bundler._keyframes[i_f]._nerfed = True
           del self.p_dict['optimized_cvcam_in_obs']
 
-  def init_conn_pvnet(self):
-    self.pvnet_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.pvnet_socket.connect((self.pvnet_host, self.pvnet_port))
-
-  def close_conn_pvnet(self):
-    if self.pvnet_socket is not None:
-      self.pvnet_socket.close()
-
   def make_frame(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
     H,W = color.shape[:2]
     roi = [0,W-1,0,H-1]
@@ -417,20 +411,6 @@ class BundleSdf:
     if occ_mask is not None:
       frame._occ_mask = my_cpp.cvMat(occ_mask)
     return frame
-
-  def get_pose_from_pvnet(self):
-    pvnet_estimation = self.send_image_to_pvnet(self.color)
-    pvnet_ob_in_cam = pvnet_estimation["pose"]
-    pvnet_confidences = pvnet_estimation["confidences"].ravel()
-    pvnet_confidences = pvnet_confidences[:-1] # dont use last keypoint
-
-    # check if confidence is ok
-    pvnet_confidences_avg = np.average(pvnet_confidences)
-    pvnet_confidences_std = np.std(pvnet_confidences)
-    if not(pvnet_confidences_std < self.cfg_track["pvnet"]["max_confidence_std"] and pvnet_confidences_avg > self.cfg_track["pvnet"]["min_confidence_avg"] and pvnet_ob_in_cam.round(decimals=6)[2,3] > 0.001):
-      pvnet_ob_in_cam = None
-    return pvnet_ob_in_cam
-
 
   def find_corres(self, frame_pairs):
     logging.info(f"frame_pairs: {len(frame_pairs)}")
@@ -476,38 +456,6 @@ class BundleSdf:
     #pdb.set_trace()
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'after_ransac')
-
-  def send_image_to_pvnet(self, img, request_mask = False):
-
-    # Pickle the object and send it to the server
-    send_data = dict()
-    send_data["rgb"] = img
-    send_data["request_mask"] = request_mask
-
-    
-    send_data_pckl = pickle.dumps(send_data)
-    
-    #sending length first
-    self.pvnet_socket.sendall(len(send_data_pckl).to_bytes(4, byteorder='big'))
-    self.pvnet_socket.sendall(send_data_pckl)
-
-    ###sending done
-    ###receiving start
-
-    #receive datalength
-    data_len = int.from_bytes(self.pvnet_socket.recv(4), byteorder='big')
-    data = b''
-    #receive data
-    while len(data) < data_len:
-        part = self.pvnet_socket.recv(data_len - len(data))
-        data += part
-
-    #data = self.pvnet_socket.recv(4096)
-    pvnet_info = pickle.loads(data)
-    logging.info(f"TF from PVNet{pvnet_info['pose']}")
-    logging.info(f"Confidence from PVNet{pvnet_info['confidences']}")
-    logging.info(f"Mask received? {pvnet_info['mask'] is not None}")
-    return pvnet_info
 
   def process_new_frame(self, frame):
     logging.info(f"process frame {frame._id_str}")
@@ -689,7 +637,7 @@ class BundleSdf:
       # Set initial frame with pvnet
       if(self.cfg_track["pvnet"]["activated"]):
         frame.setNewInitCoordinate()
-        pvnet_estimation = self.send_image_to_pvnet(self.color)
+        pvnet_estimation = self.inference_client.sendPVNetReq(self.color)
         pvnet_ob_in_cam = pvnet_estimation["pose"]
         pvnet_confidences = pvnet_estimation["confidences"]
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
@@ -733,7 +681,7 @@ class BundleSdf:
       return
     elif (frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.previous_occluded > 0) and self.cfg_track["pvnet"]["activated"]:   # check if tf needed from pvnet
       
-      pvnet_ob_in_cam = self.get_pose_from_pvnet()
+      pvnet_ob_in_cam = self.inference_client.getPVNetPose(self.color)
 
       if pvnet_ob_in_cam is not None and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.previous_occluded > 0):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
@@ -844,7 +792,7 @@ class BundleSdf:
     if not self.checkMovement(frame) and self.previous_occluded == 0 and self.continous_discarded_frames < self.cfg_track["limits"]["force_pvnet_after"]:
       frame._status = my_cpp.Frame.FAIL
     elif self.continous_discarded_frames >= self.cfg_track["limits"]["force_pvnet_after"]:
-      pvnet_ob_in_cam = self.get_pose_from_pvnet()
+      pvnet_ob_in_cam = self.inference_client.getPVNetPose(self.color)
       if pvnet_ob_in_cam is not None:
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
       else:

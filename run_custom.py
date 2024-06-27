@@ -12,7 +12,6 @@ import argparse
 import os,sys
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(code_dir)
-from segmentation_utils import Segmenter
 import debugpy
 import traceback
 import time
@@ -69,28 +68,25 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   use_segmenter = cfg_bundletrack["segmenter"]["activated"]
 
-  if use_segmenter:
-    segmenter = Segmenter(host = cfg_bundletrack["segmenter"]["ip_addr"], port = cfg_bundletrack["segmenter"]["port"])
-
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
-  if cfg_bundletrack["pvnet"]["activated"]:
-    tracker.init_conn_pvnet()
 
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
   if cfg_bundletrack["segmenter"]["use_first_mask_offline"] and use_segmenter:
     first_mask = cv2.imread(os.path.join(video_dir, "first_mask.png"), cv2.IMREAD_GRAYSCALE)
     first_mask = np.where(first_mask >= 1, 1, 0)
-  elif use_segmenter:
+  elif cfg_bundletrack["pvnet"]["activated"] and use_segmenter:
     #getting first mask from pvnet
-    pvnet_info = tracker.send_image_to_pvnet(img = cv2.imread(reader.color_files[0]), request_mask= True)
-    first_mask = pvnet_info["mask"]
-    first_mask = np.squeeze(first_mask) 
+    pvnet_req_data = tracker.inference_client.sendPVNetReq()
+    first_mask = np.squeeze(pvnet_req_data["mask"]) 
     first_mask = np.where(first_mask >= 1, 1, 0)
+  elif use_segmenter:
+    raise RuntimeError("Activate either pvnet or offline mask in config!")
+
   if use_segmenter:
     #segmenter.setFirstMask(first_mask, cv2.imread(reader.color_files[0]))
-    rec_data = segmenter.runClient(color_img= cv2.imread(reader.color_files[0]), first_mask_img=first_mask)
-    logging.info(f"Segmenter return: {rec_data['success']}")
+    rec_data = tracker.inference_client.getMask(color_img= cv2.imread(reader.color_files[0]), first_mask_img=first_mask)
+    #logging.info(f"Segmenter first return: {rec_data['success']}")
 
   start_time = time.time()
   tracker.time_keeper.add("whole_runtime", 0)
@@ -110,13 +106,11 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
       mask = cv2.resize(mask, (W,H), interpolation=cv2.INTER_NEAREST)
       if use_segmenter:
         #mask = segmenter.run(color_file.replace('rgb','masks'))
-        rec_data = segmenter.runClient(color)
-        mask = rec_data["mask"]
+        mask = tracker.inference_client.getMask(color)
     else:
       if use_segmenter:
         #mask = segmenter.run(color_file.replace('rgb','masks'))
-        rec_data = segmenter.runClient(color)
-        mask = rec_data["mask"]
+        mask = tracker.inference_client.getMask(color)
       else:
         mask = reader.get_mask(i)
         mask = cv2.resize(mask, (W,H), interpolation=cv2.INTER_NEAREST)
