@@ -5,7 +5,8 @@ import os
 from math import dist
 import cv2
 import time
-
+import hashlib
+import scienceplots
 
 class ResultPlotter:
     graph1 = None 
@@ -231,6 +232,7 @@ class ResultPlotter:
 
 
         plt.switch_backend('TkAgg')
+        #plt.style.use(['science','ieee'])
 
         #plt.rc ('font', size = 30)
         fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
@@ -245,7 +247,7 @@ class ResultPlotter:
         #ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
         #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
-        #plt.plot(self.x,self.add_pvnet_orig, "-m", label ="ADD PVNet orig")
+        plt.plot(self.x,self.add_pvnet_orig, ResultPlotter.string_to_rgb("ADD PVNet orig"), label ="ADD PVNet orig")
         # plt.plot(self.x_masked, self.confidence_kpt_0, label ="Confidences kpt 0")
         # plt.plot(self.x_masked, self.confidence_kpt_1, label ="Confidences kpt 1")
         # plt.plot(self.x_masked, self.confidence_kpt_2, label ="Confidences kpt 2")
@@ -256,8 +258,8 @@ class ResultPlotter:
         # plt.plot(self.x_masked, self.confidence_kpt_7, label ="Confidences kpt 7")
         # plt.plot(self.x_masked, self.confidence_kpt_8, label ="Confidences kpt 8")
         
-        # plt.plot(self.x_masked, self.avg, label ="avg")
-        # plt.plot(self.x_masked, self.stabw, label ="stabw")
+        plt.plot(self.x_masked, self.avg, label ="avg")
+        plt.plot(self.x_masked, self.stabw, label ="stabw")
 
 
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
@@ -275,12 +277,12 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression 2")
-        plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD First Offline Cutie segmentation")
+        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD First Offline Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
         plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
-        plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
+        #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
 
 
 
@@ -401,7 +403,6 @@ class ResultPlotter:
             last_avg = np.average(last_four)
         return np.array(jumps) 
 
-
     #calculates a mask array for valid poses only
     @staticmethod
     def calcMask(pose_dir):
@@ -414,6 +415,16 @@ class ResultPlotter:
                 mask.append(True)
         return np.array(mask)
 
+    @staticmethod
+    def string_to_rgb(input_string):
+        hash_object = hashlib.md5(input_string.encode())
+        hex_dig = hash_object.hexdigest()
+        
+        r = int(hex_dig[0:2], 16)
+        g = int(hex_dig[2:4], 16)
+        b = int(hex_dig[4:6], 16)
+        
+        return (r, g, b)
 
 
 if __name__ == "__main__":
