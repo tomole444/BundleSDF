@@ -127,6 +127,8 @@ class BenchmarkADD:
 
 
     def plot_results(self):
+        plt.switch_backend('TkAgg')
+
         y = self.result_y
 
         x = self.ids
@@ -195,19 +197,19 @@ class BenchmarkSegmentation:
         self.pixel_acc_arr = []
         self.precision_arr = []
         self.recall_arr = []
+        self.dice_arr = []
 
         self.ids = []
     
     @staticmethod
     def calc_iou( mask_est, mask_gt):
-        intersection = np.logical_and(mask_est, mask_gt)
-        union = np.logical_or(mask_est, mask_gt)
-        if np.sum(union) != 0:
+        confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
+        denominator = (confusion["tp"] + confusion["fp"] + confusion["fn"])
+        if denominator != 0:
             # print (f"sum1 {np.sum(intersection)} sum2 {np.sum(union)}")
-            iou = np.sum(intersection) / np.sum(union)
+            iou = confusion["tp"] / denominator
         else:
             iou = -1
-        # print(iou)
         return iou
     
     @staticmethod
@@ -241,6 +243,16 @@ class BenchmarkSegmentation:
         return recall
 
     @staticmethod
+    def calc_dice(mask_est, mask_gt):
+        confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
+        denominator = (2 * confusion["tp"] + confusion["fp"] + confusion["fn"])
+        if denominator != 0:
+            dice = (2 * confusion["tp"]) / denominator
+        else:
+            dice = -1
+        return dice
+
+    @staticmethod
     def calc_confusion(mask_est, mask_gt):
         tp = np.sum(np.logical_and(mask_est, mask_gt))
         tn = np.sum(np.logical_and(np.logical_not(mask_est), np.logical_not(mask_gt)))
@@ -272,11 +284,13 @@ class BenchmarkSegmentation:
             pixel_acc = BenchmarkSegmentation.calc_pixel_acc(mask_est, mask_gt)
             precision = BenchmarkSegmentation.calc_precision(mask_est, mask_gt)
             recall = BenchmarkSegmentation.calc_recall(mask_est, mask_gt)
+            dice = BenchmarkSegmentation.calc_dice(mask_est, mask_gt)
 
             self.iou_arr.append(iou)
             self.pixel_acc_arr.append(pixel_acc)
             self.precision_arr.append(precision)
             self.recall_arr.append(recall)
+            self.dice_arr.append(dice)
             
             self.ids.append(idx)
         
@@ -284,9 +298,12 @@ class BenchmarkSegmentation:
         self.pixel_acc_arr = np.array(self.pixel_acc_arr)
         self.precision_arr = np.array(self.precision_arr)
         self.recall_arr = np.array(self.recall_arr)
+        self.dice_arr = np.array(self.dice_arr)
         self.ids = np.array(self.ids)
     
     def plot_results(self):
+        plt.switch_backend('TkAgg')
+
         ax = plt.gca()
         #ax.set_ylim([0, 1])
         
@@ -294,6 +311,7 @@ class BenchmarkSegmentation:
         plt.plot(self.ids, self.pixel_acc_arr, label = "Pixel Acc")
         plt.plot(self.ids, self.precision_arr, label = "Precision")
         plt.plot(self.ids, self.recall_arr, label = "Recall")
+        plt.plot(self.ids, self.dice_arr, label = "Dice")
 
         plt.legend(loc="upper right")
         ax.set_title(self.masks_est_dir, fontsize = 32, fontweight ='bold')
@@ -307,6 +325,7 @@ class BenchmarkSegmentation:
         save_arr["pixel_acc"] = self.pixel_acc_arr 
         save_arr["precision"] = self.precision_arr 
         save_arr["recall"] = self.recall_arr 
+        save_arr["dice"] = self.dice_arr 
 
         save_arr["ids"] = self.ids
         save_arr = np.array(save_arr, dtype=object)
@@ -325,13 +344,13 @@ def calcADD():
     bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_first_pvnet_cutie_segmentation.npy")
 
 def calcMaskMetrics():
-    bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_xmem_first_pvnet",
+    bench = BenchmarkSegmentation(masks_est_dir= "outBuchVideoFirstMaskPVNet/mask",
                                   masks_gt_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
     bench.calc_metrics()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy")
+    bench.save_results("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_cutie.npy")
 
 
 if __name__ == "__main__":
-    calcADD()
-    #calcMaskMetrics()
+    #calcADD()
+    calcMaskMetrics()
