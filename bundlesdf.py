@@ -1567,8 +1567,8 @@ class BundleSdf:
       ret = False
 
     
-
-    if(T_cam_obj is None) or (T_cam_obj is not None and ret): 
+    # Pose is not invalid
+    if ret: 
       self.trans_movements.append(trans_movement)
       self.rot_movements.append(rot_movement)
 

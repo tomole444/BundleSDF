@@ -70,8 +70,6 @@ class InferenceClient():
         pvnet_confidences_avg = np.average(pvnet_confidences)
         pvnet_confidences_std = np.std(pvnet_confidences)
         if pvnet_confidences_std > self.cfg_track["pvnet"]["max_confidence_std"] or pvnet_confidences_avg < self.cfg_track["pvnet"]["min_confidence_avg"] or pvnet_ob_in_cam.round(decimals=6)[2,3] < 0.001:
-            
-            
             logging.info(f"PVNet TF not used pvnet_confidences_std > max_confidence_std: {pvnet_confidences_std > self.cfg_track['pvnet']['max_confidence_std']} \
                          pvnet_confidences_avg < min_confidence_avg: {pvnet_confidences_avg < self.cfg_track['pvnet']['min_confidence_avg']} \
                          pvnet_ob_in_cam.round(decimals=6)[2,3] < 0.001: {pvnet_ob_in_cam.round(decimals=6)[2,3] < 0.001}")

@@ -8,6 +8,10 @@ import time
 import hashlib
 import scienceplots
 
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF
+from PyPDF2 import PdfReader, PdfWriter
+
 class ResultPlotter:
     graph1 = None 
     graph2 = None 
@@ -69,6 +73,12 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
         self.add_bundle_orig = load_arr["result_y"]
+        
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerf.npy", allow_pickle=True).item()
+        self.add_bundle_nonerf = load_arr["result_y"]
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerfPVNet.npy", allow_pickle=True).item()
+        self.add_bundle_nonerf_pvnet = load_arr["result_y"]
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_Test.npy", allow_pickle=True).item()
         self.add_test = load_arr["result_y"]
@@ -224,17 +234,17 @@ class ResultPlotter:
         ax.set_title('IOU comparison', fontsize = 40, fontweight ='bold')
         plt.show()
 
-    def plotADDResults(self):
+    def plotADDResults(self, use_tk_backend = True):
         #x = range(0,len(y))
         #plt.hist(a)
         #matplotlib                3.7.1
         #matplotlib-inline         0.1.7
 
-
-        plt.switch_backend('TkAgg')
+        if use_tk_backend:
+            plt.switch_backend('TkAgg')
         #plt.style.use(['science','ieee'])
 
-        #plt.rc ('font', size = 30)
+        plt.rc ('font', size = 30)
         fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
         ax.set_ylim([0, 1])
@@ -247,7 +257,7 @@ class ResultPlotter:
         #ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
         #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
-        plt.plot(self.x,self.add_pvnet_orig, ResultPlotter.string_to_rgb("ADD PVNet orig"), label ="ADD PVNet orig")
+        #plt.plot(self.x,self.add_pvnet_orig, ResultPlotter.string_to_rgb("ADD PVNet orig"), label ="ADD PVNet orig")
         # plt.plot(self.x_masked, self.confidence_kpt_0, label ="Confidences kpt 0")
         # plt.plot(self.x_masked, self.confidence_kpt_1, label ="Confidences kpt 1")
         # plt.plot(self.x_masked, self.confidence_kpt_2, label ="Confidences kpt 2")
@@ -258,12 +268,14 @@ class ResultPlotter:
         # plt.plot(self.x_masked, self.confidence_kpt_7, label ="Confidences kpt 7")
         # plt.plot(self.x_masked, self.confidence_kpt_8, label ="Confidences kpt 8")
         
-        plt.plot(self.x_masked, self.avg, label ="avg")
-        plt.plot(self.x_masked, self.stabw, label ="stabw")
+        #plt.plot(self.x_masked, self.avg, label ="avg")
+        #plt.plot(self.x_masked, self.stabw, label ="stabw")
 
 
         #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
-        #plt.plot(self.x, self.add_bundle_orig, label="BundleSDF original")
+        #plt.plot(self.x, self.add_bundle_orig, label="Original")
+        plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
+        plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First Estimation PVNet")
         #plt.plot(x, rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
@@ -280,7 +292,7 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD First Offline Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
-        plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
+        #plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
         #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
 
@@ -305,19 +317,38 @@ class ResultPlotter:
 
 
         plt.legend(loc="upper right")
-        ax.set_xlabel("Frame")
-        ax.set_ylabel("ADD")
+        ax.set_xlabel("Frame-ID")
+        ax.set_ylabel("ADD [m]")
         ax.grid(True)
         
-        ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
+        #ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
 
         #fps = 25
 
         #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
         #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
         #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
-        plt.show()
+        #plt.show()
     
+    def exportPlot(self, path:str, white_border:bool = False):
+        is_pdf = False
+        if(path.endswith(".pdf")):
+            is_pdf = True
+            path = path.replace(".pdf", ".svg")
+        if white_border:
+            plt.savefig(path)
+        else:
+            plt.savefig(path, bbox_inches='tight', transparent=True)
+
+        if is_pdf:
+            dir = os.path.dirname(path)
+            file_name = os.path.basename(path)
+            drawing = svg2rlg(path)
+            
+            # Render the drawing to PDF
+            pdf_filename = os.path.join(dir, file_name.replace(".svg", ".pdf"))
+            renderPDF.drawToFile(drawing, pdf_filename)
+
     @staticmethod
     def animate(frame):
         ResultPlotter.graph1.set_xdata(ResultPlotter.x[:frame])
@@ -430,4 +461,5 @@ class ResultPlotter:
 if __name__ == "__main__":
     result_plot = ResultPlotter()
     result_plot.plotADDResults()
+    result_plot.exportPlot("plots/ADD_BundleSDF_no_nerf_pvnet_2.pdf")
     #result_plot.plotMaskResults()
