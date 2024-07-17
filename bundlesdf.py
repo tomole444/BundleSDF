@@ -698,7 +698,7 @@ class BundleSdf:
         return
 
     #search for corresponding frame in memory 
-    self.time_keeper.add("find_corres",frame._id)
+    self.time_keeper.add("find_corres_1",frame._id)
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     self.find_corres([(frame, ref_frame)])
     matches = self.bundler._fm._matches[(frame, ref_frame)]
@@ -776,7 +776,7 @@ class BundleSdf:
     
     self.time_keeper.add("getFeatureMatchPairs",frame._id)
     pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
-    self.time_keeper.add("find_corres",frame._id)
+    self.time_keeper.add("find_corres_2",frame._id)
     self.find_corres(pairs)
 
     # if n_fg > self.cfg_track["limits"]["min_mask_pixels"]:
@@ -792,7 +792,7 @@ class BundleSdf:
     self.time_keeper.add("optimizeGPU",frame._id)
     self.bundler.optimizeGPU(local_frames, find_matches)
 
-
+    self.time_keeper.add("checkMovement_limits",frame._id)
     # limit rot and trans movement
     if not self.checkMovement(frame) and self.previous_occluded == 0 and self.continous_discarded_frames < self.cfg_track["limits"]["force_pvnet_after"]:
       logging.info(f"Did not use frame {frame._id_str} because MovementLimit")
@@ -805,9 +805,13 @@ class BundleSdf:
         logging.info(f"Frames previous to frame {frame._id_str} have been discarded, but not using pvnet_pose bc its too unsafe!")
         frame._status = my_cpp.Frame.FAIL
 
+    self.time_keeper.add("checkMovement_limits_end",frame._id)
+    self.time_keeper.add("icp",frame._id)
     # Do icp opitmization
     T_optPose_initialPose = self.optimizeICP(frame)
     frame._pose_in_model = T_optPose_initialPose @ frame._pose_in_model
+    self.time_keeper.add("icp_end",frame._id)
+
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
@@ -1180,7 +1184,7 @@ class BundleSdf:
     #self.process_new_frame(frame)
     self.time_keeper.add("process_new_frame_pvnet",frame._id)
     self.process_new_frame_pvnet(frame)
-    self.time_keeper.add("process_new_frame_pvnet done",frame._id)
+    self.time_keeper.add("process_new_frame_pvnet_done",frame._id)
     logging.info(f"processNewFrame done {frame._id_str}")
 
     #correct with pvnet correction
@@ -1199,17 +1203,16 @@ class BundleSdf:
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
     if frame._status != my_cpp.Frame.FAIL:
-      logging.info(f"Frame {id_str} marked as FAILED -> invalidating pose")
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
       self.continous_discarded_frames = 0
       self.last_valid_frames_count += 1
     else:
+      logging.info(f"Frame {id_str} marked as FAILED -> invalidating pose")
       self.continous_discarded_frames += 1
       self.last_valid_frames_count = 0
     if self.SPDLOG>=2 and occ_mask is not None:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
-    self.time_keeper.add("runNoNerf done",frame._id)
     
 
   def runRealtime(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):

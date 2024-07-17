@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # time.sleep(1)
 
     # timer.save("benchmarks/BuchVideo/time_analysis/test_time.npy")
-    timer.load("benchmarks/BuchVideo/time_analysis/timing_pose_regression.npy")
+    timer.load("benchmarks/BuchVideo/time_analysis/timing_orig.npy")
 
     keys = timer.time_save.keys()
     print(keys)

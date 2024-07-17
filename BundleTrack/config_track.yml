@@ -117,8 +117,8 @@ pvnet:
   ip_addr: "192.168.99.91" #address of the inference server
   port: 11024 #port number of the server 
   adjust_every: 60 # get TF from PVNet every x frames
-  max_confidence_std: 0.04 # maximum standard deviation of keypoint confidence
-  min_confidence_avg: 0.69 # minimum average keypoint confidence
+  max_confidence_std: 0.05 # maximum standard deviation of keypoint confidence
+  min_confidence_avg: 0.65 # minimum average keypoint confidence
 
 icp:
   activated: False # icp activation

@@ -7,6 +7,7 @@ import cv2
 import time
 import hashlib
 import scienceplots
+from TimeAnalyser import TimeAnalyser
 
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
@@ -22,22 +23,28 @@ class ResultPlotter:
         self.loadADDResults()
         self.loadMaskResults()
 
+        self.time_keeper = None
+        self.loadTimingResults()
+
+        self.setupPlot()
+
 
     def loadADDResults(self):
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_orig.npy", allow_pickle=True).item()
         self.add_pvnet_orig = load_arr["result_y"]
 
         pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239/pose"
-        self.mask = ResultPlotter.calcMask(pose_dir=pose_dir)
 
-
-        
         self.x = load_arr["ids"]
+        self.mask = ResultPlotter.calcMask(pose_dir=pose_dir)
+        self.x_masked = self.x[self.mask]
+        #self.add_pvnet_orig[np.invert( self.mask)] = -1
 
 
         #self.add_pvnet_orig = self.add_pvnet_orig[self.mask]
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_temp/confidences_indiv.npy", allow_pickle=True).item()
         cov_invs = load_arr["result_y"] 
+
         confidence_sum = np.sum(np.abs(cov_invs), axis=2)
         #confidence_sum = np.sum(confidence_sum, axis=2)
         confidence_sum = 1-(confidence_sum / 5)
@@ -69,15 +76,20 @@ class ResultPlotter:
 
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_upnp.npy", allow_pickle=True).item()
         self.add_pvnet_upnp = load_arr["result_y"]
-        self.add_pvnet_upnp = self.add_pvnet_upnp[self.mask]
+        
+        self.mask_upnp = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_upnp/pose")
+        self.x_masked_upnp = self.x[self.mask_upnp]
+        
+        #self.add_pvnet_upnp[np.invert(self.mask_upnp)] = -1
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
         self.add_bundle_orig = load_arr["result_y"]
         
+        
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerf.npy", allow_pickle=True).item()
         self.add_bundle_nonerf = load_arr["result_y"]
 
-        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerfPVNet.npy", allow_pickle=True).item()
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerfPVNet_2.npy", allow_pickle=True).item()
         self.add_bundle_nonerf_pvnet = load_arr["result_y"]
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_Test.npy", allow_pickle=True).item()
@@ -116,7 +128,10 @@ class ResultPlotter:
         
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
-        self.add_bundle_pose_regression = load_arr["result_y"]
+        self.add_bundle_pose_regression_2 = load_arr["result_y"]
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_-4.npy", allow_pickle=True).item()
+        self.add_bundle_pose_regression_minus_4 = load_arr["result_y"]
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_cutie_first_offline_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_cutie_first_offline_segmentation = load_arr["result_y"]
@@ -146,8 +161,7 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo2/ADD_PVNet_upnp_Big_dataset.npy", allow_pickle=True).item()
         self.add_pvnet_orig_buch_2 = load_arr["result_y"]
-        self.mask = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/pose")
-        self.x_masked = self.x[self.mask]
+
 
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/confidences_indiv.npy", allow_pickle=True).item()
         cov_invs = load_arr["result_y"] 
@@ -173,20 +187,20 @@ class ResultPlotter:
         self.confidence_kpt_6 = np.append(self.confidence_kpt_6,0)
         self.confidence_kpt_7 = np.append(self.confidence_kpt_7,0)
         self.confidence_kpt_8 = np.append(self.confidence_kpt_8,0)
-        self.confidence_kpt_0 = self.confidence_kpt_0[self.mask]
-        self.confidence_kpt_1 = self.confidence_kpt_1[self.mask]
-        self.confidence_kpt_2 = self.confidence_kpt_2[self.mask]
-        self.confidence_kpt_3 = self.confidence_kpt_3[self.mask]
-        self.confidence_kpt_4 = self.confidence_kpt_4[self.mask]
-        self.confidence_kpt_5 = self.confidence_kpt_5[self.mask]
-        self.confidence_kpt_6 = self.confidence_kpt_6[self.mask]
-        self.confidence_kpt_7 = self.confidence_kpt_7[self.mask]
-        self.confidence_kpt_8 = self.confidence_kpt_8[self.mask]
+        self.confidence_kpt_0 = self.confidence_kpt_0[self.mask_upnp]
+        self.confidence_kpt_1 = self.confidence_kpt_1[self.mask_upnp]
+        self.confidence_kpt_2 = self.confidence_kpt_2[self.mask_upnp]
+        self.confidence_kpt_3 = self.confidence_kpt_3[self.mask_upnp]
+        self.confidence_kpt_4 = self.confidence_kpt_4[self.mask_upnp]
+        self.confidence_kpt_5 = self.confidence_kpt_5[self.mask_upnp]
+        self.confidence_kpt_6 = self.confidence_kpt_6[self.mask_upnp]
+        self.confidence_kpt_7 = self.confidence_kpt_7[self.mask_upnp]
+        self.confidence_kpt_8 = self.confidence_kpt_8[self.mask_upnp]
 
         confidence_sum_no_last = confidence_sum[:,:-1]
-        self.stabw = np.std(confidence_sum_no_last,axis = 1)[self.mask]
+        self.stabw = np.std(confidence_sum_no_last,axis = 1)[self.mask_upnp]
         #stabw = np.sqrt(stabw)
-        self.avg = np.average(confidence_sum_no_last,axis = 1)[self.mask]
+        self.avg = np.average(confidence_sum_no_last,axis = 1)[self.mask_upnp]
 
         self.err_detections = np.where(self.mask, 0, 0.8)
 
@@ -213,43 +227,90 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy", allow_pickle=True).item()
         self.iou_first_mask_pvnet_xmem = load_arr["iou"]
 
+    def loadTimingResults(self):
+        self.time_keeper = TimeAnalyser()
+        self.time_keeper.load("benchmarks/BuchVideo/time_analysis/timing_orig.npy")
+
+        keys = self.time_keeper.time_save.keys()
+        print("Loaded timer with keys: ", keys)
+
+        ANALYSE_ORIGINAL = True
+        
+        time_pair_preprocessing = ("preprocessing", "preprocessing_done")
+
+        time_pair_run = ("run", "run_done")
+
+        time_pair_process_new_frame = ("process_new_frame", "invalidatePixelsByMask")
+        time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask", "pointCloudDenoise")
+        time_pair_pointCloudDenoise = ("pointCloudDenoise", "find_corres")
+        time_pair_find_corres = ("find_corres", "len(matches)<min_match_with_ref")
+        time_pair_min_match_with_ref = ("len(matches)<min_match_with_ref", "procrustesByCorrespondence")
+        time_pair_procrustesByCorrespondence = ("procrustesByCorrespondence", "selectKeyFramesForBA")
+        time_pair_selectKeyFramesForBA = ("selectKeyFramesForBA", "getFeatureMatchPairs")
+        time_pair_getFeatureMatchPairs = ("getFeatureMatchPairs", "optimizeGPU")
+        time_pair_optimizeGPU = ("optimizeGPU", "checkAndAddKeyframe")
+
+        if ANALYSE_ORIGINAL:
+
+
+            time_pair_process = ("process_new_frame", "process_new_frame_done")
+
+        self.time_pair_1_ids, self.time_pair_1_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process_new_frame) 
+        self.time_pair_2_ids, self.time_pair_2_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_invalidatePixelsByMask)
+        self.time_pair_3_ids, self.time_pair_3_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_pointCloudDenoise)
+        self.time_pair_4_ids, self.time_pair_4_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres)
+        self.time_pair_5_ids, self.time_pair_5_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_min_match_with_ref)
+        self.time_pair_5_2_ids, self.time_pair_5_2_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_procrustesByCorrespondence)
+        self.time_pair_6_ids, self.time_pair_6_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
+        self.time_pair_7_ids, self.time_pair_7_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
+        self.time_pair_8_ids, self.time_pair_8_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_optimizeGPU)
+        self.time_pair_process_ids, self.time_pair_process_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process)
+
+        print("Whole runtime: ", self.time_keeper.time_save["whole_runtime_done"]["time"] - self.time_keeper.time_save["whole_runtime"]["time"])
+
+
     
     def plotMaskResults(self):
-        plt.switch_backend('TkAgg')
-        #plt.rc ('font', size = 30)
-        fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
-        ax = plt.gca()
-        #ax.set_ylim([0, 1])
-        ax.set_xlim([0, len(self.x)])
+        
 
         plt.plot(self.x, self.iou_pvnet, label = "IOU Pure PVNet")
         plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IOU First PVNet Cutie")
         plt.plot(self.x, self.iou_first_mask_pvnet_xmem, label = "IOU First PVNet XMem")
 
-        plt.legend(loc="upper right")
+        ax = plt.gca()
         ax.set_xlabel("Frame")
         ax.set_ylabel("IOU")
-        ax.grid(True)
+        # ax.grid(True)
         
-        ax.set_title('IOU comparison', fontsize = 40, fontweight ='bold')
-        plt.show()
+        # ax.set_title('IOU comparison', fontsize = 40, fontweight ='bold')
+        #plt.show()
 
-    def plotADDResults(self, use_tk_backend = True):
+    def plotTimingResults(self):
+        ax = plt.gca()
+        ax.set_xlabel("Frame")
+        ax.set_ylabel("Time [s]")
+
+
+    def setupPlot(self,use_tk_backend = True):
+        if use_tk_backend:
+            plt.switch_backend('TkAgg')
+        plt.rc ('font', size = 30)
+        fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
+        ax = plt.gca()
+        ax.set_ylim([0, 1.0])
+        ax.set_xlim([0, len(self.x)])
+        plt.legend(loc="upper right")
+
+
+    def plotADDResults(self):
         #x = range(0,len(y))
         #plt.hist(a)
         #matplotlib                3.7.1
         #matplotlib-inline         0.1.7
 
-        if use_tk_backend:
-            plt.switch_backend('TkAgg')
+        
         #plt.style.use(['science','ieee'])
-
-        plt.rc ('font', size = 30)
-        fig =plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1])
-        ax.set_xlim([0, len(self.x)])
-
         ResultPlotter.x = self.x
         ResultPlotter.y1 = self.add_bundle_orig
         ResultPlotter.y2 = self.add_bundle_feature_matching_spike
@@ -257,43 +318,51 @@ class ResultPlotter:
         #ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
         #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
-        #plt.plot(self.x,self.add_pvnet_orig, ResultPlotter.string_to_rgb("ADD PVNet orig"), label ="ADD PVNet orig")
-        # plt.plot(self.x_masked, self.confidence_kpt_0, label ="Confidences kpt 0")
-        # plt.plot(self.x_masked, self.confidence_kpt_1, label ="Confidences kpt 1")
-        # plt.plot(self.x_masked, self.confidence_kpt_2, label ="Confidences kpt 2")
-        # plt.plot(self.x_masked, self.confidence_kpt_3, label ="Confidences kpt 3")
-        # plt.plot(self.x_masked, self.confidence_kpt_4, label ="Confidences kpt 4")
-        # plt.plot(self.x_masked, self.confidence_kpt_5, label ="Confidences kpt 5")
-        # plt.plot(self.x_masked, self.confidence_kpt_6, label ="Confidences kpt 6")
-        # plt.plot(self.x_masked, self.confidence_kpt_7, label ="Confidences kpt 7")
-        # plt.plot(self.x_masked, self.confidence_kpt_8, label ="Confidences kpt 8")
+
+        #plt.plot(self.x_masked, self.add_pvnet_orig[self.mask], label ="PVNet original")
+        #plt.plot(self.x_masked_upnp, self.add_pvnet_upnp[self.mask_upnp],label ="PVNet upnp")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_0[self.mask_upnp], label ="Confidences kpt 0")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_1[self.mask_upnp], label ="Confidences kpt 1")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_2[self.mask_upnp], label ="Confidences kpt 2")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_3[self.mask_upnp], label ="Confidences kpt 3")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_4[self.mask_upnp], label ="Confidences kpt 4")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_5[self.mask_upnp], label ="Confidences kpt 5")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_6[self.mask_upnp], label ="Confidences kpt 6")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_7[self.mask_upnp], label ="Confidences kpt 7")
+        # plt.plot(self.x_masked_upnp, self.confidence_kpt_8[self.mask_upnp], label ="Confidences kpt 8")
         
-        #plt.plot(self.x_masked, self.avg, label ="avg")
-        #plt.plot(self.x_masked, self.stabw, label ="stabw")
+        # plt.plot(self.x_masked_upnp, self.avg, label ="Uncertainty avgerage")
+        # plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
+        
+        # plt.plot(self.x, np.ones(self.x.shape) * 0.05)
+        # plt.plot(self.x, np.ones(self.x.shape) * 0.65)
+        #plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
 
 
-        #plt.plot(x,add_pvnet_upnp, "-r",label ="ADD PVNet upnp")
         #plt.plot(self.x, self.add_bundle_orig, label="Original")
-        plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
-        plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First Estimation PVNet")
+        #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
+        #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First Estimation PVNet")
         #plt.plot(x, rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
-        #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="ADD BundleSDF Limit Trans Rot")
-        #plt.plot(self.x, self.add_bundle_icp, label="ADD BundleSDF ICP")
-        #plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
-        #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
-        #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
-        #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="ADD BundleSDF Occlusion aware force pvnet") #1380 problematic -> full occlusion
-        #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "ADD feature spike prevention")
+        #plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
+        #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
+        # #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="Limit rotation translation")
+        #plt.plot(self.x, self.add_bundle_icp, label="ICP")
+        # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
+        # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
+        # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
+        #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
+        #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
-        #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression 2")
-        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "ADD First Offline Cutie segmentation")
-        #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "ADD Orig Cutie segmentation")
-        #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "ADD Orig XMem segmentation")
-        #plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "ADD First PVNet Cutie Segmentation")
+        #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
+        #plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression -4")
+        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie first offline")
+        #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
+        plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "Original XMEM")
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
+        plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "Cutie first PVNet")
         #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
 
 
@@ -313,13 +382,13 @@ class ResultPlotter:
         #plt.plot(self.x, self.mask_count, label = "Mask visib Pixels")
 
         #plt.plot(x, add_bundle_limit_rot, label="ADD limit rot")
-        #plt.plot(x, add_bundle_periodic_upnp, label="ADD BundleSDF periodic upnp")
 
 
-        plt.legend(loc="upper right")
+
+        # plt.legend(loc="upper right")
         ax.set_xlabel("Frame-ID")
         ax.set_ylabel("ADD [m]")
-        ax.grid(True)
+        # ax.grid(True)
         
         #ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
 
@@ -460,6 +529,7 @@ class ResultPlotter:
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
-    result_plot.plotADDResults()
-    result_plot.exportPlot("plots/ADD_BundleSDF_no_nerf_pvnet_2.pdf")
+    #result_plot.plotADDResults()
     #result_plot.plotMaskResults()
+    result_plot.plotTimingResults()
+    result_plot.exportPlot("plots/BuchVideo/timing/BundleSDF_original.pdf")
