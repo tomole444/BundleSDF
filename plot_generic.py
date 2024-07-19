@@ -227,47 +227,110 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy", allow_pickle=True).item()
         self.iou_first_mask_pvnet_xmem = load_arr["iou"]
 
-    def loadTimingResults(self):
+    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_0.npy"):
         self.time_keeper = TimeAnalyser()
-        self.time_keeper.load("benchmarks/BuchVideo/time_analysis/timing_orig.npy")
+        self.time_keeper.load(timing_file_path)
 
         keys = self.time_keeper.time_save.keys()
         print("Loaded timer with keys: ", keys)
 
-        ANALYSE_ORIGINAL = True
+        ANALYSE_ORIGINAL = False
         
         time_pair_preprocessing = ("preprocessing", "preprocessing_done")
 
         time_pair_run = ("run", "run_done")
 
-        time_pair_process_new_frame = ("process_new_frame", "invalidatePixelsByMask")
-        time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask", "pointCloudDenoise")
-        time_pair_pointCloudDenoise = ("pointCloudDenoise", "find_corres")
-        time_pair_find_corres = ("find_corres", "len(matches)<min_match_with_ref")
-        time_pair_min_match_with_ref = ("len(matches)<min_match_with_ref", "procrustesByCorrespondence")
-        time_pair_procrustesByCorrespondence = ("procrustesByCorrespondence", "selectKeyFramesForBA")
-        time_pair_selectKeyFramesForBA = ("selectKeyFramesForBA", "getFeatureMatchPairs")
-        time_pair_getFeatureMatchPairs = ("getFeatureMatchPairs", "optimizeGPU")
-        time_pair_optimizeGPU = ("optimizeGPU", "checkAndAddKeyframe")
+        #time_pair_process_new_frame = ("process_new_frame", "invalidatePixelsByMask")
+
 
         if ANALYSE_ORIGINAL:
+            time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask", "pointCloudDenoise")
+            time_pair_pointCloudDenoise = ("pointCloudDenoise", "find_corres")
+            time_pair_find_corres = ("find_corres", "len(matches)<min_match_with_ref")
+            time_pair_min_match_with_ref = ("len(matches)<min_match_with_ref", "procrustesByCorrespondence")
+            time_pair_procrustesByCorrespondence = ("procrustesByCorrespondence", "selectKeyFramesForBA")
+            time_pair_selectKeyFramesForBA = ("selectKeyFramesForBA", "getFeatureMatchPairs")
+            time_pair_getFeatureMatchPairs = ("getFeatureMatchPairs", "optimizeGPU")
+            time_pair_optimizeGPU = ("optimizeGPU", "checkAndAddKeyframe")
+            time_pair_checkAndAddKeyframe = ("checkAndAddKeyframe", "process_new_frame_done")
+            time_pair_process_frame = ("process_new_frame", "process_new_frame_done")
+            time_pair_nerf_start = ("nerf_start","nerf_end")
+            time_pair_nerf_pose_adaptation = ("nerf_pose_adaptation","nerf_pose_adaptation_end")
+            time_pair_rematch_after_nerf = ("rematch_after_nerf","rematch_after_nerf_end")
+
+            self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_invalidatePixelsByMask)
+            self.time_pair_pointCloudDenoise_ids, self.time_pair_pointCloudDenoise_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_pointCloudDenoise)
+            self.time_pair_find_corres_ids, self.time_pair_find_corres_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres)
+            self.time_pair_min_match_with_ref_ids, self.time_pair_min_match_with_ref_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_min_match_with_ref)
+            self.time_pair_procrustesByCorrespondence_ids, self.time_pair_procrustesByCorrespondence_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_procrustesByCorrespondence)
+            self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
+            self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
+            self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_optimizeGPU)
+            self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_checkAndAddKeyframe)
+            self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process_frame)
+            self.time_pair_nerf_start_ids, self.time_pair_nerf_start_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_nerf_start)
+            self.time_pair_nerf_pose_adaptation_ids, self.time_pair_nerf_pose_adaptation_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_nerf_pose_adaptation)
+            self.time_pair_rematch_after_nerf_ids, self.time_pair_rematch_after_nerf_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_rematch_after_nerf)
+
+            print ("Average time self.time_pair_invalidatePixelsByMask_execution_times: ", np.average(self.time_pair_invalidatePixelsByMask_execution_times))
+            print ("Average time self.time_pair_pointCloudDenoise_execution_times: ", np.average(self.time_pair_pointCloudDenoise_execution_times))
+            print ("Average time self.time_pair_find_corres_execution_times: ", np.average(self.time_pair_find_corres_execution_times))
+            print ("Average time self.time_pair_min_match_with_ref_execution_times: ", np.average(self.time_pair_min_match_with_ref_execution_times))
+            print ("Average time self.time_pair_procrustesByCorrespondence_execution_times: ", np.average(self.time_pair_procrustesByCorrespondence_execution_times))
+            print ("Average time self.time_pair_selectKeyFramesForBA_execution_times: ", np.average(self.time_pair_selectKeyFramesForBA_execution_times))
+            print ("Average time self.time_pair_getFeatureMatchPairs_execution_times: ", np.average(self.time_pair_getFeatureMatchPairs_execution_times))
+            print ("Average time self.time_pair_optimizeGPU_execution_times: ", np.average(self.time_pair_optimizeGPU_execution_times))
+            print ("Average time self.time_pair_checkAndAddKeyframe_execution_times: ", np.average(self.time_pair_checkAndAddKeyframe_execution_times))
+            print ("Average time self.time_pair_process_frame_execution_times: ", np.average(self.time_pair_process_frame_execution_times))
+            print ("Average time self.time_pair_nerf_start_execution_times: ", np.average(self.time_pair_nerf_start_execution_times))
+            print ("Average time self.time_pair_nerf_pose_adaptation_execution_times: ", np.average(self.time_pair_nerf_pose_adaptation_execution_times))
+            print ("Average time self.time_pair_rematch_after_nerf_execution_times: ", np.average(self.time_pair_rematch_after_nerf_execution_times))
+
+        else:
+            time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask","denoise_cloud")
+            time_pair_denoise_cloud = ("denoise_cloud","pvnet_adjust_every")
+            time_pair_find_corres_1 = ("find_corres_1","selectKeyFramesForBA")
+            time_pair_selectKeyFramesForBA = ("selectKeyFramesForBA","getFeatureMatchPairs")
+            time_pair_getFeatureMatchPairs = ("getFeatureMatchPairs","find_corres_2")
+            time_pair_find_corres_2 = ("find_corres_2","optimizeGPU")
+            time_pair_optimizeGPU = ("optimizeGPU","checkMovement_limits")
+            time_pair_checkMovement_limits = ("checkMovement_limits","checkMovement_limits_end")
+            time_pair_icp = ("icp","icp_end")
+            time_pair_checkAndAddKeyframe = ("icp_end","process_new_frame_pvnet_done")
+            time_pair_process_frame = ("process_new_frame_pvnet","process_new_frame_pvnet_done")
+
+            self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_invalidatePixelsByMask)
+            self.time_pair_denoise_cloud_ids, self.time_pair_denoise_cloud_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_denoise_cloud)
+            self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres_1)
+            self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
+            self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
+            self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres_2)
+            self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_optimizeGPU)
+            self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_checkMovement_limits)
+            self.time_pair_icp_ids, self.time_pair_icp_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_icp)
+            self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_checkAndAddKeyframe)
+            self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_process_frame)
+
+            print("Average time self.time_pair_invalidatePixelsByMask_execution_time: ", np.average(self.time_pair_invalidatePixelsByMask_execution_time))
+            print("Average time self.time_pair_denoise_cloud_execution_time: ", np.average(self.time_pair_denoise_cloud_execution_time))
+            print("Average time self.time_pair_find_corres_1_execution_time: ", np.average(self.time_pair_find_corres_1_execution_time))
+            print("Average time self.time_pair_selectKeyFramesForBA_execution_time: ", np.average(self.time_pair_selectKeyFramesForBA_execution_time))
+            print("Average time self.time_pair_getFeatureMatchPairs_execution_time: ", np.average(self.time_pair_getFeatureMatchPairs_execution_time))
+            print("Average time self.time_pair_find_corres_2_execution_time: ", np.average(self.time_pair_find_corres_2_execution_time))
+            print("Average time self.time_pair_optimizeGPU_execution_time: ", np.average(self.time_pair_optimizeGPU_execution_time))
+            print("Average time self.time_pair_checkMovement_limits_execution_time: ", np.average(self.time_pair_checkMovement_limits_execution_time))
+            print("Average time self.time_pair_icp_execution_time: ", np.average(self.time_pair_icp_execution_time))
+            print("Average time self.time_pair_checkAndAddKeyframe_execution_time: ", np.average(self.time_pair_checkAndAddKeyframe_execution_time))
+            print("Average time self.time_pair_process_frame_execution_time: ", np.average(self.time_pair_process_frame_execution_time))
 
 
-            time_pair_process = ("process_new_frame", "process_new_frame_done")
+        self.time_pair_run_ids, self.time_pair_run_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_run)
+        #self.time_pair_1_ids, self.time_pair_1_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process_new_frame) 
 
-        self.time_pair_1_ids, self.time_pair_1_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process_new_frame) 
-        self.time_pair_2_ids, self.time_pair_2_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_invalidatePixelsByMask)
-        self.time_pair_3_ids, self.time_pair_3_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_pointCloudDenoise)
-        self.time_pair_4_ids, self.time_pair_4_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres)
-        self.time_pair_5_ids, self.time_pair_5_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_min_match_with_ref)
-        self.time_pair_5_2_ids, self.time_pair_5_2_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_procrustesByCorrespondence)
-        self.time_pair_6_ids, self.time_pair_6_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
-        self.time_pair_7_ids, self.time_pair_7_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
-        self.time_pair_8_ids, self.time_pair_8_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_optimizeGPU)
-        self.time_pair_process_ids, self.time_pair_process_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process)
 
-        print("Whole runtime: ", self.time_keeper.time_save["whole_runtime_done"]["time"] - self.time_keeper.time_save["whole_runtime"]["time"])
+        print("Whole runtime: ", self.time_keeper.time_save["whole_runtime_done"][0]["time"] - self.time_keeper.time_save["whole_runtime"][0]["time"])
 
+        print("Average time per frame ", np.average(self.time_pair_run_execution_times))
 
     
     def plotMaskResults(self):
@@ -281,6 +344,7 @@ class ResultPlotter:
         ax.set_xlabel("Frame")
         ax.set_ylabel("IOU")
         # ax.grid(True)
+        plt.legend(loc="upper right")
         
         # ax.set_title('IOU comparison', fontsize = 40, fontweight ='bold')
         #plt.show()
@@ -290,16 +354,47 @@ class ResultPlotter:
         ax.set_xlabel("Frame")
         ax.set_ylabel("Time [s]")
 
+        #plt.plot(self.time_pair_min_match_with_ref_ids, self.time_pair_min_match_with_ref_execution_times, label = "min_match_with_ref")
+        #plt.plot(self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_times, label = "checkAndAddKeyframe")
+        #plt.plot(self.time_pair_pointCloudDenoise_ids, self.time_pair_pointCloudDenoise_execution_times, label = "pointCloudDenoise")
+        
+        # plt.plot(self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_times, label = "invalidatePixelsByMask")
+        # plt.plot(self.time_pair_find_corres_ids, self.time_pair_find_corres_execution_times, label = "find_corres")
+        # plt.plot(self.time_pair_procrustesByCorrespondence_ids, self.time_pair_procrustesByCorrespondence_execution_times, label = "procrustesByCorrespondence")
+        # plt.plot(self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_times, label = "selectKeyFramesForBA")
+        # plt.plot(self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_times, label = "getFeatureMatchPairs")
+        # plt.plot(self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_times, label = "optimizeGPU")
+        # plt.plot(self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_times, label = "process_frame")
+        # plt.plot(self.time_pair_nerf_start_ids, self.time_pair_nerf_start_execution_times, label = "nerf_start")
+        # plt.plot(self.time_pair_nerf_pose_adaptation_ids, self.time_pair_nerf_pose_adaptation_execution_times, label = "nerf_pose_adaptation")
+        # plt.plot(self.time_pair_rematch_after_nerf_ids, self.time_pair_rematch_after_nerf_execution_times, label = "rematch_after_nerf")
+
+        plt.plot(self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time, label = "time_pair_invalidatePixelsByMask")
+        plt.plot(self.time_pair_denoise_cloud_ids, self.time_pair_denoise_cloud_execution_time, label = "time_pair_denoise_cloud")
+        plt.plot(self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time, label = "time_pair_find_corres_1")
+        plt.plot(self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time, label = "time_pair_selectKeyFramesForBA")
+        plt.plot(self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time, label = "time_pair_getFeatureMatchPairs")
+        plt.plot(self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time, label = "time_pair_find_corres_2")
+        plt.plot(self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time, label = "time_pair_optimizeGPU")
+        plt.plot(self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time, label = "time_pair_checkMovement_limits")
+        #plt.plot(self.time_pair_icp_ids, self.time_pair_icp_execution_time, label = "time_pair_icp")
+        plt.plot(self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time, label = "time_pair_checkAndAddKeyframe")
+        plt.plot(self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time, label = "time_pair_process_frame")
+
+
+        
+        plt.legend(loc="upper right")
+        
+        #plt.show()
 
     def setupPlot(self,use_tk_backend = True):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
-        plt.rc ('font', size = 30)
+        plt.rc ('font', size = 15)
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
         ax.set_ylim([0, 1.0])
         ax.set_xlim([0, len(self.x)])
-        plt.legend(loc="upper right")
 
 
     def plotADDResults(self):
@@ -341,7 +436,7 @@ class ResultPlotter:
 
         #plt.plot(self.x, self.add_bundle_orig, label="Original")
         #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
-        #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First Estimation PVNet")
+        #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
         #plt.plot(x, rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
         #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
@@ -349,20 +444,20 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
         #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
         # #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="Limit rotation translation")
-        #plt.plot(self.x, self.add_bundle_icp, label="ICP")
+        plt.plot(self.x, self.add_bundle_icp, label="ICP")
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
-        #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
+        plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
         #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
         #plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression -4")
         #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie first offline")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
-        plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "Original XMEM")
+        #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "Original XMEM")
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
-        plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "Cutie first PVNet")
+        #plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "Cutie first PVNet")
         #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
 
 
@@ -385,10 +480,10 @@ class ResultPlotter:
 
 
 
-        # plt.legend(loc="upper right")
+        plt.legend(loc="upper right")
         ax.set_xlabel("Frame-ID")
         ax.set_ylabel("ADD [m]")
-        # ax.grid(True)
+        ax.grid(True)
         
         #ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
 
@@ -532,4 +627,4 @@ if __name__ == "__main__":
     #result_plot.plotADDResults()
     #result_plot.plotMaskResults()
     result_plot.plotTimingResults()
-    result_plot.exportPlot("plots/BuchVideo/timing/BundleSDF_original.pdf")
+    result_plot.exportPlot("plots/BuchVideo/timing/timing_pose_regression_0.pdf")

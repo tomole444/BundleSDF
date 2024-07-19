@@ -364,6 +364,7 @@ class BundleSdf:
     self.rot_movement_path = os.path.join(self.debug_dir, "rot_movement")
     self.trans_movement_path = os.path.join(self.debug_dir, "trans_movement")
     self.previous_occluded = 0 # count of previous frames, that have been occluded
+    self.reset_occlusion_counter = False
 
     self.continous_discarded_frames = 0 # count of continously discarded frames
     self.last_valid_frames_count = 0 # count of last valid frames
@@ -651,17 +652,20 @@ class BundleSdf:
       else:
         frame.setNewInitCoordinate()
     
+
+    #detect occlision
     n_fg = (np.array(frame._fg_mask)>0).sum()
     if n_fg < self.cfg_track["limits"]["min_mask_pixels"]:
       self.previous_occluded += 1
-      logging.info(f"Frame {frame._id_str} cloud is empty, marked FAIL, roi={n_fg}")
+      logging.info(f"Frame {frame._id_str} is too occluded, marked FAIL, roi={n_fg}")
       frame._status = my_cpp.Frame.FAIL
       frame._pose_in_model = np.identity(4) #assign invalid pose
       self.bundler.forgetFrame(frame)
       return
     else:
       # reset occlusion counter
-      self.previous_occluded = 0
+      self.reset_occlusion_counter = True
+
    
     
     #Denoising Pointcloud
@@ -752,7 +756,7 @@ class BundleSdf:
       #spike detected -> dont use frame#invalidate frame
       #frame._status = my_cpp.Frame.FAIL
       #frame._pose_in_model = np.identity(4) #assign invalid pose
-      logging.info(f"Did not use frame {frame._id_str} feature_matching_optimization (too big of an offset)")
+      logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset)")
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
@@ -800,6 +804,7 @@ class BundleSdf:
     elif self.continous_discarded_frames >= self.cfg_track["limits"]["force_pvnet_after"]:
       pvnet_ob_in_cam = self.inference_client.getPVNetPose(self.color)
       if pvnet_ob_in_cam is not None:
+        logging.info(f"Frames previous to frame {frame._id_str} have been discarded, used PVNet estimation")
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
       else:
         logging.info(f"Frames previous to frame {frame._id_str} have been discarded, but not using pvnet_pose bc its too unsafe!")
@@ -1202,6 +1207,11 @@ class BundleSdf:
     
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
+    
+    if self.reset_occlusion_counter: 
+      self.previous_occluded = 0
+      self.reset_occlusion_counter = False
+    
     if frame._status != my_cpp.Frame.FAIL:
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
       self.continous_discarded_frames = 0
@@ -1529,6 +1539,14 @@ class BundleSdf:
 
     depth_scene_pcd.estimate_normals()
 
+    if (self.use_gui):
+      self.model_pcd.paint_uniform_color([0, 0.651, 0.929])
+      depth_scene_pcd.paint_uniform_color([1, 0, 0])
+
+      self.model_pcd.transform(intial_pose)
+      o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd], window_name = "Before ICP", mesh_show_wireframe = True)
+      self.model_pcd.transform(np.linalg.inv(intial_pose))
+
 
     criteria = o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration = self.cfg_track["icp"]["max_iterations"])
     threshold = self.cfg_track["icp"]["threshold"]
@@ -1549,10 +1567,11 @@ class BundleSdf:
 
     if (self.use_gui):
       self.model_pcd.paint_uniform_color([0, 0.651, 0.929])
-      depth_scene_pcd.paint_uniform_color([1, 0.706, 0])
+      depth_scene_pcd.paint_uniform_color([1, 0, 0])
+      #depth_scene_pcd.paint_uniform_color([1, 0.706, 0])
 
       self.model_pcd.transform(optimzed_pose)
-      o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd])
+      o3d.visualization.draw_geometries([self.model_pcd, depth_scene_pcd], window_name = "After ICP")
       self.model_pcd.transform(np.linalg.inv(optimzed_pose))
 
     return T_optPose_initialPose
