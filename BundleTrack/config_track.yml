@@ -140,8 +140,12 @@ estimation: # estimation through velocity regression
   max_acceleration_std_use_last: 20 # use last x frames for the acceleration limit test
 
 segmenter: #online cutie segmenter server
-  activated: True #use one online -> True / offline -> False
+  activated: False #use one online -> True / offline -> False
   ip_addr: "192.168.99.91" #address of the inference server
   port: 15323 #port number of the server 
-  use_first_mask_offline: False # use first_mask.png in dataset as offline mask / get first mask from pvnet
+  use_first_mask_offline: True # use first_mask.png in dataset as offline mask / get first mask from pvnet
   use_pvnet_exclusively: False # get all masks from pvnet 
+
+real_time_simulation: # use realtime simulation 
+  activated: False 
+  fps: 15 #fps that is going to be simulated

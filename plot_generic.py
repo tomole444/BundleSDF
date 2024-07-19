@@ -227,7 +227,7 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy", allow_pickle=True).item()
         self.iou_first_mask_pvnet_xmem = load_arr["iou"]
 
-    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_0.npy"):
+    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_2.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
 
@@ -627,4 +627,4 @@ if __name__ == "__main__":
     #result_plot.plotADDResults()
     #result_plot.plotMaskResults()
     result_plot.plotTimingResults()
-    result_plot.exportPlot("plots/BuchVideo/timing/timing_pose_regression_0.pdf")
+    result_plot.exportPlot("plots/BuchVideo/timing/timing_pose_regression_2_false.pdf")

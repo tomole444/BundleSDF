@@ -363,8 +363,8 @@ class BundleSdf:
     self.rot_movements = []
     self.rot_movement_path = os.path.join(self.debug_dir, "rot_movement")
     self.trans_movement_path = os.path.join(self.debug_dir, "trans_movement")
-    self.previous_occluded = 0 # count of previous frames, that have been occluded
-    self.reset_occlusion_counter = False
+    # self.previous_occluded = 0 # count of previous frames, that have been occluded
+    # self.reset_occlusion_counter = False
 
     self.continous_discarded_frames = 0 # count of continously discarded frames
     self.last_valid_frames_count = 0 # count of last valid frames
@@ -656,7 +656,6 @@ class BundleSdf:
     #detect occlision
     n_fg = (np.array(frame._fg_mask)>0).sum()
     if n_fg < self.cfg_track["limits"]["min_mask_pixels"]:
-      self.previous_occluded += 1
       logging.info(f"Frame {frame._id_str} is too occluded, marked FAIL, roi={n_fg}")
       frame._status = my_cpp.Frame.FAIL
       frame._pose_in_model = np.identity(4) #assign invalid pose
@@ -686,11 +685,11 @@ class BundleSdf:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
       return
-    elif (frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.previous_occluded > 0) and self.cfg_track["pvnet"]["activated"]:   # check if tf needed from pvnet
+    elif (frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.continous_discarded_frames > self.cfg_track["limits"]["force_pvnet_after"]) and self.cfg_track["pvnet"]["activated"]:   # check if tf needed from pvnet
       
       pvnet_ob_in_cam = self.inference_client.getPVNetPose(self.color)
 
-      if pvnet_ob_in_cam is not None and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.previous_occluded > 0):
+      if pvnet_ob_in_cam is not None and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.continous_discarded_frames > self.cfg_track["limits"]["force_pvnet_after"]):
         frame._pose_in_model = np.linalg.inv(pvnet_ob_in_cam)
         # Do icp opitmization
         T_optPose_initialPose = self.optimizeICP(frame)
@@ -783,8 +782,6 @@ class BundleSdf:
     self.time_keeper.add("find_corres_2",frame._id)
     self.find_corres(pairs)
 
-    # if n_fg > self.cfg_track["limits"]["min_mask_pixels"]:
-    #   self.previous_occluded = self.previous_occluded - 1 if self.previous_occluded >= 1 else 0
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
@@ -798,7 +795,7 @@ class BundleSdf:
 
     self.time_keeper.add("checkMovement_limits",frame._id)
     # limit rot and trans movement
-    if not self.checkMovement(frame) and self.previous_occluded == 0 and self.continous_discarded_frames < self.cfg_track["limits"]["force_pvnet_after"]:
+    if not self.checkMovement(frame) and self.continous_discarded_frames < self.cfg_track["limits"]["force_pvnet_after"]:
       logging.info(f"Did not use frame {frame._id_str} because MovementLimit")
       frame._status = my_cpp.Frame.FAIL
     elif self.continous_discarded_frames >= self.cfg_track["limits"]["force_pvnet_after"]:
@@ -1207,10 +1204,6 @@ class BundleSdf:
     
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
-    
-    if self.reset_occlusion_counter: 
-      self.previous_occluded = 0
-      self.reset_occlusion_counter = False
     
     if frame._status != my_cpp.Frame.FAIL:
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
