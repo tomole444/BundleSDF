@@ -372,6 +372,7 @@ class BundleSdf:
     # Velocity pose estimator
     self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path)
     self.velocity_estimations = {"tfs":[], "ids": [], "calculation_times": []}
+    self.velocity_estimation_path = os.path.join(self.debug_dir, "velocity_estimation")
     self.last_tfs = []
     self.last_time_stamp = None
     #self.last_euler_angle = None
@@ -384,6 +385,10 @@ class BundleSdf:
 
     #time analysis
     self.time_keeper = TimeAnalyser()
+
+    os.makedirs(self.trans_movement_path, exist_ok=True)
+    os.makedirs(self.rot_movement_path, exist_ok=True)
+    os.makedirs(self.velocity_estimation_path, exist_ok=True)
 
 
 
@@ -623,8 +628,6 @@ class BundleSdf:
             return
     else:
       self.bundler._firstframe = frame
-      os.makedirs(self.trans_movement_path, exist_ok=True)
-      os.makedirs(self.rot_movement_path, exist_ok=True)
 
     self.time_keeper.add("invalidatePixelsByMask",frame._id)
     frame.invalidatePixelsByMask(frame._fg_mask)
@@ -1206,7 +1209,7 @@ class BundleSdf:
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
     save_arr = np.array(self.velocity_estimations, dtype=object)
-    np.save(os.path.join(self.debug_dir, "velocity_estimations.npy"), save_arr, allow_pickle=True)
+    np.save(os.path.join(self.velocity_estimation_path, "velocity_estimations.npy"), save_arr, allow_pickle=True)
     
     if frame._status != my_cpp.Frame.FAIL:
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
@@ -1627,6 +1630,7 @@ class BundleSdf:
       self.velocity_estimations["tfs"].append(ret)
       self.velocity_estimations["ids"].append(self.bundler._newframe._id)
       self.velocity_estimations["calculation_times"].append(time.time() - start_calc)
+      np.savetxt(os.path.join(self.velocity_estimation_path, self.bundler._newframe._id_str + ".txt"), ret)
     
     return ret
 
