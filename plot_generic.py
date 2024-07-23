@@ -30,8 +30,17 @@ class ResultPlotter:
 
 
     def loadADDResults(self):
+        diameter = 0.211
+        ADD_logpath = "plots/BuchVideo/ADD/ADD-whole.txt"
+        full_text_add_combined = ""
+        latex_add_combined = ""
+
+
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_orig.npy", allow_pickle=True).item()
         self.add_pvnet_orig = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_PVNet_orig: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_PVNet_orig & " + latex_add
 
         pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239/pose"
 
@@ -76,6 +85,9 @@ class ResultPlotter:
 
         load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/ADD_PVNet_upnp.npy", allow_pickle=True).item()
         self.add_pvnet_upnp = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_PVNet_upnp: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_PVNet_upnp & " + latex_add
         
         self.mask_upnp = ResultPlotter.calcMask(pose_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/outPVNet239_upnp/pose")
         self.x_masked_upnp = self.x[self.mask_upnp]
@@ -84,69 +96,132 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
         self.add_bundle_orig = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_orig: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_orig & " + latex_add
         
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerf.npy", allow_pickle=True).item()
         self.add_bundle_nonerf = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_NoNerf: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_NoNerf & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerfPVNet_2.npy", allow_pickle=True).item()
         self.add_bundle_nonerf_pvnet = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_NoNerfPVNet_2: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_NoNerfPVNet_2 & " + latex_add
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_Test.npy", allow_pickle=True).item()
         self.add_test = load_arr["result_y"]
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_orig.npy", allow_pickle=True).item()
         self.add_bundle_periodic_orig = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_PeriodicPVNet_orig: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_PeriodicPVNet_orig & " + latex_add
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_PeriodicPVNet_upnp.npy", allow_pickle=True).item()
         self.add_bundle_periodic_upnp = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_PeriodicPVNet_upnp: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_PeriodicPVNet_upnp & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_LimitRot.npy", allow_pickle=True).item()
         self.add_bundle_limit_rot = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_LimitRot: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_LimitRot & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_LimitRotTrans.npy", allow_pickle=True).item()
         self.add_bundle_limit_rot_trans = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_LimitRotTrans: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_LimitRotTrans & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_ICP.npy", allow_pickle=True).item()
         self.add_bundle_icp = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_ICP: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_ICP & " + latex_add
 
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware.npy", allow_pickle=True).item()
         self.add_bundle_occ_aware = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_Occlusion_Aware: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_Occlusion_Aware & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_check_limit.npy", allow_pickle=True).item()
         self.add_bundle_occ_aware_check_limit = load_arr["result_y"]
         self.add_bundle_occ_aware_check_limit_trans_err = load_arr["trans_err"]
         self.add_bundle_occ_aware_check_limit_rot_err = load_arr["rot_err"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_Occlusion_Aware_check_limit: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_Occlusion_Aware_check_limit & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_force_pvnet.npy", allow_pickle=True).item()
         self.add_bundle_occ_aware_force_pvnet = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_Occlusion_Aware_force_pvnet: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_Occlusion_Aware_force_pvnet & " + latex_add
 
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_feature_matching_spike.npy", allow_pickle=True).item()
         self.add_bundle_feature_matching_spike = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_feature_matching_spike: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_feature_matching_spike & " + latex_add
         
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
         self.add_bundle_pose_regression_2 = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_pose_regression_2: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_pose_regression_2 & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_-4.npy", allow_pickle=True).item()
         self.add_bundle_pose_regression_minus_4 = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_pose_regression_: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_pose_regression_ & " + latex_add
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_cutie_first_offline_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_cutie_first_offline_segmentation = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_cutie_first_offline_segmentation: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_cutie_first_offline_segmentation & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig_cutie_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_orig_cutie_segmentation = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_orig_cutie_segmentation: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_orig_cutie_segmentation & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_orig_xmem_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_orig_xmem_segmentation = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_orig_xmem_segmentation: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_orig_xmem_segmentation & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_first_pvnet_cutie_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_first_pvnet_cutie_segmentation = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_first_pvnet_cutie_segmentation: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_first_pvnet_cutie_segmentation & " + latex_add
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pvnet_segmentation_only.npy", allow_pickle=True).item()
         self.add_bundle_pvnet_seg_only = load_arr["result_y"]
+        full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
+        full_text_add_combined += "ADD_BundleSDF_pvnet_segmentation_only: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_pvnet_segmentation_only & " + latex_add
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_current_implementation.npy", allow_pickle=True).item()
+        self.add_bundle_current_implementation = load_arr["result_y"]
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_union_occlusion.npy", allow_pickle=True).item()
+        self.add_bundle_union_occlusion = load_arr["result_y"]
 
 
 
@@ -216,16 +291,47 @@ class ResultPlotter:
         
         self.rot_movement_2 = ResultPlotter.calcRotMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
         self.trans_movement_2 = ResultPlotter.calcTransMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
+
+        with open(ADD_logpath, 'w') as datei:
+            datei.write(full_text_add_combined)
+            datei.write("\n\n\n\n")
+            datei.write(latex_add_combined)
     
     def loadMaskResults(self):
         load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_pvnet.npy", allow_pickle=True).item()
         self.iou_pvnet = load_arr["iou"]
+        self.pixel_acc_pvnet = load_arr["pixel_acc"]
+        self.precision_acc_pvnet = load_arr["precision"]
+        self.recall_pvnet = load_arr["recall"]
+        self.dice_pvnet = load_arr["dice"]
 
         load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_cutie.npy", allow_pickle=True).item()
         self.iou_first_mask_pvnet_cutie = load_arr["iou"]
+        self.pixel_acc_first_mask_pvnet_cutie = load_arr["pixel_acc"]
+        self.precision_acc_first_mask_pvnet_cutie = load_arr["precision"]
+        self.recall_first_mask_pvnet_cutie = load_arr["recall"]
+        self.dice_first_mask_pvnet_cutie = load_arr["dice"]
+
+        load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_offline_cutie.npy", allow_pickle=True).item()
+        self.iou_first_mask_offline_cutie = load_arr["iou"] 
+        self.pixel_acc_first_mask_offline_cutie = load_arr["pixel_acc"]
+        self.precision_acc_first_mask_offline_cutie = load_arr["precision"]
+        self.recall_first_mask_offline_cutie = load_arr["recall"]
+        self.dice_first_mask_offline_cutie = load_arr["dice"]       
 
         load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_pvnet_xmem.npy", allow_pickle=True).item()
         self.iou_first_mask_pvnet_xmem = load_arr["iou"]
+        self.pixel_acc_first_mask_pvnet_xmem = load_arr["pixel_acc"]
+        self.precision_acc_first_mask_pvnet_xmem = load_arr["precision"]
+        self.recall_first_mask_pvnet_xmem = load_arr["recall"]
+        self.dice_first_mask_pvnet_xmem = load_arr["dice"]
+
+        load_arr = np.load("benchmarks/BuchVideo/mask_analysis/Metrics_first_mask_offline_xmem.npy", allow_pickle=True).item()
+        self.iou_first_mask_offline_xmem = load_arr["iou"]
+        self.pixel_acc_first_mask_offline_xmem = load_arr["pixel_acc"]
+        self.precision_acc_first_mask_offline_xmem = load_arr["precision"]
+        self.recall_first_mask_offline_xmem = load_arr["recall"]
+        self.dice_first_mask_offline_xmem = load_arr["dice"]
 
     def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_2.npy"):
         self.time_keeper = TimeAnalyser()
@@ -335,15 +441,40 @@ class ResultPlotter:
     
     def plotMaskResults(self):
         
+        plt.plot(self.x, self.iou_pvnet, label = "IoU PVNet")
+        # plt.plot(self.x, self.pixel_acc_pvnet,label  = "Pixel accuracy")
+        # plt.plot(self.x, self.precision_acc_pvnet, label = "Precision")
+        # plt.plot(self.x, self.recall_pvnet, label = "Recall")
+        # plt.plot(self.x, self.dice_pvnet, label = "Dice")
+        
+        plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IoU Cutie first mask PVNet")
+        # plt.plot(self.x, self.pixel_acc_first_mask_pvnet_cutie, label = "Pixel accuracy")
+        # plt.plot(self.x, self.precision_acc_first_mask_pvnet_cutie, label = "Precision")
+        # plt.plot(self.x, self.recall_first_mask_pvnet_cutie, label = "Recall")
+        # plt.plot(self.x, self.dice_first_mask_pvnet_cutie, label = "Dice")
+        
+        #plt.plot(self.x, self.iou_first_mask_offline_cutie, label = "IoU Cutie first mask gt")
+        # plt.plot(self.x, self.pixel_acc_first_mask_offline_cutie,label = "Pixel accuracy")
+        # plt.plot(self.x, self.precision_acc_first_mask_offline_cutie,  label = "Precision")
+        # plt.plot(self.x, self.recall_first_mask_offline_cutie, label = "Recall")
+        # plt.plot(self.x, self.dice_first_mask_offline_cutie, label = "Dice")
 
-        plt.plot(self.x, self.iou_pvnet, label = "IOU Pure PVNet")
-        plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IOU First PVNet Cutie")
-        plt.plot(self.x, self.iou_first_mask_pvnet_xmem, label = "IOU First PVNet XMem")
+        #plt.plot(self.x, self.iou_first_mask_pvnet_xmem, label = "IoU XMEM first mask PVNet")
+        # plt.plot(self.x, self.pixel_acc_first_mask_pvnet_xmem,label = "Pixel accuracy")
+        # plt.plot(self.x, self.precision_acc_first_mask_pvnet_xmem,  label = "Precision")
+        # plt.plot(self.x, self.recall_first_mask_pvnet_xmem, label = "Recall")
+        # plt.plot(self.x, self.dice_first_mask_pvnet_xmem, label = "Dice")
+
+        #plt.plot(self.x, self.iou_first_mask_offline_xmem, label = "IoU XMEM first mask gt")
+        # plt.plot(self.x, self.pixel_acc_first_mask_offline_xmem,label = "Pixel accuracy")
+        # plt.plot(self.x, self.precision_acc_first_mask_offline_xmem,  label = "Precision")
+        # plt.plot(self.x, self.recall_first_mask_offline_xmem, label = "Recall")
+        # plt.plot(self.x, self.dice_first_mask_offline_xmem, label = "Dice")
 
         ax = plt.gca()
         ax.set_xlabel("Frame")
-        ax.set_ylabel("IOU")
-        # ax.grid(True)
+        ax.set_ylabel("Value")
+        ax.grid(True)
         plt.legend(loc="upper right")
         
         # ax.set_title('IOU comparison', fontsize = 40, fontweight ='bold')
@@ -387,13 +518,13 @@ class ResultPlotter:
         
         #plt.show()
 
-    def setupPlot(self,use_tk_backend = True):
+    def setupPlot(self,use_tk_backend = False):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
-        plt.rc ('font', size = 15)
+        plt.rc ('font', size = 20) #20 für masken
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1.0])
+        ax.set_ylim([0, 1.4]) #2.5 für Masken
         ax.set_xlim([0, len(self.x)])
 
 
@@ -444,11 +575,11 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
         #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
         # #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="Limit rotation translation")
-        plt.plot(self.x, self.add_bundle_icp, label="ICP")
+        #plt.plot(self.x, self.add_bundle_icp, label="ICP")
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
-        plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
+        #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
         #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
@@ -459,6 +590,8 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
         #plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "Cutie first PVNet")
         #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
+        plt.plot(self.x,self.add_bundle_current_implementation, label = "Current implementation")
+        plt.plot(self.x,self.add_bundle_union_occlusion, label = "Union occlusion value")
 
 
 
@@ -492,7 +625,7 @@ class ResultPlotter:
         #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
         #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
         #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
-        #plt.show()
+        plt.show()
     
     def exportPlot(self, path:str, white_border:bool = False):
         is_pdf = False
@@ -621,10 +754,41 @@ class ResultPlotter:
         
         return (r, g, b)
 
+    @staticmethod
+    def calcADD(x,y, diameter, k_m = 0.1):
+        full_string = ""
+        latex_string = ""
+        total_add = len(x)
+        if total_add > 0:
+            good_add = y[y < (k_m * diameter)]
+            full_string += "ADD_10 = " + str (len(good_add) / total_add) + "\n"
+            latex_string += str (len(good_add) / total_add) + " & "
+            
+            k_m = 0.2
+            good_add = y[y < (k_m * diameter)]
+            full_string += "ADD_20 = " + str (len(good_add) / total_add) + "\n"
+            latex_string += str (len(good_add) / total_add) + " & "
+            
+            k_m = 0.3
+            good_add = y[y < (k_m * diameter)]
+            full_string += "ADD_30 = " + str (len(good_add) / total_add) + "\n"
+            latex_string += str (len(good_add) / total_add) + " & "
+            
+            k_m = 0.4
+            good_add = y[y < (k_m * diameter)]
+            full_string += "ADD_40 = " + str (len(good_add) / total_add) + "\n"
+            latex_string += str (len(good_add) / total_add) + " & "
+
+            k_m = 0.5
+            good_add = y[y < (k_m * diameter)]
+            full_string += "ADD_50 = " + str (len(good_add) / total_add) + "\n"
+            latex_string += str (len(good_add) / total_add) + " \\\\\n"
+        return full_string, latex_string
+
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
     #result_plot.plotADDResults()
-    #result_plot.plotMaskResults()
-    result_plot.plotTimingResults()
-    result_plot.exportPlot("plots/BuchVideo/timing/timing_pose_regression_2_false.pdf")
+    result_plot.plotMaskResults()
+    #result_plot.plotTimingResults()
+    result_plot.exportPlot("plots/BuchVideo/mask/iou_pvnet_first_mask_pvnet_cutie.pdf")

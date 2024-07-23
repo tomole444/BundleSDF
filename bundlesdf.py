@@ -371,6 +371,7 @@ class BundleSdf:
 
     # Velocity pose estimator
     self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path)
+    self.velocity_estimations = {"tfs":[], "ids": [], "calculation_times": []}
     self.last_tfs = []
     self.last_time_stamp = None
     #self.last_euler_angle = None
@@ -1204,6 +1205,8 @@ class BundleSdf:
     
     np.save(os.path.join(self.trans_movement_path, str(frame._id) + ".npy"),  np.array(self.trans_movements))
     np.save(os.path.join(self.rot_movement_path, str(frame._id) + ".npy"),    np.array(self.rot_movements))
+    save_arr = np.array(self.velocity_estimations, dtype=object)
+    np.save(os.path.join(self.debug_dir, "velocity_estimations.npy"), save_arr, allow_pickle=True)
     
     if frame._status != my_cpp.Frame.FAIL:
       self.last_valid_tf = np.linalg.inv(frame._pose_in_model).copy()
@@ -1612,6 +1615,8 @@ class BundleSdf:
     return ret
 
   def get_Estimation(self):
+    
+    start_calc = time.time()
     ret = None
     last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
     last_acc_std = np.std(last_accs, axis = 0)  
@@ -1619,6 +1624,9 @@ class BundleSdf:
       last_tfs = np.array(self.last_tfs)[ len(self.last_tfs) - (self.cfg_track["estimation"]["use_last"] - 1) : len(self.last_tfs)]
       last_tfs = np.array(last_tfs)
       ret = self.velocity_pose_regression.predictPose(np.array(last_tfs))
+      self.velocity_estimations["tfs"].append(ret)
+      self.velocity_estimations["ids"].append(self.bundler._newframe._id)
+      self.velocity_estimations["calculation_times"].append(time.time() - start_calc)
     
     return ret
 

@@ -48,7 +48,7 @@ class BenchmarkADD:
                 shape = pose.shape
                 pose = pose[:4, :4]
             self.pred_poses.append(pose)
-            self.ids.append(idx)
+            self.ids.append(int(pose_file.split(".")[0]))
 
         self.pred_poses = np.array(self.pred_poses)
         self.ids = np.array(self.ids)
@@ -71,7 +71,7 @@ class BenchmarkADD:
 
         for i in range(len(self.pred_poses)):
             #adi = adi_err(pred_poses[i],gt_poses[i],mesh.vertices.copy())
-            add, trans_err, rot_err = self.calc_add_error(self.pred_poses[i],self.gt_poses[i])
+            add, trans_err, rot_err = self.calc_add_error(self.pred_poses[i],self.gt_poses[self.ids[i]])
             #adi_errs.append(adi)
             self.add_errs.append(add)
             self.trans_errs.append(trans_err)
@@ -333,7 +333,7 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoCurrent/ob_in_cam",
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICPReactivation/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -341,10 +341,10 @@ def calcADD():
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_current_0.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_icp_reactivation.npy")
 
 def calcMaskMetrics():
-    bench = BenchmarkSegmentation(masks_est_dir= "outBuchVideoFirstMaskPVNet/mask",
+    bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_pvnet",
                                   masks_gt_dir="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
     bench.calc_metrics()
     bench.plot_results()
@@ -352,5 +352,5 @@ def calcMaskMetrics():
 
 
 if __name__ == "__main__":
-    calcADD()
-    #calcMaskMetrics()
+    #calcADD()
+    calcMaskMetrics()

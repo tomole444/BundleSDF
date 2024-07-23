@@ -297,7 +297,7 @@ bool Bundler::checkAndAddKeyframe(std::shared_ptr<Frame> frame)
     const auto &cur_pose = frame->_pose_in_model;
     float rot_diff = Utils::rotationGeodesicDistanceIgnoreRotationAroundCamZ(cur_pose.block(0,0,3,3).transpose(), k_pose.block(0,0,3,3).transpose());
     float trans_diff = (cur_pose.inverse().block(0,3,3,1)-k_pose.inverse().block(0,3,3,1)).norm();
-    SPDLOG("frame {} trans_diff: ", frame->_id_str, trans_diff);
+    //SPDLOG("frame {} trans_diff: ", frame->_id_str, trans_diff);
     if (rot_diff<min_rot)
     {
       SPDLOG("frame {} not selected as keyframe since its rot diff with frame {} is {} deg", frame->_id_str, kf->_id_str, rot_diff/M_PI*180);
@@ -305,7 +305,7 @@ bool Bundler::checkAndAddKeyframe(std::shared_ptr<Frame> frame)
     }
     if (trans_diff < min_trans)
     {
-      SPDLOG("frame {} not selected as keyframe since its rot diff with frame {} is {} deg", frame->_id_str, kf->_id_str, trans_diff);
+      SPDLOG("frame {} not selected as keyframe since its trans_diff with frame {} is {} m", frame->_id_str, kf->_id_str, trans_diff);
       return false;
     }
   }
