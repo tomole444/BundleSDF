@@ -184,8 +184,8 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_-4.npy", allow_pickle=True).item()
         self.add_bundle_pose_regression_minus_4 = load_arr["result_y"]
         full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
-        full_text_add_combined += "ADD_BundleSDF_pose_regression_: " + full_text_add + "\n\n"
-        latex_add_combined += "ADD_BundleSDF_pose_regression_ & " + latex_add
+        full_text_add_combined += "ADD_BundleSDF_pose_regression_-4: " + full_text_add + "\n\n"
+        latex_add_combined += "ADD_BundleSDF_pose_regression_-4 & " + latex_add
         
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_cutie_first_offline_segmentation.npy", allow_pickle=True).item()
         self.add_bundle_cutie_first_offline_segmentation = load_arr["result_y"]
@@ -222,6 +222,16 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_union_occlusion.npy", allow_pickle=True).item()
         self.add_bundle_union_occlusion = load_arr["result_y"]
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_2.npy", allow_pickle=True).item()
+        self.add_bundle_extrapolated_poses_only_2 = load_arr["result_y"]
+        self.x_extrapolated_poses_only_2 = load_arr["ids"]
+
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_-4.npy", allow_pickle=True).item()
+        self.add_bundle_extrapolated_poses_only_minus_4 = load_arr["result_y"]
+        self.x_extrapolated_poses_only_minus_4 = load_arr["ids"]
+
+
 
 
 
@@ -336,14 +346,21 @@ class ResultPlotter:
     def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_2.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
+        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_2.txt"
+        WRITE_LOG = False
+        
 
         keys = self.time_keeper.time_save.keys()
-        print("Loaded timer with keys: ", keys)
+        #print("Loaded timer with keys: ", keys)
 
         ANALYSE_ORIGINAL = False
+
+        timing_log_str = f"Average times (ANALYSE_ORIGINAL = {ANALYSE_ORIGINAL}, timing_file_path = {timing_file_path}): " + "\n" 
         
         time_pair_preprocessing = ("preprocessing", "preprocessing_done")
-
+        self.time_pair_preprocessing_ids , self.time_pair_preprocessing_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_preprocessing)
+        timing_log_str += "time_pair_preprocessing_execution_times & " +  str(np.round(np.average(self.time_pair_preprocessing_execution_times), 5)) + "s " + "\\\\\n"
+        
         time_pair_run = ("run", "run_done")
 
         #time_pair_process_new_frame = ("process_new_frame", "invalidatePixelsByMask")
@@ -378,19 +395,19 @@ class ResultPlotter:
             self.time_pair_nerf_pose_adaptation_ids, self.time_pair_nerf_pose_adaptation_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_nerf_pose_adaptation)
             self.time_pair_rematch_after_nerf_ids, self.time_pair_rematch_after_nerf_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_rematch_after_nerf)
 
-            print ("Average time self.time_pair_invalidatePixelsByMask_execution_times: ", np.average(self.time_pair_invalidatePixelsByMask_execution_times))
-            print ("Average time self.time_pair_pointCloudDenoise_execution_times: ", np.average(self.time_pair_pointCloudDenoise_execution_times))
-            print ("Average time self.time_pair_find_corres_execution_times: ", np.average(self.time_pair_find_corres_execution_times))
-            print ("Average time self.time_pair_min_match_with_ref_execution_times: ", np.average(self.time_pair_min_match_with_ref_execution_times))
-            print ("Average time self.time_pair_procrustesByCorrespondence_execution_times: ", np.average(self.time_pair_procrustesByCorrespondence_execution_times))
-            print ("Average time self.time_pair_selectKeyFramesForBA_execution_times: ", np.average(self.time_pair_selectKeyFramesForBA_execution_times))
-            print ("Average time self.time_pair_getFeatureMatchPairs_execution_times: ", np.average(self.time_pair_getFeatureMatchPairs_execution_times))
-            print ("Average time self.time_pair_optimizeGPU_execution_times: ", np.average(self.time_pair_optimizeGPU_execution_times))
-            print ("Average time self.time_pair_checkAndAddKeyframe_execution_times: ", np.average(self.time_pair_checkAndAddKeyframe_execution_times))
-            print ("Average time self.time_pair_process_frame_execution_times: ", np.average(self.time_pair_process_frame_execution_times))
-            print ("Average time self.time_pair_nerf_start_execution_times: ", np.average(self.time_pair_nerf_start_execution_times))
-            print ("Average time self.time_pair_nerf_pose_adaptation_execution_times: ", np.average(self.time_pair_nerf_pose_adaptation_execution_times))
-            print ("Average time self.time_pair_rematch_after_nerf_execution_times: ", np.average(self.time_pair_rematch_after_nerf_execution_times))
+            timing_log_str += "time_pair_invalidatePixelsByMask_execution_times & " +  str(np.round(np.average(self.time_pair_invalidatePixelsByMask_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_pointCloudDenoise_execution_times & " +  str(np.round(np.average(self.time_pair_pointCloudDenoise_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_find_corres_execution_times & " +  str(np.round(np.average(self.time_pair_find_corres_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_min_match_with_ref_execution_times & " +  str(np.round(np.average(self.time_pair_min_match_with_ref_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_procrustesByCorrespondence_execution_times & " +  str(np.round(np.average(self.time_pair_procrustesByCorrespondence_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_selectKeyFramesForBA_execution_times & " +  str(np.round(np.average(self.time_pair_selectKeyFramesForBA_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_getFeatureMatchPairs_execution_times & " +  str(np.round(np.average(self.time_pair_getFeatureMatchPairs_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_optimizeGPU_execution_times & " +  str(np.round(np.average(self.time_pair_optimizeGPU_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_checkAndAddKeyframe_execution_times & " +  str(np.round(np.average(self.time_pair_checkAndAddKeyframe_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_process_frame_execution_times & " +  str(np.round(np.average(self.time_pair_process_frame_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_nerf_start_execution_times & " +  str(np.round(np.average(self.time_pair_nerf_start_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_nerf_pose_adaptation_execution_times & " +  str(np.round(np.average(self.time_pair_nerf_pose_adaptation_execution_times), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_rematch_after_nerf_execution_times & " +  str(np.round(np.average(self.time_pair_rematch_after_nerf_execution_times), 5)) + "s " + "\\\\\n"
 
         else:
             time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask","denoise_cloud")
@@ -417,37 +434,48 @@ class ResultPlotter:
             self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_checkAndAddKeyframe)
             self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_process_frame)
 
-            print("Average time self.time_pair_invalidatePixelsByMask_execution_time: ", np.average(self.time_pair_invalidatePixelsByMask_execution_time))
-            print("Average time self.time_pair_denoise_cloud_execution_time: ", np.average(self.time_pair_denoise_cloud_execution_time))
-            print("Average time self.time_pair_find_corres_1_execution_time: ", np.average(self.time_pair_find_corres_1_execution_time))
-            print("Average time self.time_pair_selectKeyFramesForBA_execution_time: ", np.average(self.time_pair_selectKeyFramesForBA_execution_time))
-            print("Average time self.time_pair_getFeatureMatchPairs_execution_time: ", np.average(self.time_pair_getFeatureMatchPairs_execution_time))
-            print("Average time self.time_pair_find_corres_2_execution_time: ", np.average(self.time_pair_find_corres_2_execution_time))
-            print("Average time self.time_pair_optimizeGPU_execution_time: ", np.average(self.time_pair_optimizeGPU_execution_time))
-            print("Average time self.time_pair_checkMovement_limits_execution_time: ", np.average(self.time_pair_checkMovement_limits_execution_time))
-            print("Average time self.time_pair_icp_execution_time: ", np.average(self.time_pair_icp_execution_time))
-            print("Average time self.time_pair_checkAndAddKeyframe_execution_time: ", np.average(self.time_pair_checkAndAddKeyframe_execution_time))
-            print("Average time self.time_pair_process_frame_execution_time: ", np.average(self.time_pair_process_frame_execution_time))
+            timing_log_str += "time_pair_invalidatePixelsByMask_execution_time & " + str(np.round(np.average(self.time_pair_invalidatePixelsByMask_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_denoise_cloud_execution_time & " + str(np.round(np.average(self.time_pair_denoise_cloud_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_find_corres_1_execution_time & " + str(np.round(np.average(self.time_pair_find_corres_1_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_selectKeyFramesForBA_execution_time & " + str(np.round(np.average(self.time_pair_selectKeyFramesForBA_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_getFeatureMatchPairs_execution_time & " + str(np.round(np.average(self.time_pair_getFeatureMatchPairs_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_find_corres_2_execution_time & " + str(np.round(np.average(self.time_pair_find_corres_2_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_optimizeGPU_execution_time & " + str(np.round(np.average(self.time_pair_optimizeGPU_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_checkMovement_limits_execution_time & " + str(np.round(np.average(self.time_pair_checkMovement_limits_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_icp_execution_time & " + str(np.round(np.average(self.time_pair_icp_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_checkAndAddKeyframe_execution_time & " + str(np.round(np.average(self.time_pair_checkAndAddKeyframe_execution_time), 5)) + "s " + "\\\\\n"
+            timing_log_str += "time_pair_process_frame_execution_time & " + str(np.round(np.average(self.time_pair_process_frame_execution_time), 5)) + "s " + "\\\\\n"
 
 
         self.time_pair_run_ids, self.time_pair_run_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_run)
         #self.time_pair_1_ids, self.time_pair_1_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process_new_frame) 
 
+        #calculate time per estimation extrapolation - normal
+        extrapolation_ids = self.x_extrapolated_poses_only_2
+        normal_ids_mask = np.setdiff1d(self.x, extrapolation_ids)
 
-        print("Whole runtime: ", self.time_keeper.time_save["whole_runtime_done"][0]["time"] - self.time_keeper.time_save["whole_runtime"][0]["time"])
+        #print("Average extrapolation time: ", np.round(np.average(self.time_pair_run_execution_times [extrapolation_ids]), 5), "s")
+        #print("Average normal time: ", np.round(np.average(self.time_pair_run_execution_times [normal_ids_mask]), 5), "s")
 
-        print("Average time per frame ", np.average(self.time_pair_run_execution_times))
+
+        timing_log_str += "Whole runtime & " + str(np.round(self.time_keeper.time_save["whole_runtime_done"][0]["time"] - self.time_keeper.time_save["whole_runtime"][0]["time"], 2)) + "s " + "\\\\\n"
+        timing_log_str += "Average time per frame & " + str(np.round(np.average(self.time_pair_run_execution_times), 5)) + "s " + "\\\\\n"
+        
+        if WRITE_LOG:
+            with open(timing_log_path, 'w') as datei:
+                datei.write(timing_log_str)
+
 
     
     def plotMaskResults(self):
         
-        plt.plot(self.x, self.iou_pvnet, label = "IoU PVNet")
+        # plt.plot(self.x, self.iou_pvnet, label = "IoU PVNet")
         # plt.plot(self.x, self.pixel_acc_pvnet,label  = "Pixel accuracy")
         # plt.plot(self.x, self.precision_acc_pvnet, label = "Precision")
         # plt.plot(self.x, self.recall_pvnet, label = "Recall")
         # plt.plot(self.x, self.dice_pvnet, label = "Dice")
         
-        plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IoU Cutie first mask PVNet")
+        plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IoU Cutie")
         # plt.plot(self.x, self.pixel_acc_first_mask_pvnet_cutie, label = "Pixel accuracy")
         # plt.plot(self.x, self.precision_acc_first_mask_pvnet_cutie, label = "Precision")
         # plt.plot(self.x, self.recall_first_mask_pvnet_cutie, label = "Recall")
@@ -472,8 +500,8 @@ class ResultPlotter:
         # plt.plot(self.x, self.dice_first_mask_offline_xmem, label = "Dice")
 
         ax = plt.gca()
-        ax.set_xlabel("Frame")
-        ax.set_ylabel("Value")
+        ax.set_xlabel("Frame-ID")
+        ax.set_ylabel("ADD [m] / Value")
         ax.grid(True)
         plt.legend(loc="upper right")
         
@@ -500,17 +528,18 @@ class ResultPlotter:
         # plt.plot(self.time_pair_nerf_pose_adaptation_ids, self.time_pair_nerf_pose_adaptation_execution_times, label = "nerf_pose_adaptation")
         # plt.plot(self.time_pair_rematch_after_nerf_ids, self.time_pair_rematch_after_nerf_execution_times, label = "rematch_after_nerf")
 
-        plt.plot(self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time, label = "time_pair_invalidatePixelsByMask")
-        plt.plot(self.time_pair_denoise_cloud_ids, self.time_pair_denoise_cloud_execution_time, label = "time_pair_denoise_cloud")
-        plt.plot(self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time, label = "time_pair_find_corres_1")
-        plt.plot(self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time, label = "time_pair_selectKeyFramesForBA")
-        plt.plot(self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time, label = "time_pair_getFeatureMatchPairs")
-        plt.plot(self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time, label = "time_pair_find_corres_2")
-        plt.plot(self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time, label = "time_pair_optimizeGPU")
-        plt.plot(self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time, label = "time_pair_checkMovement_limits")
+        plt.plot(self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time, label = "invalidatePixelsByMask")
+        plt.plot(self.time_pair_denoise_cloud_ids, self.time_pair_denoise_cloud_execution_time, label = "denoise_cloud")
+        plt.plot(self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time, label = "find_corres_1")
+        plt.plot(self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time, label = "selectKeyFramesForBA")
+        plt.plot(self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time, label = "getFeatureMatchPairs")
+        plt.plot(self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time, label = "find_corres_2")
+        plt.plot(self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time, label = "optimizeGPU")
+        plt.plot(self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time, label = "checkMovement_limits")
+        plt.plot(self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time, label = "checkAndAddKeyframe")
+        plt.plot(self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time, label = "process_frame")
         #plt.plot(self.time_pair_icp_ids, self.time_pair_icp_execution_time, label = "time_pair_icp")
-        plt.plot(self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time, label = "time_pair_checkAndAddKeyframe")
-        plt.plot(self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time, label = "time_pair_process_frame")
+
 
 
         
@@ -518,15 +547,14 @@ class ResultPlotter:
         
         #plt.show()
 
-    def setupPlot(self,use_tk_backend = False):
+    def setupPlot(self,use_tk_backend = True):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
-        plt.rc ('font', size = 20) #20 für masken
+        plt.rc ('font', size = 15) #20 für masken / 30 für posen / 15 für timing
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1.4]) #2.5 für Masken
+        ax.set_ylim([0, 1.5]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5für timing 
         ax.set_xlim([0, len(self.x)])
-
 
     def plotADDResults(self):
         #x = range(0,len(y))
@@ -557,15 +585,15 @@ class ResultPlotter:
         # plt.plot(self.x_masked_upnp, self.confidence_kpt_7[self.mask_upnp], label ="Confidences kpt 7")
         # plt.plot(self.x_masked_upnp, self.confidence_kpt_8[self.mask_upnp], label ="Confidences kpt 8")
         
-        # plt.plot(self.x_masked_upnp, self.avg, label ="Uncertainty avgerage")
-        # plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
+        #plt.plot(self.x_masked_upnp, self.avg, label ="Uncertainty avgerage")
+        #plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
         
         # plt.plot(self.x, np.ones(self.x.shape) * 0.05)
         # plt.plot(self.x, np.ones(self.x.shape) * 0.65)
         #plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
 
 
-        #plt.plot(self.x, self.add_bundle_orig, label="Original")
+        #plt.plot(self.x, self.add_bundle_orig, label="Gt segmentation")
         #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
         #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
         #plt.plot(x, rot_movement_2, label="Rot movement")
@@ -582,16 +610,19 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
-        #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
+        # plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
         #plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression -4")
-        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie first offline")
+        # plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
-        #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "Original XMEM")
-        #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "ADD PVNet Only Segmentation")
+        #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "XMEM segmentation")
+        #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "PVNet segmentation")
         #plt.plot(self.x,self.add_bundle_first_pvnet_cutie_segmentation, label = "Cutie first PVNet")
         #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
-        plt.plot(self.x,self.add_bundle_current_implementation, label = "Current implementation")
-        plt.plot(self.x,self.add_bundle_union_occlusion, label = "Union occlusion value")
+        #plt.plot(self.x,self.add_bundle_current_implementation, label = "Current implementation")
+        #plt.plot(self.x,self.add_bundle_union_occlusion, label = "Union occlusion value")
+
+        plt.plot(self.x_extrapolated_poses_only_2, self.add_bundle_extrapolated_poses_only_2, label = "Pose regression 2")
+        plt.plot(self.x_extrapolated_poses_only_minus_4, self.add_bundle_extrapolated_poses_only_minus_4, label = "Pose regression -4")
 
 
 
@@ -625,7 +656,7 @@ class ResultPlotter:
         #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
         #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
         #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
-        plt.show()
+        #plt.show()
     
     def exportPlot(self, path:str, white_border:bool = False):
         is_pdf = False
@@ -755,40 +786,27 @@ class ResultPlotter:
         return (r, g, b)
 
     @staticmethod
-    def calcADD(x,y, diameter, k_m = 0.1):
+    def calcADD(x,y, diameter, k_m = 10):
         full_string = ""
         latex_string = ""
         total_add = len(x)
         if total_add > 0:
-            good_add = y[y < (k_m * diameter)]
-            full_string += "ADD_10 = " + str (len(good_add) / total_add) + "\n"
-            latex_string += str (len(good_add) / total_add) + " & "
-            
-            k_m = 0.2
-            good_add = y[y < (k_m * diameter)]
-            full_string += "ADD_20 = " + str (len(good_add) / total_add) + "\n"
-            latex_string += str (len(good_add) / total_add) + " & "
-            
-            k_m = 0.3
-            good_add = y[y < (k_m * diameter)]
-            full_string += "ADD_30 = " + str (len(good_add) / total_add) + "\n"
-            latex_string += str (len(good_add) / total_add) + " & "
-            
-            k_m = 0.4
-            good_add = y[y < (k_m * diameter)]
-            full_string += "ADD_40 = " + str (len(good_add) / total_add) + "\n"
-            latex_string += str (len(good_add) / total_add) + " & "
+            for k_m in range(10,50,10):
+                k_m = float(k_m) / 100
+                good_add = y[y < (k_m * diameter)]
+                full_string += f"ADD_{int(k_m * 100)} = " + str (np.round(len(good_add) / total_add,3)) + "\n"
+                latex_string += str (np.round(len(good_add) / total_add,3)) + " & "
 
             k_m = 0.5
             good_add = y[y < (k_m * diameter)]
-            full_string += "ADD_50 = " + str (len(good_add) / total_add) + "\n"
-            latex_string += str (len(good_add) / total_add) + " \\\\\n"
+            full_string += "ADD_50 = " + str (np.round(len(good_add) / total_add,3)) + "\n"
+            latex_string += str (np.round(len(good_add) / total_add,3)) + " \\\\\n"
         return full_string, latex_string
 
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
     #result_plot.plotADDResults()
-    result_plot.plotMaskResults()
+    #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
-    result_plot.exportPlot("plots/BuchVideo/mask/iou_pvnet_first_mask_pvnet_cutie.pdf")
+    #result_plot.exportPlot("plots/BuchVideo/timing/timing_BundleSDF_pose_regression_-4.pdf")

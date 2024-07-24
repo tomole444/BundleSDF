@@ -782,10 +782,12 @@ class BundleSdf:
     local_frames = self.bundler._local_frames
     
     self.time_keeper.add("getFeatureMatchPairs",frame._id)
-    pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
-    self.time_keeper.add("find_corres_2",frame._id)
-    self.find_corres(pairs)
-
+    if self.cfg_track["time_reducer"]["search_all_pairs_feature_matching"]: 
+      pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
+      self.time_keeper.add("find_corres_2",frame._id)
+      self.find_corres(pairs)
+    else:
+      self.time_keeper.add("find_corres_2",frame._id)
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
