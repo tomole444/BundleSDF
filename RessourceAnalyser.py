@@ -13,6 +13,8 @@ class RessourceAnalyser:
         self.current_cpu_usage = -1 # CPU load in Percent
         self.current_memory_usage = -1 # Memory usage in MiB
 
+        #self.cpu_usage_interval = 
+
         self.combined_info = {
             "GPU": [],
             "CPU": [],
@@ -20,6 +22,7 @@ class RessourceAnalyser:
             }
 
     def addDataPoint(self, meta_info):
+        start_time = time.time()
         self.getGPUMemoryUsage()
         self.getMemoryUsage()
         self.getCPUMemoryUsage()
@@ -40,9 +43,10 @@ class RessourceAnalyser:
             "usage": self.current_memory_usage
         }
         
-        self.combined_info["GPU"].append (gpu_dict)
-        self.combined_info["CPU"].append (cpu_dict)
-        self.combined_info["memory"].append (memory_dict)
+        self.combined_info["GPU"].append(gpu_dict)
+        self.combined_info["CPU"].append(cpu_dict)
+        self.combined_info["memory"].append(memory_dict)
+        print("retrieving takes ", time.time() - start_time)
 
     def save(self, file_name):
         save_arr = np.array(self.combined_info, dtype=object)
@@ -62,7 +66,7 @@ class RessourceAnalyser:
         return self.current_memory_usage
 
     def getCPUMemoryUsage(self):
-        self.current_cpu_usage = psutil.cpu_percent(interval=1)
+        self.current_cpu_usage = psutil.cpu_percent()
         return self.current_cpu_usage
     
 
@@ -72,6 +76,6 @@ if __name__ == "__main__":
     ressource_analyser = RessourceAnalyser()
 
     for i in range(100):
-        time.sleep(2)
+        time.sleep(3)
         ressource_analyser.addDataPoint(None)
     
