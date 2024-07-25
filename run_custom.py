@@ -136,9 +136,13 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
       tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     
     i += args.stride
-
+    
+    
+    tracker.ressource_tracker.addDataPoint(int(id_str))
     tracker.time_keeper.add("run_done", int(id_str))
+
     tracker.time_keeper.save(os.path.join(out_folder, "timing.npy"))
+    tracker.time_keeper.save(os.path.join(out_folder, "ressource_monitor.npy"))
 
   tracker.time_keeper.add("whole_runtime_done", int(id_str))
   tracker.time_keeper.save(os.path.join(out_folder, "timing.npy"))

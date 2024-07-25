@@ -30,6 +30,7 @@ import open3d as o3d
 from velocity_pose_regression import VelocityPoseRegression
 from TimeAnalyser import TimeAnalyser
 from InferenceClient import InferenceClient
+from RessourceAnalyser import RessourceAnalyser
 
 try:
   multiprocessing.set_start_method('spawn')
@@ -385,6 +386,9 @@ class BundleSdf:
 
     #time analysis
     self.time_keeper = TimeAnalyser()
+
+    #ressource analysis
+    self.ressource_tracker = RessourceAnalyser()
 
     os.makedirs(self.trans_movement_path, exist_ok=True)
     os.makedirs(self.rot_movement_path, exist_ok=True)

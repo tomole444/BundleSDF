@@ -343,7 +343,7 @@ class ResultPlotter:
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
 
-    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_2.npy"):
+    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_orig.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
         timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_2.txt"
@@ -353,7 +353,7 @@ class ResultPlotter:
         keys = self.time_keeper.time_save.keys()
         #print("Loaded timer with keys: ", keys)
 
-        ANALYSE_ORIGINAL = False
+        ANALYSE_ORIGINAL = True
 
         timing_log_str = f"Average times (ANALYSE_ORIGINAL = {ANALYSE_ORIGINAL}, timing_file_path = {timing_file_path}): " + "\n" 
         
@@ -457,6 +457,7 @@ class ResultPlotter:
         #print("Average extrapolation time: ", np.round(np.average(self.time_pair_run_execution_times [extrapolation_ids]), 5), "s")
         #print("Average normal time: ", np.round(np.average(self.time_pair_run_execution_times [normal_ids_mask]), 5), "s")
 
+        #print("Combined nerf time: ", np.sum(self.time_pair_nerf_start_execution_times))
 
         timing_log_str += "Whole runtime & " + str(np.round(self.time_keeper.time_save["whole_runtime_done"][0]["time"] - self.time_keeper.time_save["whole_runtime"][0]["time"], 2)) + "s " + "\\\\\n"
         timing_log_str += "Average time per frame & " + str(np.round(np.average(self.time_pair_run_execution_times), 5)) + "s " + "\\\\\n"
@@ -545,7 +546,7 @@ class ResultPlotter:
         
         plt.legend(loc="upper right")
         
-        #plt.show()
+        plt.show()
 
     def setupPlot(self,use_tk_backend = True):
         if use_tk_backend:

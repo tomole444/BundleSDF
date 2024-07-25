@@ -333,15 +333,15 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression2/ob_in_cam",
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression0/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
-                      first_pose_adjust= True) 
+                      first_pose_adjust= False) 
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_2.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_Test.npy")
 
 def calcMaskMetrics():
     bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_pvnet",
