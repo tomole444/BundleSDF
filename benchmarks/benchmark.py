@@ -333,7 +333,7 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression0/ob_in_cam",
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose",
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,

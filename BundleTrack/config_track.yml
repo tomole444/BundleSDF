@@ -152,3 +152,7 @@ real_time_simulation: # use realtime simulation
 
 time_reducer: # Functions to speed up analysis
   search_all_pairs_feature_matching: True # do the feature matching with all possible pairs every run (call the getFeatureMatchPairs with all frames and do the find corres on all)
+
+meassurement:
+  time: True # meassure runtime
+  ressources: True # meassure ressource usage

@@ -26,6 +26,8 @@ class ResultPlotter:
         self.time_keeper = None
         self.loadTimingResults()
 
+        self.loadRessourceResults()
+
         self.setupPlot()
 
 
@@ -466,8 +468,73 @@ class ResultPlotter:
             with open(timing_log_path, 'w') as datei:
                 datei.write(timing_log_str)
 
+    def loadRessourceResults(self):
+        load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_bundlesdf_orig.npy", allow_pickle=True).item()
+        print(load_arr.keys())
+        self.ressources_bundle_sdf_orig_gpu =  []
+        self.ressources_bundle_sdf_orig_cpu =  []
+        self.ressources_bundle_sdf_orig_memory =  []
+        self.ressources_bundle_sdf_orig_ids = []
 
-    
+        for data_point in load_arr["GPU"]:
+            self.ressources_bundle_sdf_orig_gpu.append(data_point["usage"])
+            self.ressources_bundle_sdf_orig_ids.append(data_point["meta"])
+        for data_point in load_arr["CPU"]:
+            self.ressources_bundle_sdf_orig_cpu.append(data_point["usage"])
+        for data_point in load_arr["memory"]:
+            self.ressources_bundle_sdf_orig_memory.append(data_point["usage"])
+
+        load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_pose_regression_0.npy", allow_pickle=True).item()
+        self.ressources_pose_regression_0_gpu =  []
+        self.ressources_pose_regression_0_cpu =  []
+        self.ressources_pose_regression_0_memory =  []
+        self.ressources_pose_regression_0_ids = []
+
+        for data_point in load_arr["GPU"]:
+            self.ressources_pose_regression_0_gpu.append(data_point["usage"])
+            self.ressources_pose_regression_0_ids.append(data_point["meta"])
+        for data_point in load_arr["CPU"]:
+            self.ressources_pose_regression_0_cpu.append(data_point["usage"])
+        for data_point in load_arr["memory"]:
+            self.ressources_pose_regression_0_memory.append(data_point["usage"])
+
+        load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_pose_regression_2.npy", allow_pickle=True).item()
+        self.ressources_pose_regression_2_gpu =  []
+        self.ressources_pose_regression_2_cpu =  []
+        self.ressources_pose_regression_2_memory =  []
+        self.ressources_pose_regression_2_ids = []
+
+        for data_point in load_arr["GPU"]:
+            self.ressources_pose_regression_2_gpu.append(data_point["usage"])
+            self.ressources_pose_regression_2_ids.append(data_point["meta"])
+        for data_point in load_arr["CPU"]:
+            self.ressources_pose_regression_2_cpu.append(data_point["usage"])
+        for data_point in load_arr["memory"]:
+            self.ressources_pose_regression_2_memory.append(data_point["usage"])
+
+        load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_pose_regression_-4.npy", allow_pickle=True).item()
+        self.ressources_pose_regression_minus_4_gpu =  []
+        self.ressources_pose_regression_minus_4_cpu =  []
+        self.ressources_pose_regression_minus_4_memory =  []
+        self.ressources_pose_regression_minus_4_ids = []
+
+        for data_point in load_arr["GPU"]:
+            self.ressources_pose_regression_minus_4_gpu.append(data_point["usage"])
+            self.ressources_pose_regression_minus_4_ids.append(data_point["meta"])
+        for data_point in load_arr["CPU"]:
+            self.ressources_pose_regression_minus_4_cpu.append(data_point["usage"])
+        for data_point in load_arr["memory"]:
+            self.ressources_pose_regression_minus_4_memory.append(data_point["usage"])
+
+    def setupPlot(self,use_tk_backend = True):
+        if use_tk_backend:
+            plt.switch_backend('TkAgg')
+        plt.rc ('font', size = 15) #20 für masken / 30 für posen / 15 für timing
+        fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
+        ax = plt.gca()
+        ax.set_ylim([0, 1.5]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5für timing 
+        ax.set_xlim([0, len(self.x)])
+   
     def plotMaskResults(self):
         
         # plt.plot(self.x, self.iou_pvnet, label = "IoU PVNet")
@@ -548,14 +615,18 @@ class ResultPlotter:
         
         plt.show()
 
-    def setupPlot(self,use_tk_backend = True):
-        if use_tk_backend:
-            plt.switch_backend('TkAgg')
-        plt.rc ('font', size = 15) #20 für masken / 30 für posen / 15 für timing
-        fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
+    def plotRessourceResults(self):
         ax = plt.gca()
-        ax.set_ylim([0, 1.5]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5für timing 
-        ax.set_xlim([0, len(self.x)])
+        ax.set_xlabel("Frame")
+        ax.set_ylabel("Time [s]")
+
+        plt.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_cpu, label = "CPU usage")
+        plt.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_gpu, label = "GPU usage")
+        plt.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_memory, label = "Memory usage")
+
+        plt.legend(loc="upper right")
+        
+        plt.show()
 
     def plotADDResults(self):
         #x = range(0,len(y))
@@ -810,4 +881,5 @@ if __name__ == "__main__":
     #result_plot.plotADDResults()
     #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
+    result_plot.plotRessourceResults()
     #result_plot.exportPlot("plots/BuchVideo/timing/timing_BundleSDF_pose_regression_-4.pdf")
