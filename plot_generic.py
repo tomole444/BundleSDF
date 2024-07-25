@@ -470,19 +470,19 @@ class ResultPlotter:
 
     def loadRessourceResults(self):
         load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_bundlesdf_orig.npy", allow_pickle=True).item()
-        print(load_arr.keys())
+        #print(load_arr.keys())
         self.ressources_bundle_sdf_orig_gpu =  []
         self.ressources_bundle_sdf_orig_cpu =  []
         self.ressources_bundle_sdf_orig_memory =  []
         self.ressources_bundle_sdf_orig_ids = []
 
         for data_point in load_arr["GPU"]:
-            self.ressources_bundle_sdf_orig_gpu.append(data_point["usage"])
+            self.ressources_bundle_sdf_orig_gpu.append(data_point["usage"] / 1024)
             self.ressources_bundle_sdf_orig_ids.append(data_point["meta"])
         for data_point in load_arr["CPU"]:
             self.ressources_bundle_sdf_orig_cpu.append(data_point["usage"])
         for data_point in load_arr["memory"]:
-            self.ressources_bundle_sdf_orig_memory.append(data_point["usage"])
+            self.ressources_bundle_sdf_orig_memory.append(data_point["usage"] / 1024)
 
         load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_pose_regression_0.npy", allow_pickle=True).item()
         self.ressources_pose_regression_0_gpu =  []
@@ -491,26 +491,27 @@ class ResultPlotter:
         self.ressources_pose_regression_0_ids = []
 
         for data_point in load_arr["GPU"]:
-            self.ressources_pose_regression_0_gpu.append(data_point["usage"])
+            self.ressources_pose_regression_0_gpu.append(data_point["usage"]/ 1024)
             self.ressources_pose_regression_0_ids.append(data_point["meta"])
         for data_point in load_arr["CPU"]:
             self.ressources_pose_regression_0_cpu.append(data_point["usage"])
         for data_point in load_arr["memory"]:
-            self.ressources_pose_regression_0_memory.append(data_point["usage"])
+            self.ressources_pose_regression_0_memory.append(data_point["usage"]/ 1024)
 
         load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_pose_regression_2.npy", allow_pickle=True).item()
+        #print(load_arr.keys())
         self.ressources_pose_regression_2_gpu =  []
         self.ressources_pose_regression_2_cpu =  []
         self.ressources_pose_regression_2_memory =  []
         self.ressources_pose_regression_2_ids = []
 
         for data_point in load_arr["GPU"]:
-            self.ressources_pose_regression_2_gpu.append(data_point["usage"])
+            self.ressources_pose_regression_2_gpu.append(data_point["usage"]/ 1024)
             self.ressources_pose_regression_2_ids.append(data_point["meta"])
         for data_point in load_arr["CPU"]:
             self.ressources_pose_regression_2_cpu.append(data_point["usage"])
         for data_point in load_arr["memory"]:
-            self.ressources_pose_regression_2_memory.append(data_point["usage"])
+            self.ressources_pose_regression_2_memory.append(data_point["usage"]/ 1024)
 
         load_arr = np.load("benchmarks/BuchVideo/ressource_analysis/ressource_monitor_pose_regression_-4.npy", allow_pickle=True).item()
         self.ressources_pose_regression_minus_4_gpu =  []
@@ -519,12 +520,12 @@ class ResultPlotter:
         self.ressources_pose_regression_minus_4_ids = []
 
         for data_point in load_arr["GPU"]:
-            self.ressources_pose_regression_minus_4_gpu.append(data_point["usage"])
+            self.ressources_pose_regression_minus_4_gpu.append(data_point["usage"]/ 1024)
             self.ressources_pose_regression_minus_4_ids.append(data_point["meta"])
         for data_point in load_arr["CPU"]:
             self.ressources_pose_regression_minus_4_cpu.append(data_point["usage"])
         for data_point in load_arr["memory"]:
-            self.ressources_pose_regression_minus_4_memory.append(data_point["usage"])
+            self.ressources_pose_regression_minus_4_memory.append(data_point["usage"]/ 1024)
 
     def setupPlot(self,use_tk_backend = True):
         if use_tk_backend:
@@ -532,7 +533,7 @@ class ResultPlotter:
         plt.rc ('font', size = 15) #20 für masken / 30 für posen / 15 für timing
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1.5]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5für timing 
+        ax.set_ylim([0, 100]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
         ax.set_xlim([0, len(self.x)])
    
     def plotMaskResults(self):
@@ -617,14 +618,46 @@ class ResultPlotter:
 
     def plotRessourceResults(self):
         ax = plt.gca()
-        ax.set_xlabel("Frame")
-        ax.set_ylabel("Time [s]")
+        #twin1 = ax.twinx()
+        twin2 = ax.twinx()
 
-        plt.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_cpu, label = "CPU usage")
-        plt.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_gpu, label = "GPU usage")
-        plt.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_memory, label = "Memory usage")
+        #twin2.spines.right.set_position(("axes", 1.07))
 
-        plt.legend(loc="upper right")
+        
+        # p1, = ax.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_cpu, "C0", label="CPU usage")
+        # p2, = ax.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_gpu, "C1", label="Original GPU-Memory usage")
+        # p3, = twin2.plot(self.ressources_bundle_sdf_orig_ids, self.ressources_bundle_sdf_orig_memory, "C2", label="Original Memory usage")
+
+        # p1, = ax.plot(self.ressources_pose_regression_0_ids, self.ressources_pose_regression_0_cpu, "C0", label="CPU usage")
+        # p2, = ax.plot(self.ressources_pose_regression_0_ids, self.ressources_pose_regression_0_gpu, "C1", label="Pose regression 0 GPU-Memory usage")
+        # p3, = twin2.plot(self.ressources_pose_regression_0_ids, self.ressources_pose_regression_0_memory, "C2", label="Pose regression 0 Memory usage")
+
+        # p1, = ax.plot(self.ressources_pose_regression_2_ids, self.ressources_pose_regression_2_cpu, "C0", label="CPU usage")
+        p2, = ax.plot(self.ressources_pose_regression_2_ids, self.ressources_pose_regression_2_gpu, "C1", label="Pose regression 2 GPU-Memory usage")
+        p3, = twin2.plot(self.ressources_pose_regression_2_ids, self.ressources_pose_regression_2_memory, "C2", label="Pose regression 2 Memory usage")
+
+        # p1, = ax.plot(self.ressources_pose_regression_minus_4_ids, self.ressources_pose_regression_minus_4_cpu, "C0", label="CPU usage")
+        p4, = ax.plot(self.ressources_pose_regression_minus_4_ids, self.ressources_pose_regression_minus_4_gpu, "C3", label="Pose regression -4 GPU-Memory usage")
+        p5, = twin2.plot(self.ressources_pose_regression_minus_4_ids, self.ressources_pose_regression_minus_4_memory, "C4", label="Pose regression -4 Memory usage")
+
+
+
+        ax.yaxis.label.set_color(p2.get_color())
+        # twin1.yaxis.label.set_color(p2.get_color())
+        twin2.yaxis.label.set_color(p3.get_color())
+
+
+        ax.set(xlim=(0, self.x[-1]), ylim=(0, 25), xlabel="Frame-ID", ylabel="GPU-Memory usage [GiB]")
+        #twin1.set(ylim=(0, 25), ylabel="GPU-Memory usage [GiB]")
+        twin2.set(ylim=(0, 50), ylabel="Memory usage [GiB]")
+
+        ax.tick_params(axis='y', colors=p2.get_color())
+        #twin1.tick_params(axis='y', colors=p2.get_color())
+        twin2.tick_params(axis='y', colors=p3.get_color())
+
+        ax.legend(handles=[p2, p3, p4, p5])
+
+        ax.grid(True)
         
         plt.show()
 
@@ -882,4 +915,4 @@ if __name__ == "__main__":
     #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
     result_plot.plotRessourceResults()
-    #result_plot.exportPlot("plots/BuchVideo/timing/timing_BundleSDF_pose_regression_-4.pdf")
+    #result_plot.exportPlot("plots/BuchVideo/ressource/ressource_BundleSDF_test.pdf")
