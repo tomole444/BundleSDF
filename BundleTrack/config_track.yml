@@ -151,4 +151,4 @@ real_time_simulation: # use realtime simulation
   fps: 15 #fps that is going to be simulated
 
 time_reducer: # Functions to speed up analysis
-  search_all_pairs_feature_matching: False # do the feature matching with all possible pairs every run (call the getFeatureMatchPairs with all frames and do the find corres on all)
+  search_all_pairs_feature_matching: True # do the feature matching with all possible pairs every run (call the getFeatureMatchPairs with all frames and do the find corres on all)
