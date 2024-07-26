@@ -6,7 +6,7 @@ import pynvml
 
 
 class RessourceAnalyser:
-    def __init__(self) -> None:
+    def __init__(self, activated = True) -> None:
         pynvml.nvmlInit()
 
         self.current_gpu_usage = -1 # GPU load in MiB
@@ -18,8 +18,12 @@ class RessourceAnalyser:
             "CPU": [],
             "memory": []
             }
+        
+        self.activated = activated
 
     def addDataPoint(self, meta_info):
+        if not self.activated:
+            return None
         #start_time = time.time()
         self.getGPUMemoryUsage()
         self.getMemoryUsage()
@@ -47,8 +51,9 @@ class RessourceAnalyser:
         #print("retrieving takes ", time.time() - start_time)
 
     def save(self, file_name):
-        save_arr = np.array(self.combined_info, dtype=object)
-        np.save(file_name,save_arr, allow_pickle=True)
+        if self.activated:
+            save_arr = np.array(self.combined_info, dtype=object)
+            np.save(file_name,save_arr, allow_pickle=True)
     
     def load(self, file_name):
         self.combined_info = np.load(file_name, allow_pickle=True).item()

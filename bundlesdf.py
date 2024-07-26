@@ -385,10 +385,10 @@ class BundleSdf:
     set_logging_format(log_path= os.path.join(self.debug_dir,"console.log"))
 
     #time analysis
-    self.time_keeper = TimeAnalyser()
+    self.time_keeper = TimeAnalyser(activated= self.cfg_track["meassurement"]["time"])
 
     #ressource analysis
-    self.ressource_tracker = RessourceAnalyser()
+    self.ressource_tracker = RessourceAnalyser(activated= self.cfg_track["meassurement"]["ressources"])
 
     os.makedirs(self.trans_movement_path, exist_ok=True)
     os.makedirs(self.rot_movement_path, exist_ok=True)
@@ -1610,7 +1610,7 @@ class BundleSdf:
 
         if len(self.last_euler_velocities) != 0:
           acc_angle = (vel_angle - self.last_euler_velocities[-1]) / (current_time - self.last_time_stamp)
-          acc_trans = (vel_trans - self.last_trans_velocities[-1]) / (current_time - self.last_time_stamp)
+          acc_trans = (vel_trans - self.last_trans_velocities[-1]) / (current_time - self.last_time_stamp) # TODO:change to be in respect to the frame
           self.last_euler_accelerations.append(acc_angle)
           self.last_trans_accelerations.append(acc_trans)
 
@@ -1628,7 +1628,7 @@ class BundleSdf:
     start_calc = time.time()
     ret = None
     last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
-    last_acc_std = np.std(last_accs, axis = 0)  
+    last_acc_std = np.std(last_accs, axis = 0)   # TODO: reset array, when not taken
     if np.all(last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]):
       last_tfs = np.array(self.last_tfs)[ len(self.last_tfs) - (self.cfg_track["estimation"]["use_last"] - 1) : len(self.last_tfs)]
       last_tfs = np.array(last_tfs)

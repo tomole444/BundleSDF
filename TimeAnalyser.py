@@ -5,10 +5,15 @@ import matplotlib.pyplot as plt
 
 
 class TimeAnalyser:
-    def __init__(self) -> None:
+    def __init__(self, activated = True) -> None:
         self.time_save = dict()
 
+        self.activated = activated
+
     def add(self, save_point_name:str, meta):
+        if not self.activated:
+            return None
+
         if(save_point_name in self.time_save):
             time_points = self.time_save[save_point_name]
         else:
@@ -21,8 +26,9 @@ class TimeAnalyser:
 
 
     def save(self, file_name):
-        save_arr = np.array(self.time_save, dtype=object)
-        np.save(file_name,save_arr, allow_pickle=True)
+        if self.activated:
+            save_arr = np.array(self.time_save, dtype=object)
+            np.save(file_name,save_arr, allow_pickle=True)
     def load(self, file_name):
         self.time_save = np.load(file_name, allow_pickle=True).item()
 

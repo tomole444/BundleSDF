@@ -8,6 +8,7 @@ import time
 import hashlib
 import scienceplots
 from TimeAnalyser import TimeAnalyser
+from scipy.spatial.transform import Rotation 
 
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPDF
@@ -111,6 +112,8 @@ class ResultPlotter:
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_NoNerfPVNet_2.npy", allow_pickle=True).item()
         self.add_bundle_nonerf_pvnet = load_arr["result_y"]
+        mask = ResultPlotter.calcMask("outBuchVideoFirstMaskPVNet/ob_in_cam")
+        self.x_masked_first_pvnet = self.x[mask]
         full_text_add, latex_add = ResultPlotter.calcADD(load_arr["ids"], load_arr["result_y"], diameter)
         full_text_add_combined += "ADD_BundleSDF_NoNerfPVNet_2: " + full_text_add + "\n\n"
         latex_add_combined += "ADD_BundleSDF_NoNerfPVNet_2 & " + latex_add
@@ -300,9 +303,14 @@ class ResultPlotter:
         #rot_movement = np.load("outBuchVideoNoLimiting/rot_movement/1699.npy", allow_pickle=True)
 
         #trans_movement = np.load("outBuchVideoNoLimiting/trans_movement/1699.npy", allow_pickle=True)
+
         
-        self.rot_movement_2 = ResultPlotter.calcRotMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
-        self.trans_movement_2 = ResultPlotter.calcTransMovement(pose_dir = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoICP/ob_in_cam")
+        self.rot_movement_2 = ResultPlotter.calcRotMovement(pose_dir = "outBuchVideoNoNerf/ob_in_cam")
+        self.trans_movement_2 = ResultPlotter.calcTransMovement(pose_dir = "outBuchVideoNoNerf/ob_in_cam")
+
+        self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot, self.acc_pose_regression_0_floating_std_ids, self.acc_pose_regression_0_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "outBuchVideoPoseRegression0/ob_in_cam")
+        self.acc_pose_regression_2_ids, self.acc_pose_regression_2_rot, self.acc_pose_regression_2_floating_std_ids, self.acc_pose_regression_2_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "outBuchVideoPose_regression_2_old/ob_in_cam")
+
 
         with open(ADD_logpath, 'w') as datei:
             datei.write(full_text_add_combined)
@@ -530,10 +538,10 @@ class ResultPlotter:
     def setupPlot(self,use_tk_backend = True):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
-        plt.rc ('font', size = 15) #20 für masken / 30 für posen / 15 für timing
+        plt.rc ('font', size = 30) #20 für masken / 30 für posen / 15 für timing
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 100]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
+        ax.set_ylim([0, 0.2]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
         ax.set_xlim([0, len(self.x)])
    
     def plotMaskResults(self):
@@ -693,8 +701,6 @@ class ResultPlotter:
         #plt.plot(self.x_masked_upnp, self.avg, label ="Uncertainty avgerage")
         #plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
         
-        # plt.plot(self.x, np.ones(self.x.shape) * 0.05)
-        # plt.plot(self.x, np.ones(self.x.shape) * 0.65)
         #plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
 
 
@@ -702,8 +708,8 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
         #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
         #plt.plot(x, rot_movement_2, label="Rot movement")
-        #plt.plot(self.x_masked, self.rot_movement_2, label="Rot movement")
-        #plt.plot(self.x_masked, self.trans_movement_2, label="Trans movement")
+        #plt.plot(self.x, self.rot_movement_2, label="Rot movement")
+        #plt.plot(self.x, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
         #plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
         #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
@@ -715,8 +721,12 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
-        # plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
+        #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
         #plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression -4")
+        plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,0], label = "q1 x")
+        plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,1], label = "q2 y")
+        plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q3 z")
+        plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,3], label = "q4 w")
         # plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "XMEM segmentation")
@@ -726,10 +736,12 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_current_implementation, label = "Current implementation")
         #plt.plot(self.x,self.add_bundle_union_occlusion, label = "Union occlusion value")
 
-        plt.plot(self.x_extrapolated_poses_only_2, self.add_bundle_extrapolated_poses_only_2, label = "Pose regression 2")
-        plt.plot(self.x_extrapolated_poses_only_minus_4, self.add_bundle_extrapolated_poses_only_minus_4, label = "Pose regression -4")
+        #plt.plot(self.x_extrapolated_poses_only_2, self.add_bundle_extrapolated_poses_only_2, label = "Pose regression 2")
+        #plt.plot(self.x_extrapolated_poses_only_minus_4, self.add_bundle_extrapolated_poses_only_minus_4, label = "Pose regression -4")
 
 
+        #plt.plot(self.x, np.ones(self.x.shape) * 0.1)
+        #plt.plot(self.x, np.ones(self.x.shape) * 1)
 
 
         # plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
@@ -751,7 +763,7 @@ class ResultPlotter:
 
         plt.legend(loc="upper right")
         ax.set_xlabel("Frame-ID")
-        ax.set_ylabel("ADD [m]")
+        ax.set_ylabel("ADD [m] / Trans movement [m] / Rot movement [1]", fontsize = 20)
         ax.grid(True)
         
         #ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
@@ -761,7 +773,7 @@ class ResultPlotter:
         #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
         #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
         #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
-        #plt.show()
+        plt.show()
     
     def exportPlot(self, path:str, white_border:bool = False):
         is_pdf = False
@@ -844,6 +856,58 @@ class ResultPlotter:
 
         return np.array(trans_movements)
     
+    @staticmethod
+    def calcQuaternionAccs(x, pose_dir):
+        USE_LAST = 20
+        
+        poses = ResultPlotter.loadPoses(pose_dir)
+        vels_trans = []
+        vels_rot = []
+        accs_trans = []
+        accs_rot = []
+
+
+        last_tf = None
+
+        acc_ids = []
+
+        accs_std_ids = []
+        accs_std = []
+        for idx, pose in enumerate(poses):
+            if idx == 0:
+                last_tf = pose
+                continue
+            r = Rotation.from_matrix(pose[:3,:3])
+            current_quat = r.as_quat(canonical=True)
+            r = Rotation.from_matrix(last_tf[:3,:3])
+            last_quat = r.as_quat(canonical=True)
+            vel_quat = (current_quat - last_quat)
+            vel_trans = (pose[:3,3] - last_tf[:3,3])
+
+            if len(vels_rot) != 0:
+                acc_quat = (vel_quat - vels_rot[-1])
+                acc_trans = (vel_trans - vels_trans[-1])
+                accs_rot.append(acc_quat) 
+                accs_trans.append(acc_trans)
+                acc_ids.append(x[idx])
+
+            vels_rot.append(vel_quat)
+            vels_trans.append(vel_trans)
+
+            last_tf = pose
+        accs_rot = np.array(accs_rot)
+        acc_ids = np.array(acc_ids)
+        for i in range(USE_LAST - 1, len(accs_rot)):
+            current_rots = accs_rot[i + 1 - USE_LAST :i + 1]
+            current_id = acc_ids[i]
+            accs_std.append(np.std(current_rots, axis = 0))
+            accs_std_ids.append(current_id)
+        
+        accs_std = np.array(accs_std)
+        accs_std_ids = np.array(accs_std_ids)
+
+        return acc_ids, accs_rot, accs_std_ids, accs_std
+
     def countVisablePixels(mask_dir):
         mask_paths = os.listdir(mask_dir)
         mask_paths.sort()
@@ -911,8 +975,8 @@ class ResultPlotter:
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
-    #result_plot.plotADDResults()
+    result_plot.plotADDResults()
     #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
-    result_plot.plotRessourceResults()
-    #result_plot.exportPlot("plots/BuchVideo/ressource/ressource_BundleSDF_test.pdf")
+    #result_plot.plotRessourceResults()
+    #result_plot.exportPlot("plots/BuchVideo/ADD/ADD_bundlesdf_first_est_pvnet_limit_rot_trans_thresh_marked.pdf")
