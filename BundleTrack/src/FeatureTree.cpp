@@ -23,13 +23,13 @@ void FeatureTree::testTree(){
     const unsigned int K = 5;
     std::vector<Point_d> points;
     std::vector<int>     indices;
-    points.push_back(Point_d(3.0, 6.0, 7.0, 1.0));
-    points.push_back(Point_d(17.0, 15.0, 13.0, 1.0));
-    points.push_back(Point_d(13.0, 15.0, 6.0, 1.0));
-    points.push_back(Point_d(6.0, 12.0, 8.0, 1.0));
-    points.push_back(Point_d(9.0, 1.0, 2.0, 1.0));
-    points.push_back(Point_d(2.0, 7.0, 6.0, 1.0));
-    points.push_back(Point_d(1.0, 2.0, 3.0, 1.0));
+    points.push_back(Point_d(3.0, 6.0, 7.0, 2.0));
+    points.push_back(Point_d(17.0, 15.0, 13.0, 2.0));
+    points.push_back(Point_d(13.0, 15.0, 6.0, 2.0));
+    points.push_back(Point_d(6.0, 12.0, 8.0, 2.0));
+    points.push_back(Point_d(9.0, 1.0, 2.0, 2.0));
+    points.push_back(Point_d(2.0, 7.0, 6.0, 2.0));
+    points.push_back(Point_d(1.0, 2.0, 3.0, 2.0));
     indices.push_back(0);
     indices.push_back(1);
     indices.push_back(2);
@@ -44,14 +44,17 @@ void FeatureTree::testTree(){
     Tree tree(points.begin(), points.end());
     // search K nearest neighbors
     Point_d query(1.0, 1.0, 1.0, 1.0);
+    std::cout << "Query: "<< query << std::endl; 
     Distance tr_dist;
     K_neighbor_search search(tree, query, K);
     for(K_neighbor_search::iterator it = search.begin(); it != search.end(); it++){
 
-        std::cout << it->first << " " " "<< std::sqrt(it->second) << std::endl;
+        std::cout << it->first << "  "<< std::sqrt(it->second) << std::endl;
         // std::cout << " d(q, nearest neighbor)=  "
         //         << tr_dist.inverse_of_transformed_distance(it->second) << " "
         //         << boost::get<0>(it->first)<< " " << boost::get<1>(it->first) << std::endl;
     }
+
+    
     exit(0);
 }

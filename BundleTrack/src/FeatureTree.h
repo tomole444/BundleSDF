@@ -19,6 +19,7 @@
 
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/Epick_d.h>
 #include <CGAL/Cartesian_d.h>
 #include <CGAL/Dimension.h>
 #include <CGAL/Search_traits_3.h>
@@ -30,7 +31,8 @@
 #include <utility>
 
 //typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
-typedef CGAL::Cartesian_d<double>  Kernel;
+//typedef CGAL::Cartesian_d<double>  Kernel;
+typedef CGAL::Epick_d<CGAL::Dimension_tag<4> > Kernel;
 //typedef Kernel::Point_3                                     Point_3;
 typedef Kernel::Point_d                                     Point_d;
 //typedef boost::tuple<Point_3,int>                           Point_and_int;
