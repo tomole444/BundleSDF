@@ -16,6 +16,7 @@
 #include "Utils.h"
 #include "Frame.h"
 #include "FeatureManager.h"
+#include "FeatureTree.h"
 
 class Loss;
 class Frame;
@@ -42,6 +43,7 @@ public:
   std::map<int,std::shared_ptr<Frame>> _frames;    //!NOTE store past few frames and keyframes. To make easier get frame by id, needed by frame->_ref_frame_id
 
   std::shared_ptr<GluNet> _fm;
+  std::shared_ptr<FeatureTree> _feature_tree;
   // std::shared_ptr<Lfnet> _fm;
 
   float _max_dist, _max_normal_angle;

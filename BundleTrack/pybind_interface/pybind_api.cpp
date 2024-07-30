@@ -17,6 +17,7 @@
 #include "Frame.h"
 #include "Utils.h"
 #include "Bundler.h"
+#include "FeatureTree.h"
 
 
 
@@ -130,6 +131,10 @@ PYBIND11_MODULE(my_cpp, m)
     .def("vizCorresBetween", &SiftManager::vizCorresBetween)
     .def_readwrite("_matches", &GluNet::_matches)
     .def_readwrite("_raw_matches", &GluNet::_raw_matches)
+    ;
+  
+  py::class_<FeatureTree, std::shared_ptr<FeatureTree>>(m, "FeatureTree")
+    .def("testTree", &FeatureTree::testTree)
     ;
 
   py::class_<Frame, std::shared_ptr<Frame>> frame(m, "Frame");

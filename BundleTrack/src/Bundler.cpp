@@ -51,6 +51,11 @@ Bundler::Bundler(std::shared_ptr<YAML::Node> yml1): _context(1), _socket(_contex
   _fm = std::make_shared<GluNet>(yml, this);
 
   _need_global_optimization = true;
+
+  _feature_tree = std::make_shared<FeatureTree>();
+
+  _feature_tree->testTree();
+
 }
 
 

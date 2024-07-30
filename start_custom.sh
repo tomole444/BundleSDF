@@ -42,7 +42,19 @@ lrwxrwxrwx 1 root root   14 Nov 16 01:07 gcc -> /usr/bin/gcc-9                  
 find /usr -name "cc1plus"
 ln -s /usr/lib/gcc/x86_64-linux-gnu/9/cc1plus /opt/conda/envs/py38/bin
 
+#ModuleNotFoundError: No module named 'pynvml'
+pip install pynvml
 
+#complete rebuild
+cd BundleTrack/ && rm -rf build && mkdir build && cd build && cmake .. && make -j11 && cd ../..
+#rebuild
+cd BundleTrack/build/ && cmake .. && make -j11 && cd ../..
+#unsuccessful build 
+cmake .. && make -j11 && cd ../..
+
+# Fehler
+ImportError: /home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/BundleTrack/build/libBundleTrack.so: undefined symbol: _ZN11FeatureTreeC1Ev
+-> kein Konstruktor definiert
 
 #Log console to file
 echo test 2>&1 | tee SomeFile.txt

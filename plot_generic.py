@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, FFMpegWriter
+from matplotlib.ticker import FuncFormatter
 import os
 from math import dist
 import cv2
 import time
 import hashlib
 import scienceplots
+import json
 from TimeAnalyser import TimeAnalyser
 from scipy.spatial.transform import Rotation 
 
@@ -33,6 +35,8 @@ class ResultPlotter:
         self.loadTimingResults()
 
         self.loadRessourceResults()
+
+        self.loadTensorboardResults()
 
         self.setupPlot()
 
@@ -129,20 +133,23 @@ class ResultPlotter:
         self.add_bundle_occ_aware_check_limit_rot_err = load_arr["rot_err"]
         self.add_bundle_occ_aware_check_limit = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_check_limit.npy", "ADD_BundleSDF_Occlusion_Aware_check_limit")
 
-        mask = ResultPlotter.calcMask("outBuchVideoOcclusionAwareCheckLimit/ob_in_cam")
+        mask = ResultPlotter.calcMask("outBuchVideoCheckLimit_force_pvnet/ob_in_cam")
         self.add_bundle_occ_aware_force_pvnet = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_Occlusion_Aware_force_pvnet.npy", "ADD_BundleSDF_Occlusion_Aware_force_pvnet", invalid_poses_mask= ~mask)
 
 
-        self.add_bundle_feature_matching_spike = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_feature_matching_spike.npy", "ADD_BundleSDF_feature_matching_spike")
+        mask = ResultPlotter.calcMask("outBuchVideoFeatureOffsetSpike/ob_in_cam")
+        self.add_bundle_feature_matching_spike = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_feature_matching_spike.npy", "ADD_BundleSDF_feature_matching_spike", invalid_poses_mask= ~mask)
         
 
+        #mask = ResultPlotter.calcMask("outBuchVideoPoseRegression2/ob_in_cam")
         self.add_bundle_pose_regression_2 = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_2.npy", "ADD_BundleSDF_pose_regression_2")
-
+        self.add_bundle_pose_regression_2 = np.where(self.add_bundle_pose_regression_2 > 0.7, np.nan, self.add_bundle_pose_regression_2)
 
         self.add_bundle_pose_regression_minus_4 = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_-4.npy", "ADD_BundleSDF_pose_regression_-4")
+        self.add_bundle_pose_regression_minus_4 = np.where(self.add_bundle_pose_regression_minus_4 > 0.7, np.nan, self.add_bundle_pose_regression_minus_4)
         
-
-        self.add_bundle_cutie_first_offline_segmentation = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_cutie_first_offline_segmentation.npy", "ADD_BundleSDF_cutie_first_offline_segmentation")
+        mask = ResultPlotter.calcMask("outBuchVideoFirstMaskOffline/ob_in_cam")
+        self.add_bundle_cutie_first_offline_segmentation = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_cutie_first_offline_segmentation.npy", "ADD_BundleSDF_cutie_first_offline_segmentation", invalid_poses_mask= ~mask)
 
 
         self.add_bundle_orig_cutie_segmentation = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_orig_cutie_segmentation.npy", "ADD_BundleSDF_orig_cutie_segmentation")
@@ -153,7 +160,8 @@ class ResultPlotter:
 
         self.add_bundle_first_pvnet_cutie_segmentation = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_first_pvnet_cutie_segmentation.npy", "ADD_BundleSDF_first_pvnet_cutie_segmentation")
 
-        self.add_bundle_pvnet_seg_only = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_pvnet_segmentation_only.npy", "ADD_BundleSDF_pvnet_segmentation_only")
+        mask = ResultPlotter.calcMask("outBuchVideoPVNetSegOnly/ob_in_cam")
+        self.add_bundle_pvnet_seg_only = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_pvnet_segmentation_only.npy", "ADD_BundleSDF_pvnet_segmentation_only", invalid_poses_mask= ~mask)
 
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_current_implementation.npy", allow_pickle=True).item()
@@ -165,10 +173,16 @@ class ResultPlotter:
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_2.npy", allow_pickle=True).item()
         self.add_bundle_extrapolated_poses_only_2 = load_arr["result_y"]
         self.x_extrapolated_poses_only_2 = load_arr["ids"]
+        self.add_bundle_extrapolated_poses_only_2_gapped = np.full_like(self.x, np.nan, dtype=np.float64)
+        indices = np.searchsorted(self.x, self.x_extrapolated_poses_only_2)
+        self.add_bundle_extrapolated_poses_only_2_gapped[indices] = self.add_bundle_extrapolated_poses_only_2
 
         load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_-4.npy", allow_pickle=True).item()
         self.add_bundle_extrapolated_poses_only_minus_4 = load_arr["result_y"]
         self.x_extrapolated_poses_only_minus_4 = load_arr["ids"]
+        self.add_bundle_extrapolated_poses_only_minus_4_gapped = np.full_like(self.x, np.nan, dtype=np.float64)
+        indices = np.searchsorted(self.x, self.x_extrapolated_poses_only_minus_4)
+        self.add_bundle_extrapolated_poses_only_minus_4_gapped[indices] = self.add_bundle_extrapolated_poses_only_minus_4
 
 
 
@@ -242,8 +256,12 @@ class ResultPlotter:
         self.rot_movement_2 = ResultPlotter.calcRotMovement(pose_dir = "outBuchVideoNoNerf/ob_in_cam")
         self.trans_movement_2 = ResultPlotter.calcTransMovement(pose_dir = "outBuchVideoNoNerf/ob_in_cam")
 
-        self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot, self.acc_pose_regression_0_floating_std_ids, self.acc_pose_regression_0_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "outBuchVideoPoseRegression0/ob_in_cam")
-        self.acc_pose_regression_2_ids, self.acc_pose_regression_2_rot, self.acc_pose_regression_2_floating_std_ids, self.acc_pose_regression_2_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "outBuchVideoPose_regression_2_old/ob_in_cam")
+
+        mask = ResultPlotter.calcMask("/home/thws_robotik/Downloads/outBuchVideoPoseRegression0TimingNoICP/ob_in_cam")
+        self.add_bundle_pose_regression_0_no_icp_new = self.loadADDFromFile("benchmarks/BuchVideo/ADD_Bundle_pose_regression_0_no_icp_new.npy", "ADD_Bundle_pose_regression_0_no_icp_new", invalid_poses_mask= ~mask)        
+        self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot, self.acc_pose_regression_0_floating_std_ids, self.acc_pose_regression_0_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Downloads/outBuchVideoPoseRegression0TimingNoICP/ob_in_cam")
+
+        self.acc_pose_regression_2_ids, self.acc_pose_regression_2_rot, self.acc_pose_regression_2_floating_std_ids, self.acc_pose_regression_2_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Downloads/outBuchVideoPoseRegression2TimingNoICP/ob_in_cam")
 
 
         with open(self.ADD_logpath, 'w') as datei:
@@ -287,17 +305,17 @@ class ResultPlotter:
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
 
-    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_orig.npy"):
+    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_-4.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
-        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_2.txt"
+        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_-4.txt"
         WRITE_LOG = False
         
 
         keys = self.time_keeper.time_save.keys()
         #print("Loaded timer with keys: ", keys)
 
-        ANALYSE_ORIGINAL = True
+        ANALYSE_ORIGINAL = False
 
         timing_log_str = f"Average times (ANALYSE_ORIGINAL = {ANALYSE_ORIGINAL}, timing_file_path = {timing_file_path}): " + "\n" 
         
@@ -469,13 +487,67 @@ class ResultPlotter:
         for data_point in load_arr["memory"]:
             self.ressources_pose_regression_minus_4_memory.append(data_point["usage"]/ 1024)
 
+    def loadTensorboardResults(self):
+        dataset_results_path = "benchmarks/ownBuchBig"
+
+        with open(os.path.join(dataset_results_path, 'train_loss.json')) as f:
+            d = json.load(f)
+        #print(type(d[0][2]))
+        self.tensorboard_train_loss_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_train_loss_x = np.array(d)[:,1].astype(int)
+        
+        with open(os.path.join(dataset_results_path, 'train_seg_loss.json')) as f:
+            d = json.load(f)
+        self.tensorboard_train_seg_loss_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_train_seg_loss_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'train_vote_loss.json')) as f:
+            d = json.load(f)
+        self.tensorboard_train_vote_loss_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_train_vote_loss_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_add.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_add_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_add_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_ap.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_ap_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_ap_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_cmd5.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_cmd5_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_cmd5_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_loss.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_loss_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_loss_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_proj2d.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_proj2d_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_proj2d_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_seg_loss.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_seg_loss_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_seg_loss_x = np.array(d)[:,1].astype(int)
+
+        with open(os.path.join(dataset_results_path, 'val_vote_loss.json')) as f:
+            d = json.load(f)
+        self.tensorboard_val_vote_loss_y = np.array(d)[:,2].astype(float)
+        self.tensorboard_val_vote_loss_x = np.array(d)[:,1].astype(int)
+
     def setupPlot(self,use_tk_backend = False):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
         plt.rc ('font', size = 30) #20 für masken / 30 für posen / 15 für timing
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1.0]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
+        ax.set_ylim([0, 1.5]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
         ax.set_xlim([0, len(self.x)])
    
     def plotMaskResults(self):
@@ -603,15 +675,38 @@ class ResultPlotter:
         
         plt.show()
 
+    def plotTensorboardResults(self):
+        ax = plt.gca()
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Proj2D")
+        ax.set_xlim([0, 150]) # 500_000
+        
+        # plt.plot(self.tensorboard_train_loss_x, self.tensorboard_train_loss_y, label = "Train loss")
+        #plt.plot(self.tensorboard_train_seg_loss_x, self.tensorboard_train_seg_loss_y, label = "Train segmentation loss")
+        #plt.plot(self.tensorboard_train_vote_loss_x, self.tensorboard_train_vote_loss_y, label = "Train vote loss")
+        #plt.plot(self.tensorboard_val_add_x, self.tensorboard_val_add_y, label = "Validation ADD")
+        #plt.plot(self.tensorboard_val_ap_x, self.tensorboard_val_ap_y, label = "Validation AP")
+        #plt.plot(self.tensorboard_val_cmd5_x, self.tensorboard_val_cmd5_y, label = "Validation CMD5")
+        #plt.plot(self.tensorboard_val_loss_x, self.tensorboard_val_loss_y, label = "Validation Loss")
+        plt.plot(self.tensorboard_val_proj2d_x, self.tensorboard_val_proj2d_y, label = "Validation Proj2D")
+        #plt.plot(self.tensorboard_val_seg_loss_x, self.tensorboard_val_seg_loss_y, label = "Validation segmentation loss")
+        #plt.plot(self.tensorboard_val_vote_loss_x, self.tensorboard_val_vote_loss_y, label = "Validation vote loss")
+        
+        plt.legend(loc="lower right")
+        ax.grid(True)
+        ax.xaxis.set_major_formatter(FuncFormatter(ResultPlotter.format_func_x))
+        plt.show()
+
     def plotADDResults(self):
         #x = range(0,len(y))
         #plt.hist(a)
         #matplotlib                3.7.1
         #matplotlib-inline         0.1.7
 
-        
-        #plt.style.use(['science','ieee'])
         ax = plt.gca()
+        ax.set_xlabel("Frame-ID")
+        ax.set_ylabel("ADD [m]")# / Trans movement [m] / Rot movement [1]", fontsize = 20)
+        #plt.style.use(['science','ieee'])
         ResultPlotter.x = self.x
         ResultPlotter.y1 = self.add_bundle_orig
         ResultPlotter.y2 = self.add_bundle_feature_matching_spike
@@ -619,7 +714,7 @@ class ResultPlotter:
         #ResultPlotter.graph1, = ax.plot([0], [0], label="BundleSDF original")
         #ResultPlotter.graph2, = ax.plot([0], [0], label = "Current Implementation")
 
-
+        # PVNet confidence eval
         #plt.plot(self.x, self.add_pvnet_orig, label ="PVNet original")
         #plt.plot(self.x, self.add_pvnet_upnp,label ="PVNet upnp")
         # plt.plot(self.x_masked_upnp, self.confidence_kpt_0[self.mask_upnp], label ="Confidences kpt 0")
@@ -637,7 +732,7 @@ class ResultPlotter:
         
         #plt.plot(self.x_masked_upnp, self.stabw, label ="Uncertainty standard deviation")
 
-
+        # classic ADD eval
         #plt.plot(self.x, self.add_bundle_orig, label="Gt segmentation")
         #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
         #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
@@ -648,11 +743,11 @@ class ResultPlotter:
         # plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
         #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
         # #plt.plot(self.x, self.add_bundle_limit_rot_trans, label="Limit rotation translation")
-        plt.plot(self.x, self.add_bundle_icp, label="ICP")
+        #plt.plot(self.x, self.add_bundle_icp, label="ICP")
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit, label="ADD BundleSDF Occlusion aware check limits") #1380 problematic -> full occlusion
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_trans_err, label="ADD BundleSDF Occlusion aware trans err") 
         # #plt.plot(self.x, self.add_bundle_occ_aware_check_limit_rot_err, label="ADD BundleSDF Occlusion aware rot err")
-        plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
+        #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
         #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
@@ -661,7 +756,7 @@ class ResultPlotter:
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,1], label = "q2 y")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q3 z")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,3], label = "q4 w")
-        # plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
+        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "XMEM segmentation")
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "PVNet segmentation")
@@ -670,11 +765,26 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_bundle_current_implementation, label = "Current implementation")
         #plt.plot(self.x,self.add_bundle_union_occlusion, label = "Union occlusion value")
 
+        #Eval pose regression poses only 
         #plt.plot(self.x_extrapolated_poses_only_2, self.add_bundle_extrapolated_poses_only_2, label = "Pose regression 2")
-        #plt.plot(self.x_extrapolated_poses_only_minus_4, self.add_bundle_extrapolated_poses_only_minus_4, label = "Pose regression -4")
+        #plt.scatter(self.x, self.add_bundle_extrapolated_poses_only_2_gapped, label = "Pose regression 2", s = 10)
+        #plt.plot(self.x, self.add_bundle_extrapolated_poses_only_minus_4_gapped, color = "C1", label = "Pose regression -4")
 
+        #Eval / limit rotational accelerations 
+        #plt.plot(self.x, self.add_bundle_pose_regression_0_no_icp_new, label = "Pose regression 0")
+        # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,0], label = "q_{1} x")
+        # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,1], label = "q_{2} y")
+        # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q_{3} z")
+        # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,3], label = "q_{4} w")
+        
+        plt.plot(self.acc_pose_regression_0_floating_std_ids, np.sum(self.acc_pose_regression_0_floating_std, axis = 1), label = "Standard deviation quaternion")
+        plt.plot(self.acc_pose_regression_0_floating_std_ids, np.sum(self.acc_pose_regression_0_floating_std, axis = 1), label = "Standard deviation translation")
+        
+        ax.set_ylabel("Value")
+        
 
-        #plt.plot(self.x, np.ones(self.x.shape) * 0.1)
+        #display thresholds
+        plt.plot(self.x, np.ones(self.x.shape) * 0.05)
         #plt.plot(self.x, np.ones(self.x.shape) * 1)
 
 
@@ -696,8 +806,7 @@ class ResultPlotter:
 
 
         plt.legend(loc="upper right")
-        ax.set_xlabel("Frame-ID")
-        ax.set_ylabel("ADD [m]")# / Trans movement [m] / Rot movement [1]", fontsize = 20)
+
         ax.grid(True)
         
         #ax.set_title('ADD comparison', fontsize = 40, fontweight ='bold')
@@ -737,6 +846,10 @@ class ResultPlotter:
         if invalid_poses_mask is not None:
             add[invalid_poses_mask] = np.nan
         return add
+
+    @staticmethod
+    def format_func_x(value, tick_number):
+        return f'{int(value):,}'  # Format the tick labels with thousand separator
 
     @staticmethod
     def animate(frame):
@@ -805,52 +918,58 @@ class ResultPlotter:
         USE_LAST = 20
         
         poses = ResultPlotter.loadPoses(pose_dir)
-        vels_trans = []
-        vels_rot = []
-        accs_trans = []
-        accs_rot = []
-
-
-        last_tf = None
-
-        acc_ids = []
+        poses = np.array(poses)
+        rots = poses[:,:3,:3]
+        trans = poses[:,:3, 3]
+        r = Rotation.from_matrix(rots)
+        quaternions = r.as_quat(canonical=True)
+        quaternions = np.array(quaternions)
+        vels_trans = np.diff(trans, axis = 0)
+        vels_rot = np.diff(quaternions, axis = 0)
+        accs_trans = np.diff(trans, axis = 0, n = 0)
+        accs_rot = np.diff(quaternions, axis = 0, n = 2)
+        
+        acc_ids = np.arange(len(x))
+        acc_ids = acc_ids[2:len(acc_ids)]
 
         accs_std_ids = []
-        accs_std = []
-        for idx, pose in enumerate(poses):
-            if idx == 0:
-                last_tf = pose
-                continue
-            r = Rotation.from_matrix(pose[:3,:3])
-            current_quat = r.as_quat(canonical=True)
-            r = Rotation.from_matrix(last_tf[:3,:3])
-            last_quat = r.as_quat(canonical=True)
-            vel_quat = (current_quat - last_quat)
-            vel_trans = (pose[:3,3] - last_tf[:3,3])
+        accs_rot_std = []
+        accs_trans_std = []
+        # for idx, pose in enumerate(poses):
+        #     if idx == 0:
+        #         last_tf = pose
+        #         continue
+        #     r = Rotation.from_matrix(pose[:3,:3])
+        #     current_quat = r.as_quat(canonical=True)
+        #     r = Rotation.from_matrix(last_tf[:3,:3])
+        #     last_quat = r.as_quat(canonical=True)
+        #     vel_quat = (current_quat - last_quat)
+        #     vel_trans = (pose[:3,3] - last_tf[:3,3])
 
-            if len(vels_rot) != 0:
-                acc_quat = (vel_quat - vels_rot[-1])
-                acc_trans = (vel_trans - vels_trans[-1])
-                accs_rot.append(acc_quat) 
-                accs_trans.append(acc_trans)
-                acc_ids.append(x[idx])
+        #     if len(vels_rot) != 0:
+        #         acc_quat = (vel_quat - vels_rot[-1])
+        #         acc_trans = (vel_trans - vels_trans[-1])
+        #         accs_rot.append(acc_quat) 
+        #         accs_trans.append(acc_trans)
+        #         acc_ids.append(x[idx])
 
-            vels_rot.append(vel_quat)
-            vels_trans.append(vel_trans)
+        #     vels_rot.append(vel_quat)
+        #     vels_trans.append(vel_trans)
 
-            last_tf = pose
+        #     last_tf = pose
         accs_rot = np.array(accs_rot)
         acc_ids = np.array(acc_ids)
         for i in range(USE_LAST - 1, len(accs_rot)):
             current_rots = accs_rot[i + 1 - USE_LAST :i + 1]
+
             current_id = acc_ids[i]
-            accs_std.append(np.std(current_rots, axis = 0))
+            accs_rot_std.append(np.std(current_rots, axis = 0))
             accs_std_ids.append(current_id)
         
-        accs_std = np.array(accs_std)
+        accs_rot_std = np.array(accs_rot_std)
         accs_std_ids = np.array(accs_std_ids)
 
-        return acc_ids, accs_rot, accs_std_ids, accs_std
+        return acc_ids, accs_rot, accs_std_ids, accs_rot_std
 
     def countVisablePixels(mask_dir):
         mask_paths = os.listdir(mask_dir)
@@ -919,8 +1038,9 @@ class ResultPlotter:
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
-    result_plot.plotADDResults()
+    #result_plot.plotADDResults()
     #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
     #result_plot.plotRessourceResults()
-    result_plot.exportPlot("plots/BuchVideo/ADD/ADD_BundleSDF_icp_occ_aware_6.pdf")
+    #result_plot.plotTensorboardResults()
+    #result_plot.exportPlot("plots/BuchVideo/vel_est/vel_est_accels_quat_std_0_2_thresh.pdf")
