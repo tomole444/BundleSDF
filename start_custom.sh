@@ -44,6 +44,7 @@ ln -s /usr/lib/gcc/x86_64-linux-gnu/9/cc1plus /opt/conda/envs/py38/bin
 
 #ModuleNotFoundError: No module named 'pynvml'
 pip install pynvml
+apt-get install libcgal-dev
 
 #complete rebuild
 cd BundleTrack/ && rm -rf build && mkdir build && cd build && cmake .. && make -j11 && cd ../..

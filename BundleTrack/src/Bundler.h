@@ -30,6 +30,7 @@ class DeepOpticalFlow;
 class SuperGlue;
 class SceneFlow;
 class OptimizerG2o;
+class FeatureTree;
 
 class Bundler
 {

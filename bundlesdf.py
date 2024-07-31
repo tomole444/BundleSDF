@@ -635,6 +635,7 @@ class BundleSdf:
 
     self.time_keeper.add("invalidatePixelsByMask",frame._id)
     frame.invalidatePixelsByMask(frame._fg_mask)
+    self.time_keeper.add("invalidatePixelsByMask_end",frame._id)
 
     #if(frame._id == 180):
     #  print("here")
@@ -676,9 +677,10 @@ class BundleSdf:
    
     
     #Denoising Pointcloud
-    self.time_keeper.add("denoise_cloud",frame._id)
     if self.cfg_track["depth_processing"]["denoise_cloud"]:
+      self.time_keeper.add("denoise_cloud",frame._id)
       frame.pointCloudDenoise()
+      self.time_keeper.add("denoise_cloud_end",frame._id)
    
     n_valid = frame.countValidPoints()
     n_valid_first = self.bundler._firstframe.countValidPoints()
@@ -688,13 +690,13 @@ class BundleSdf:
       self.bundler.forgetFrame(frame)
       return
 
-    self.time_keeper.add("pvnet_adjust_every",frame._id)
+    
     if frame._id==0:
       self.bundler.checkAndAddKeyframe(frame)   # First frame is always keyframe
       self.bundler._frames[frame._id] = frame
       return
     elif (frame._id % self.cfg_track["pvnet"]["adjust_every"] == 0 or self.continous_discarded_frames > self.cfg_track["limits"]["force_pvnet_after"]) and self.cfg_track["pvnet"]["activated"]:   # check if tf needed from pvnet
-      
+      self.time_keeper.add("pvnet_adjust_every",frame._id)
       pvnet_ob_in_cam = self.inference_client.getPVNetPose(self.color)
 
       if pvnet_ob_in_cam is not None and (self.checkMovement(frame,T_cam_obj = pvnet_ob_in_cam) or self.continous_discarded_frames > self.cfg_track["limits"]["force_pvnet_after"]):
@@ -705,13 +707,17 @@ class BundleSdf:
         self.bundler.checkAndAddKeyframe(frame)   # Set frame as keyframe
         self.bundler._frames[frame._id] = frame
         logging.info(f"Set pose successfully from PVNet for frame {frame._id_str}")
-
+        self.time_keeper.add("pvnet_adjust_every_end",frame._id)
         return
+      self.time_keeper.add("pvnet_adjust_every_end",frame._id)
+      
 
     #search for corresponding frame in memory 
     self.time_keeper.add("find_corres_1",frame._id)
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     self.find_corres([(frame, ref_frame)])
+    self.time_keeper.add("find_corres_1_end",frame._id)
+
     matches = self.bundler._fm._matches[(frame, ref_frame)]
 
     if frame._status==my_cpp.Frame.FAIL:
@@ -722,6 +728,8 @@ class BundleSdf:
 
     matches = self.bundler._fm._matches[(frame, ref_frame)]
     if len(matches)<min_match_with_ref:
+      self.time_keeper.add("search_new_ref",frame._id)
+
       #Falls zu wenige Übereinstimmungen zw. Frame und Ref.-Frame gefunden wurde -> versuche neuen Keyframe mit mehr Übereinstimmungen zu finden
       visibles = []
       for kf in self.bundler._keyframes:
@@ -745,7 +753,7 @@ class BundleSdf:
           logging.info(f"re-choose new ref frame to {kf._id_str}")
           found = True
           break
-
+      self.time_keeper.add("search_new_ref_end",frame._id)
       if not found:
         frame._status = my_cpp.Frame.FAIL
         logging.info(f"frame {frame._id_str} has not suitable ref_frame, mark as FAIL")
@@ -782,16 +790,19 @@ class BundleSdf:
 
     self.time_keeper.add("selectKeyFramesForBA",frame._id)
     self.bundler.selectKeyFramesForBA()
+    self.time_keeper.add("selectKeyFramesForBA_end",frame._id)
+
 
     local_frames = self.bundler._local_frames
     
-    self.time_keeper.add("getFeatureMatchPairs",frame._id)
+    
     if self.cfg_track["time_reducer"]["search_all_pairs_feature_matching"]: 
+      self.time_keeper.add("getFeatureMatchPairs",frame._id)
       pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
+      self.time_keeper.add("getFeatureMatchPairs_end",frame._id)
       self.time_keeper.add("find_corres_2",frame._id)
       self.find_corres(pairs)
-    else:
-      self.time_keeper.add("find_corres_2",frame._id)
+      self.time_keeper.add("find_corres_2_end",frame._id)
 
     if frame._status==my_cpp.Frame.FAIL:
       self.bundler.forgetFrame(frame)
@@ -802,6 +813,7 @@ class BundleSdf:
 
     self.time_keeper.add("optimizeGPU",frame._id)
     self.bundler.optimizeGPU(local_frames, find_matches)
+    self.time_keeper.add("optimizeGPU_end",frame._id)
 
     self.time_keeper.add("checkMovement_limits",frame._id)
     # limit rot and trans movement

@@ -316,6 +316,8 @@ class ResultPlotter:
         #print("Loaded timer with keys: ", keys)
 
         ANALYSE_ORIGINAL = False
+        ANALYSE_NEW_PVNET = False
+        ANALYSE_NEWEST_PVNET = True
 
         timing_log_str = f"Average times (ANALYSE_ORIGINAL = {ANALYSE_ORIGINAL}, timing_file_path = {timing_file_path}): " + "\n" 
         
@@ -371,7 +373,7 @@ class ResultPlotter:
             timing_log_str += "time_pair_nerf_pose_adaptation_execution_times & " +  str(np.round(np.average(self.time_pair_nerf_pose_adaptation_execution_times), 5)) + "s " + "\\\\\n"
             timing_log_str += "time_pair_rematch_after_nerf_execution_times & " +  str(np.round(np.average(self.time_pair_rematch_after_nerf_execution_times), 5)) + "s " + "\\\\\n"
 
-        else:
+        if ANALYSE_NEW_PVNET:
             time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask","denoise_cloud")
             time_pair_denoise_cloud = ("denoise_cloud","pvnet_adjust_every")
             time_pair_find_corres_1 = ("find_corres_1","selectKeyFramesForBA")

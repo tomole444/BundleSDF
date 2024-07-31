@@ -143,6 +143,7 @@
     "ranges": "cpp",
     "semaphore": "cpp",
     "stop_token": "cpp",
-    "syncstream": "cpp"
+    "syncstream": "cpp",
+    "geometry": "cpp"
   }
 }

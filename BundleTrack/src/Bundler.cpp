@@ -54,7 +54,8 @@ Bundler::Bundler(std::shared_ptr<YAML::Node> yml1): _context(1), _socket(_contex
 
   _feature_tree = std::make_shared<FeatureTree>();
 
-  _feature_tree->testTree();
+  //_feature_tree->testTree();
+  //_feature_tree->testClass();
 
 }
 
@@ -271,6 +272,7 @@ bool Bundler::checkAndAddKeyframe(std::shared_ptr<Frame> frame)
   {
     _keyframes.push_back(frame);
     SPDLOG("Added frame {} as keyframe, current #keyframe: {}", frame->_id_str, _keyframes.size());
+    _feature_tree->insert(frame);
     return true;
   }
   if (frame->_status != Frame::OTHER) return false;
@@ -329,6 +331,7 @@ bool Bundler::checkAndAddKeyframe(std::shared_ptr<Frame> frame)
 
   _keyframes.push_back(frame);
   SPDLOG("Added frame {} as keyframe, current #keyframe: {}", frame->_id_str, _keyframes.size());
+  _feature_tree->insert(frame);
   return true;
 
 }
