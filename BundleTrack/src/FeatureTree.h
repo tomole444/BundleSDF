@@ -33,13 +33,13 @@ public:
     // void insert(const std::vector<Point_d>& points, const std::vector<int>& indices);
     // void insert(const Eigen::Quaternion<double>& quat, int index);
     void insert(std::shared_ptr<Frame>& frame);
-    void insert(const Eigen::Quaternion<double>& quat, std::shared_ptr<Frame>& frame);
+    void insert(const Eigen::Quaternion<float>& quat, std::shared_ptr<Frame>& frame);
 
-    K_neighbor_search nearestNeighbor(const Eigen::Quaternion<double>& quat, unsigned int K);
+    K_neighbor_search nearestNeighbor(const Eigen::Quaternion<float>& quat, unsigned int K);
     K_neighbor_search nearestNeighbor(std::shared_ptr<Frame>& frame, unsigned int K);
 
-    static Point_d quaternionToPoint_D (const Eigen::Quaternion<double>& quat);
-    static Eigen::Quaternion<double> getQuaternionFromFrame (std::shared_ptr<Frame>& frame);
+    static Point_d quaternionToPoint_D (const Eigen::Quaternion<float>& quat);
+    static Eigen::Quaternion<float> getQuaternionFromFrame (std::shared_ptr<Frame>& frame);
 
     void testTree();
 

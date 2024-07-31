@@ -113,7 +113,7 @@ shape:
   truncate_dist: 0.005
 
 pvnet:
-  activated: False # use pvnet
+  activated: True # use pvnet
   ip_addr: "192.168.99.91" #address of the inference server
   port: 11024 #port number of the server 
   adjust_every: 60 # get TF from PVNet every x frames

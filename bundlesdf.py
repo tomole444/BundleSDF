@@ -437,12 +437,16 @@ class BundleSdf:
     if len(query_pairs)==0:
       return
     #pdb.set_trace()
+    self.time_keeper.add("loftr_predict",self.bundler._newframe._id)
     corres = self.loftr.predict(rgbAs=imgs[::2], rgbBs=imgs[1::2])
+    self.time_keeper.add("loftr_predict_end",self.bundler._newframe._id)
+    
     # if not hasattr(self, 'corres'):
     #   self.corres = corres
     # if np.array(corres).shape[1] > np.array(self.corres).shape[1]:
     #   self.corres = corres
 
+    self.time_keeper.add("loftr_match_assign",self.bundler._newframe._id)
     for i_pair in range(len(query_pairs)):
       cur_corres = corres[i_pair][:,:4]
       tfA = np.array(tfs[i_pair*2])
@@ -450,6 +454,8 @@ class BundleSdf:
       cur_corres[:,:2] = transform_pts(cur_corres[:,:2], np.linalg.inv(tfA))
       cur_corres[:,2:4] = transform_pts(cur_corres[:,2:4], np.linalg.inv(tfB))
       self.bundler._fm._raw_matches[query_pairs[i_pair]] = cur_corres.round().astype(np.uint16)
+    self.time_keeper.add("loftr_match_assign_end",self.bundler._newframe._id)
+    
 
     min_match_with_ref = self.cfg_track["feature_corres"]["min_match_with_ref"]
     if is_match_ref and len(self.bundler._fm._raw_matches[frame_pairs[0]])<min_match_with_ref:
@@ -458,12 +464,16 @@ class BundleSdf:
       logging.info(f'frame {self.bundler._newframe._id_str} mark FAIL, due to no matching')
       return
 
+    self.time_keeper.add("loftr_rawMatchesToCorres",self.bundler._newframe._id)
     self.bundler._fm.rawMatchesToCorres(query_pairs)
+    self.time_keeper.add("loftr_rawMatchesToCorres_end",self.bundler._newframe._id)
     #pdb.set_trace()
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'before_ransac')
 
+    self.time_keeper.add("loftr_rrunRansacMultiPairGPU",self.bundler._newframe._id)
     self.bundler._fm.runRansacMultiPairGPU(query_pairs)
+    self.time_keeper.add("loftr_runRansacMultiPairGPU_end",self.bundler._newframe._id)
     #pdb.set_trace()
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'after_ransac')

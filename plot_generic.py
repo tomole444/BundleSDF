@@ -305,11 +305,11 @@ class ResultPlotter:
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
 
-    def loadTimingResults(self, timing_file_path = "benchmarks/BuchVideo/time_analysis/timing_pose_regression_-4.npy"):
+    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4TimingICP/timing.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
-        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_-4.txt"
-        WRITE_LOG = False
+        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_-4_new.txt"
+        WRITE_LOG = True
         
 
         keys = self.time_keeper.time_save.keys()
@@ -410,6 +410,45 @@ class ResultPlotter:
             timing_log_str += "time_pair_checkAndAddKeyframe_execution_time & " + str(np.round(np.average(self.time_pair_checkAndAddKeyframe_execution_time), 5)) + "s " + "\\\\\n"
             timing_log_str += "time_pair_process_frame_execution_time & " + str(np.round(np.average(self.time_pair_process_frame_execution_time), 5)) + "s " + "\\\\\n"
 
+        if ANALYSE_NEWEST_PVNET:
+            time_pair_invalidatePixelsByMask = ("invalidatePixelsByMask","invalidatePixelsByMask_end")
+            time_pair_pvnet_adjust_every = ("pvnet_adjust_every", "pvnet_adjust_every_end")
+            time_pair_find_corres_1 = ("find_corres_1","find_corres_1_end")
+            time_pair_search_new_ref = ("search_new_ref","search_new_ref_end")
+            time_pair_selectKeyFramesForBA = ("selectKeyFramesForBA","selectKeyFramesForBA_end")
+            time_pair_getFeatureMatchPairs = ("getFeatureMatchPairs","getFeatureMatchPairs_end")
+            time_pair_find_corres_2 = ("find_corres_2","find_corres_2_end")
+            time_pair_optimizeGPU = ("optimizeGPU","optimizeGPU_end")
+            time_pair_checkMovement_limits = ("checkMovement_limits","checkMovement_limits_end")
+            time_pair_icp = ("icp","icp_end")
+            time_pair_checkAndAddKeyframe = ("icp_end","process_new_frame_pvnet_done")
+            time_pair_process_frame = ("process_new_frame_pvnet","process_new_frame_pvnet_done")
+
+            self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_invalidatePixelsByMask)
+            self.time_pair_pvnet_adjust_every_ids, self.time_pair_pvnet_adjust_every_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_pvnet_adjust_every)
+            self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres_1)
+            self.time_pair_search_new_ref_ids, self.time_pair_search_new_ref_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_search_new_ref)
+            self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
+            self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
+            self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres_2)
+            self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_optimizeGPU)
+            self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_checkMovement_limits)
+            self.time_pair_icp_ids, self.time_pair_icp_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_icp)
+            self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_checkAndAddKeyframe)
+            self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_process_frame)
+
+            timing_log_str +=  "time_pair_invalidatePixelsByMask & " + str(np.round(np.average(self.time_pair_invalidatePixelsByMask_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_invalidatePixelsByMask_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_pvnet_adjust_every & " + str(np.round(np.average(self.time_pair_pvnet_adjust_every_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_pvnet_adjust_every_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_find_corres_1 & " + str(np.round(np.average(self.time_pair_find_corres_1_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_find_corres_1_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_search_new_ref & " + str(np.round(np.average(self.time_pair_search_new_ref_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_search_new_ref_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_selectKeyFramesForBA & " + str(np.round(np.average(self.time_pair_selectKeyFramesForBA_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_selectKeyFramesForBA_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_getFeatureMatchPairs & " + str(np.round(np.average(self.time_pair_getFeatureMatchPairs_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_getFeatureMatchPairs_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_find_corres_2 & " + str(np.round(np.average(self.time_pair_find_corres_2_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_find_corres_2_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_optimizeGPU & " + str(np.round(np.average(self.time_pair_optimizeGPU_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_optimizeGPU_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_checkMovement_limits & " + str(np.round(np.average(self.time_pair_checkMovement_limits_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_checkMovement_limits_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_icp & " + str(np.round(np.average(self.time_pair_icp_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_icp_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_checkAndAddKeyframe & " + str(np.round(np.average(self.time_pair_checkAndAddKeyframe_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_checkAndAddKeyframe_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_process_frame & " + str(np.round(np.average(self.time_pair_process_frame_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_process_frame_execution_time)) + " \\\\\n"
 
         self.time_pair_run_ids, self.time_pair_run_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_run)
         #self.time_pair_1_ids, self.time_pair_1_execution_times = self.time_keeper.getSyncTimeByFrameID(time_pair_process_new_frame) 
@@ -543,7 +582,7 @@ class ResultPlotter:
         self.tensorboard_val_vote_loss_y = np.array(d)[:,2].astype(float)
         self.tensorboard_val_vote_loss_x = np.array(d)[:,1].astype(int)
 
-    def setupPlot(self,use_tk_backend = False):
+    def setupPlot(self,use_tk_backend = True):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
         plt.rc ('font', size = 30) #20 für masken / 30 für posen / 15 für timing

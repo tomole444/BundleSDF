@@ -12,32 +12,33 @@
 // }
 
 void FeatureTree::insert(std::shared_ptr<Frame>& frame){
-    Eigen::Quaternion<double> quat = FeatureTree::getQuaternionFromFrame(frame);
+    Eigen::Quaternion<float> quat = FeatureTree::getQuaternionFromFrame(frame);
     insert(quat, frame);
 }
 
 
-void FeatureTree::insert(const Eigen::Quaternion<double>& quat, std::shared_ptr<Frame>& frame){
+void FeatureTree::insert(const Eigen::Quaternion<float>& quat, std::shared_ptr<Frame>& frame){
     tree.insert(boost::make_tuple( FeatureTree::quaternionToPoint_D(quat), frame));
 }
 
 K_neighbor_search FeatureTree::nearestNeighbor(std::shared_ptr<Frame>& frame, unsigned int K) {
-    Eigen::Quaternion<double> quat = FeatureTree::getQuaternionFromFrame(frame);
+    Eigen::Quaternion<float> quat = FeatureTree::getQuaternionFromFrame(frame);
     Point_d query = FeatureTree::quaternionToPoint_D(quat);
     return K_neighbor_search(tree, query, K) ;
 }
 
-K_neighbor_search FeatureTree::nearestNeighbor(const Eigen::Quaternion<double>& quat, unsigned int K) {
+K_neighbor_search FeatureTree::nearestNeighbor(const Eigen::Quaternion<float>& quat, unsigned int K) {
     Point_d query = FeatureTree::quaternionToPoint_D(quat);
     return K_neighbor_search(tree, query, K) ;
 }
 
-Point_d FeatureTree::quaternionToPoint_D(const Eigen::Quaternion<double>& quat){
+Point_d FeatureTree::quaternionToPoint_D(const Eigen::Quaternion<float>& quat){
     return Point_d (quat.w(),quat.x(),quat.y(),quat.z());
 }
-Eigen::Quaternion<double> FeatureTree::getQuaternionFromFrame (std::shared_ptr<Frame>& frame) {
+Eigen::Quaternion<float> FeatureTree::getQuaternionFromFrame (std::shared_ptr<Frame>& frame) {
     Eigen::Matrix4f pose = frame->_pose_in_model;
-    Eigen::Quaternion<double> quat(pose.block(0,0,3,3));
+    Eigen::Matrix3f rotation = pose.block(0,0,3,3);
+    Eigen::Quaternion<float> quat(rotation);
     return quat;
 }
 void FeatureTree::testTree(){
@@ -101,15 +102,15 @@ void FeatureTree::testClass(){
     std::shared_ptr<Frame> frame6 = std::make_shared<Frame>();
     frame6->_id = 6;
 
-    insert(Eigen::Quaternion<double> (3.0, 6.0, 7.0, 2.0), frame0);
-    insert(Eigen::Quaternion<double> (7.0, 15.0, 13.0, 2.0), frame1);
-    insert(Eigen::Quaternion<double> (3.0, 15.0, 6.0, 2.0), frame2);
-    insert(Eigen::Quaternion<double> (6.0, 12.0, 8.0, 2.0), frame3);
-    insert(Eigen::Quaternion<double> (9.0, 1.0, 2.0, 2.0), frame4);
-    insert(Eigen::Quaternion<double> (2.0, 7.0, 6.0, 2.0), frame5);
-    insert(Eigen::Quaternion<double> (1.0, 2.0, 3.0, 2.0), frame6);
+    insert(Eigen::Quaternion<float> (3.0, 6.0, 7.0, 2.0), frame0);
+    insert(Eigen::Quaternion<float> (7.0, 15.0, 13.0, 2.0), frame1);
+    insert(Eigen::Quaternion<float> (3.0, 15.0, 6.0, 2.0), frame2);
+    insert(Eigen::Quaternion<float> (6.0, 12.0, 8.0, 2.0), frame3);
+    insert(Eigen::Quaternion<float> (9.0, 1.0, 2.0, 2.0), frame4);
+    insert(Eigen::Quaternion<float> (2.0, 7.0, 6.0, 2.0), frame5);
+    insert(Eigen::Quaternion<float> (1.0, 2.0, 3.0, 2.0), frame6);
 
-    Eigen::Quaternion<double> query (1.0,1.0,1.0,1.0);
+    Eigen::Quaternion<float> query (1.0,1.0,1.0,1.0);
     Distance tr_dist;
     K_neighbor_search search = nearestNeighbor(query, K);
     for(K_neighbor_search::iterator it = search.begin(); it != search.end(); it++){
