@@ -305,10 +305,10 @@ class ResultPlotter:
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
 
-    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4TimingICP/timing.npy"):
+    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoPoseRegression2TimingLoftr/timing.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
-        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_-4_new.txt"
+        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_2_loftr.txt"
         WRITE_LOG = True
         
 
@@ -418,6 +418,10 @@ class ResultPlotter:
             time_pair_selectKeyFramesForBA = ("selectKeyFramesForBA","selectKeyFramesForBA_end")
             time_pair_getFeatureMatchPairs = ("getFeatureMatchPairs","getFeatureMatchPairs_end")
             time_pair_find_corres_2 = ("find_corres_2","find_corres_2_end")
+            time_pair_loftr_predict = ("loftr_predict", "loftr_predict_end")
+            time_pair_loftr_match_assign = ("loftr_match_assign", "loftr_match_assign_end")
+            time_pair_loftr_rawMatchesToCorres = ("loftr_rawMatchesToCorres", "loftr_rawMatchesToCorres_end")
+            time_pair_loftr_runRansacMultiPairGPU = ("loftr_runRansacMultiPairGPU", "loftr_runRansacMultiPairGPU_end")
             time_pair_optimizeGPU = ("optimizeGPU","optimizeGPU_end")
             time_pair_checkMovement_limits = ("checkMovement_limits","checkMovement_limits_end")
             time_pair_icp = ("icp","icp_end")
@@ -431,6 +435,10 @@ class ResultPlotter:
             self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
             self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
             self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres_2)
+            self.time_pair_loftr_predict_ids, self.time_pair_loftr_predict_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_predict)
+            self.time_pair_loftr_match_assign_ids, self.time_pair_loftr_match_assign_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_match_assign)
+            self.time_pair_loftr_rawMatchesToCorres_ids, self.time_pair_loftr_rawMatchesToCorres_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_rawMatchesToCorres)
+            self.time_pair_loftr_runRansacMultiPairGPU_ids, self.time_pair_loftr_runRansacMultiPairGPU_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_runRansacMultiPairGPU)
             self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_optimizeGPU)
             self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_checkMovement_limits)
             self.time_pair_icp_ids, self.time_pair_icp_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_icp)
@@ -444,6 +452,10 @@ class ResultPlotter:
             timing_log_str +=  "time_pair_selectKeyFramesForBA & " + str(np.round(np.average(self.time_pair_selectKeyFramesForBA_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_selectKeyFramesForBA_execution_time)) + " \\\\\n"
             timing_log_str +=  "time_pair_getFeatureMatchPairs & " + str(np.round(np.average(self.time_pair_getFeatureMatchPairs_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_getFeatureMatchPairs_execution_time)) + " \\\\\n"
             timing_log_str +=  "time_pair_find_corres_2 & " + str(np.round(np.average(self.time_pair_find_corres_2_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_find_corres_2_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_loftr_predict & " + str(np.round(np.average(self.time_pair_loftr_predict_execution_time), 5)).replace(".", ",") + "s & " + str(len(self.time_pair_loftr_predict_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_loftr_match_assign & " + str(np.round(np.average(self.time_pair_loftr_match_assign_execution_time), 5)).replace(".", ",") + "s & " + str(len(self.time_pair_loftr_match_assign_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_loftr_rawMatchesToCorres & " + str(np.round(np.average(self.time_pair_loftr_rawMatchesToCorres_execution_time), 5)).replace(".", ",") + "s & " + str(len(self.time_pair_loftr_rawMatchesToCorres_execution_time)) + " \\\\\n"
+            timing_log_str +=  "time_pair_loftr_runRansacMultiPairGPU & " + str(np.round(np.average(self.time_pair_loftr_runRansacMultiPairGPU_execution_time), 5)).replace(".", ",") + "s & " + str(len(self.time_pair_loftr_runRansacMultiPairGPU_execution_time)) + " \\\\\n"
             timing_log_str +=  "time_pair_optimizeGPU & " + str(np.round(np.average(self.time_pair_optimizeGPU_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_optimizeGPU_execution_time)) + " \\\\\n"
             timing_log_str +=  "time_pair_checkMovement_limits & " + str(np.round(np.average(self.time_pair_checkMovement_limits_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_checkMovement_limits_execution_time)) + " \\\\\n"
             timing_log_str +=  "time_pair_icp & " + str(np.round(np.average(self.time_pair_icp_execution_time), 5)).replace(".",",") + "s & " + str(len(self.time_pair_icp_execution_time)) + " \\\\\n"

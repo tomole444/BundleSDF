@@ -76,6 +76,7 @@ public:
   void bruteForceCombination(std::set<std::shared_ptr<Frame>, FramePtrComparator> frames, std::set<std::shared_ptr<Frame>, FramePtrComparator> &best_frames, int pos, float &min_rot_dist);
   void selectKeyFramesForBA();
   std::vector<FramePair> getFeatureMatchPairs(std::vector<std::shared_ptr<Frame>> &frames);
+  std::vector<FramePair> filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs);
   void maxNumEdgePathDfs(std::shared_ptr<Frame> cur, std::shared_ptr<Frame> goal, const std::vector<std::shared_ptr<Frame>> &frames_pool,  std::set<std::shared_ptr<Frame>, FramePtrComparator> &path, std::set<std::shared_ptr<Frame>, FramePtrComparator> &best_path, std::map<std::set<std::shared_ptr<Frame>, FramePtrComparator>, bool> &visited, int &best_n_edges);
   void nearEnoughRotSearch(std::shared_ptr<Frame> cur, std::shared_ptr<Frame> goal, const std::vector<std::shared_ptr<Frame>> &frames_pool,  std::set<std::shared_ptr<Frame>, FramePtrComparator> &path, std::set<std::shared_ptr<Frame>, FramePtrComparator> &best_path, std::map<std::set<std::shared_ptr<Frame>, FramePtrComparator>, bool> &visited);
   void saveNewframeResult();

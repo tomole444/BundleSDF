@@ -427,9 +427,10 @@ class BundleSdf:
     logging.info(f"frame_pairs: {len(frame_pairs)}")
     is_match_ref = len(frame_pairs)==1 and frame_pairs[0][0]._ref_frame_id==frame_pairs[0][1]._id and self.bundler._newframe==frame_pairs[0][0]
 
-    if is_match_ref:
-      frameA = frame_pairs[0][0]
-      frameB = frame_pairs[0][1]
+    logging.info(f"Analysing {len(frame_pairs)} pairs with loftr...")
+
+    if(len(frame_pairs) > 5):
+      print("here")
 
     imgs, tfs, query_pairs = self.bundler._fm.getProcessedImagePairs(frame_pairs)
     imgs = np.array([np.array(img) for img in imgs])

@@ -795,6 +795,7 @@ void Bundler::optimizationGlobal()
 std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr<Frame>> &frames)
 {
   std::vector<FramePair> pairs;
+
   for (int i=0;i<frames.size();i++)
   {
     for (int j=i+1;j<frames.size();j++)
@@ -820,6 +821,12 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
   return pairs;
 }
 
+std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs_in){
+
+  std::vector<FramePair> pairs_out;
+  auto frameA = pairs_in[0][0];
+
+}
 
 void Bundler::optimizeGPU(std::vector<std::shared_ptr<Frame>> &frames, bool find_matches)
 {
