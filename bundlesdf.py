@@ -467,7 +467,7 @@ class BundleSdf:
     for pair in query_pairs:
       self.bundler._fm.vizCorresBetween(pair[0], pair[1], 'before_ransac')
 
-    if track_timing == True: self.time_keeper.add("loftr_rrunRansacMultiPairGPU",self.bundler._newframe._id)
+    if track_timing == True: self.time_keeper.add("loftr_runRansacMultiPairGPU",self.bundler._newframe._id)
     self.bundler._fm.runRansacMultiPairGPU(query_pairs)
     if track_timing == True: self.time_keeper.add("loftr_runRansacMultiPairGPU_end",self.bundler._newframe._id)
 
