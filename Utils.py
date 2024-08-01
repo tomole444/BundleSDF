@@ -61,7 +61,7 @@ COLOR_MAP=np.array([[0, 0, 0], #Ignore
 
 
 def set_logging_format(log_path = None):
-  importlib.reload(logging)
+  #importlib.reload(logging)
   FORMAT = '[%(filename)s:%(lineno)d] %(message)s'
   if log_path is None:
     logging.basicConfig(level=logging.INFO, format=FORMAT)

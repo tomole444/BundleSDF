@@ -427,10 +427,6 @@ class BundleSdf:
     logging.info(f"frame_pairs: {len(frame_pairs)}")
     is_match_ref = len(frame_pairs)==1 and frame_pairs[0][0]._ref_frame_id==frame_pairs[0][1]._id and self.bundler._newframe==frame_pairs[0][0]
 
-    logging.info(f"Analysing {len(frame_pairs)} pairs with loftr...")
-
-    if(len(frame_pairs) > 5):
-      print("here")
 
     imgs, tfs, query_pairs = self.bundler._fm.getProcessedImagePairs(frame_pairs)
     imgs = np.array([np.array(img) for img in imgs])
@@ -438,9 +434,15 @@ class BundleSdf:
     if len(query_pairs)==0:
       return
 
+    start_time = time.time()
+
     if track_timing == True: self.time_keeper.add("loftr_predict",self.bundler._newframe._id)
     corres = self.loftr.predict(rgbAs=imgs[::2], rgbBs=imgs[1::2])
     if track_timing == True: self.time_keeper.add("loftr_predict_end",self.bundler._newframe._id)
+
+
+    logging.info(f"Analysing {len(frame_pairs)} pairs with loftr. Took {time.time() - start_time}s")
+
     
 
     if track_timing == True: self.time_keeper.add("loftr_match_assign",self.bundler._newframe._id)

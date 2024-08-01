@@ -823,8 +823,24 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
 
 std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs_in){
 
+  const unsigned int K = 5;
   std::vector<FramePair> pairs_out;
-  auto frameA = pairs_in[0][0];
+  auto frameA = pairs_in[0].first;
+
+  K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
+    
+
+  for(int i = 0; i <pairs_in.size(); i++){
+    int req_id = pairs_in[i].second->_id;
+
+    for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+      if (req_id == boost::get<1>(it->first)->_id){
+        pairs_out.push_back(pairs_in[i]);
+      } 
+    }
+
+  }
+
 
 }
 
