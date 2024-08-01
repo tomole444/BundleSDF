@@ -157,7 +157,7 @@ meassurement:
   ressources: True # meassure ressource usage
 
 loftr: #Settings for the loftr feature matching
-  do_matches_kd_tree_filtering: True #is kd_tree filtering activated 
+  do_matches_kd_tree_filtering: False #is kd_tree filtering activated 
   max_k_neighbor_distance: 5 # maximum distance of rotation in kd_tree -> equals maximum of loftr-matchings that are examined at once
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 

@@ -1621,10 +1621,10 @@ class BundleSdf:
         time_diff = current_time - self.velocity_pose_regression.pose_data["time_stamps"][-1]
         r = Rotation.from_matrix(T_cam_obj[:3,:3])
         #current_angles = r.as_euler("zyx",)
-        current_quat = r.as_quat()
+        current_quat = r.as_euler("zyx",)# r.as_quat()
         r = Rotation.from_matrix(self.velocity_pose_regression.pose_data["tfs"][-1][:3,:3])
         #last_angles = r.as_euler("zyx",)
-        last_quat = r.as_quat()
+        last_quat = r.as_euler("zyx",) # r.as_quat()
         
         vel_quat = (current_quat - last_quat) / time_diff
         #vel_angle = (current_angles - last_angles) / (current_time - self.last_time_stamp) # deprec
