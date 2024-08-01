@@ -460,6 +460,7 @@ void Bundler::selectKeyFramesForBA()
   frames.insert(_keyframes[0]);
 
   const std::string method = (*yml)["bundle"]["subset_selection_method"].as<std::string>();
+  std::cout << "choosing "<< method << std::endl;
   if (method=="greedy_rot")
   {
     while (frames.size()<max_BA_frames)
@@ -818,8 +819,8 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
       }
     }
   }
-
-  if ((*yml)["loftr"]["do_matches_kd_tree_filtering"].as<bool>()){
+  bool do_filertering = (*yml)["loftr"]["do_matches_kd_tree_filtering"].as<bool>();
+  if (do_filertering){
     pairs = filterFeatureMatchPairsWithKDTree(pairs);
   }
 
@@ -827,24 +828,38 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
 }
 
 std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs_in){
-
+  
+  if (pairs_in.size() == 0)
+    return pairs_in;
   const unsigned int K = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
   std::vector<FramePair> pairs_out;
-  auto frameA = pairs_in[0].first;
+  
 
-  K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
-    
+  auto frameA = pairs_in.at(0).first;
 
-  for(int i = 0; i <pairs_in.size(); i++){
-    int req_id = pairs_in[i].second->_id;
+  std::cout << "_keyframes count " << _keyframes.size()  << " and K " << K << std::endl;
 
-    for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
-      if (req_id == boost::get<1>(it->first)->_id){
-        pairs_out.push_back(pairs_in[i]);
-      } 
+  if (_keyframes.size() > K)
+  { 
+    std::cout << "filtering pairs going" << std::endl;
+    K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
+      
+
+    for(int i = 0; i <pairs_in.size(); i++){
+      int req_id = pairs_in.at(i).second->_id;
+
+      for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+        if (req_id == boost::get<1>(it->first)->_id){
+          pairs_out.push_back(pairs_in.at(i));
+        } 
+      }
+
     }
-
+  }else {
+    pairs_out = pairs_in;
   }
+  
+  std::cout << "pairs_in " << pairs_in.size() << "pairs_out " << pairs_out.size() <<std::endl;
   return pairs_out;
 
 }

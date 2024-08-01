@@ -15,8 +15,9 @@ class VelocityPoseRegression:
         self.est_pose = np.identity(4)
 
         self.mask_est = None
+        self.pose_data = {"tfs": [], "vels": [], "accs": [], "time_stamps": []}
 
-    def predictPose(self,last_poses):
+    def predictPose(self, last_poses):
 
         x = np.arange(len(last_poses) - 1)
         rot_mats = last_poses[:, :3, :3]

@@ -1624,6 +1624,7 @@ class BundleSdf:
         current_time = time.time()
         r = Rotation.from_matrix(T_cam_obj[:3,:3])
         current_angles = r.as_euler("zyx",)
+        current_quat = r.as_quat()
         r = Rotation.from_matrix(self.last_tfs[-1][:3,:3])
         last_angles = r.as_euler("zyx",)
         vel_angle = (current_angles - last_angles) / (current_time - self.last_time_stamp)
@@ -1640,8 +1641,10 @@ class BundleSdf:
         self.last_euler_velocities.append(vel_angle)
         self.last_trans_velocities.append(vel_trans)
 
-      self.last_tfs.append(T_cam_obj)
-      self.last_time_stamp = time.time()
+      self.velocity_pose_regression.pose_data["tfs"].append(T_cam_obj)
+      self.velocity_pose_regression.pose_data["time_stamps"].append(time.time())
+      self.last_tfs.append(T_cam_obj) # deprec
+      self.last_time_stamp = time.time() # deprec
     return ret
 
   def get_Estimation(self):

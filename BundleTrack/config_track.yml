@@ -113,7 +113,7 @@ shape:
   truncate_dist: 0.005
 
 pvnet:
-  activated: False # use pvnet
+  activated: True # use pvnet
   ip_addr: "192.168.99.91" #address of the inference server
   port: 11024 #port number of the server 
   adjust_every: 60 # get TF from PVNet every x frames
@@ -135,7 +135,7 @@ limits:
 estimation: # estimation through velocity regression 
   use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
   use_last: 10 # use last x frames for the estimation
-  max_acceleration_std: 0.1 # maximum acceleration changes -> if too much fluctuation, dont use estimation
+  max_acceleration_std: 0.05 # maximum acceleration changes -> if too much fluctuation, dont use estimation
   max_acceleration_std_use_last: 20 # use last x frames for the acceleration limit test
 
 segmenter: #online cutie segmenter server
