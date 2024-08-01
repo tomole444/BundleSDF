@@ -776,7 +776,7 @@ class BundleSdf:
     feature_matching_optimized_pose = offset@frame._pose_in_model
     distance = np.linalg.norm(feature_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
     
-    if distance > self.cfg_track["limits"]["max_feature_matching_offset"]:
+    if distance > self.cfg_track["loftr"]["max_feature_matching_offset"]:
       #spike detected -> dont use frame#invalidate frame
       #frame._status = my_cpp.Frame.FAIL
       #frame._pose_in_model = np.identity(4) #assign invalid pose

@@ -131,7 +131,6 @@ limits:
   max_t_vec_movement: 0.1 # maximum distance in meters
   force_pvnet_after: 15 #number of frames that need to be discarded before pvnet is utilized
   min_mask_pixels: 100 #minimum number of pixels of the object that needs to be seen
-  max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 
 estimation: # estimation through velocity regression 
   use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
@@ -156,3 +155,9 @@ time_reducer: # Functions to speed up analysis
 meassurement:
   time: True # meassure runtime
   ressources: True # meassure ressource usage
+
+loftr: #Settings for the loftr feature matching
+  do_matches_kd_tree_filtering: True #is kd_tree filtering activated 
+  max_k_neighbor_distance: 5 # maximum distance of rotation in kd_tree -> equals maximum of loftr-matchings that are examined at once
+  max_feature_matching_offset: 0.2 # maximum feature matching translation offset
+

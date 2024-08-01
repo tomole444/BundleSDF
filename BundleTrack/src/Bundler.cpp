@@ -818,12 +818,17 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
       }
     }
   }
+
+  if ((*yml)["loftr"]["do_matches_kd_tree_filtering"].as<bool>()){
+    pairs = filterFeatureMatchPairsWithKDTree(pairs);
+  }
+
   return pairs;
 }
 
 std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs_in){
 
-  const unsigned int K = 5;
+  const unsigned int K = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
   std::vector<FramePair> pairs_out;
   auto frameA = pairs_in[0].first;
 
@@ -840,7 +845,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
     }
 
   }
-
+  return pairs_out;
 
 }
 
