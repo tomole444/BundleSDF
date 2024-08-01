@@ -70,7 +70,7 @@ class VelocityPoseRegression:
 
         time_diff = time.time() - np.array(self.pose_data["time_stamps"])[-1]
         est_quat = last_vels_quat[-1] + est_quat_vel * time_diff
-        est_rot_mat = R.from_quat(est_quat).as_matrix()
+        est_rot_mat = R.from_euler("zyx",est_quat).as_matrix() # R.from_quat(est_quat).as_matrix()
         est_trans_vec = trans_vecs[-1] + est_trans_vel * time_diff
 
         est_pose = np.identity(4)
