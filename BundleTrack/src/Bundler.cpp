@@ -858,8 +858,8 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
   }else {
     pairs_out = pairs_in;
   }
-  
-  std::cout << "pairs_in " << pairs_in.size() << "pairs_out " << pairs_out.size() <<std::endl;
+
+  std::cout << "pairs_in " << pairs_in.size() << " / pairs_out " << pairs_out.size() <<std::endl;
   return pairs_out;
 
 }

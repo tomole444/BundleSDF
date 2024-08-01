@@ -296,7 +296,7 @@ if __name__=="__main__":
   args = parser.parse_args()
 
   if args.debug:
-    port = 56787
+    port = 56781
     print(f"Waiting for debugger to attach to port {port}")
     debugpy.listen(port)
     debugpy.wait_for_client()

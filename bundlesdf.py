@@ -371,16 +371,12 @@ class BundleSdf:
     self.last_valid_frames_count = 0 # count of last valid frames
 
     # Velocity pose estimator
-    self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path)
+    self.velocity_pose_regression = VelocityPoseRegression(self.K, self.model_pcd_path, self.cfg_track)
     self.velocity_estimations = {"tfs":[], "ids": [], "calculation_times": []}
     self.velocity_estimation_path = os.path.join(self.debug_dir, "velocity_estimation")
     self.last_tfs = []
-    self.last_time_stamp = None
-    #self.last_euler_angle = None
     self.last_euler_velocities = []
-    self.last_euler_accelerations = []
     self.last_trans_velocities = []
-    self.last_trans_accelerations = []
 
     set_logging_format(log_path= os.path.join(self.debug_dir,"console.log"))
 
@@ -1620,43 +1616,50 @@ class BundleSdf:
       self.trans_movements.append(trans_movement)
       self.rot_movements.append(rot_movement)
 
-      if len(self.last_tfs) != 0 and self.last_time_stamp is not None:
+      if len(self.velocity_pose_regression.pose_data["tfs"]) != 0 and len(self.velocity_pose_regression.pose_data["time_stamps"]) != 0:
         current_time = time.time()
+        time_diff = current_time - self.velocity_pose_regression.pose_data["time_stamps"][-1]
         r = Rotation.from_matrix(T_cam_obj[:3,:3])
-        current_angles = r.as_euler("zyx",)
+        #current_angles = r.as_euler("zyx",)
         current_quat = r.as_quat()
-        r = Rotation.from_matrix(self.last_tfs[-1][:3,:3])
-        last_angles = r.as_euler("zyx",)
-        vel_angle = (current_angles - last_angles) / (current_time - self.last_time_stamp)
-        vel_trans = (T_cam_obj[:3,3] - self.last_tfs[-1][:3,3]) / (current_time - self.last_time_stamp)
+        r = Rotation.from_matrix(self.velocity_pose_regression.pose_data["tfs"][-1][:3,:3])
+        #last_angles = r.as_euler("zyx",)
+        last_quat = r.as_quat()
+        
+        vel_quat = (current_quat - last_quat) / time_diff
+        #vel_angle = (current_angles - last_angles) / (current_time - self.last_time_stamp) # deprec
+        vel_trans = (T_cam_obj[:3,3] - self.velocity_pose_regression.pose_data["tfs"][-1][:3,3]) / time_diff
 
-        if len(self.last_euler_velocities) != 0:
-          acc_angle = (vel_angle - self.last_euler_velocities[-1]) / (current_time - self.last_time_stamp)
-          acc_trans = (vel_trans - self.last_trans_velocities[-1]) / (current_time - self.last_time_stamp) # TODO:change to be in respect to the frame
-          self.last_euler_accelerations.append(acc_angle)
-          self.last_trans_accelerations.append(acc_trans)
+        if len(self.velocity_pose_regression.pose_data["vels"]["quat"]) != 0:
+          #acc_angle = (vel_angle - self.last_euler_velocities[-1]) / (current_time - self.last_time_stamp) # deprec
+          acc_quat = (vel_quat - self.velocity_pose_regression.pose_data["vels"]["quat"][-1]) / time_diff
+          acc_trans = (vel_trans - self.velocity_pose_regression.pose_data["vels"]["trans"][-1]) / time_diff 
+          self.velocity_pose_regression.pose_data["accs"]["quat"].append(acc_quat)
+          self.velocity_pose_regression.pose_data["accs"]["trans"].append(acc_trans)
+          #self.last_euler_accelerations.append(acc_angle)# deprec
+          #self.last_trans_accelerations.append(acc_trans)# deprec
 
 
-
-        self.last_euler_velocities.append(vel_angle)
-        self.last_trans_velocities.append(vel_trans)
+        self.velocity_pose_regression.pose_data["vels"]["quat"].append(vel_quat)
+        self.velocity_pose_regression.pose_data["vels"]["trans"].append(vel_trans)
+        #self.last_euler_velocities.append(vel_angle)# deprec
+        #self.last_trans_velocities.append(vel_trans)# deprec
 
       self.velocity_pose_regression.pose_data["tfs"].append(T_cam_obj)
       self.velocity_pose_regression.pose_data["time_stamps"].append(time.time())
-      self.last_tfs.append(T_cam_obj) # deprec
-      self.last_time_stamp = time.time() # deprec
+      #self.last_tfs.append(T_cam_obj) # deprec
+      #self.last_time_stamp = time.time() # deprec
     return ret
 
   def get_Estimation(self):
     
     start_calc = time.time()
     ret = None
-    last_accs = np.array(self.last_euler_accelerations)[len(self.last_euler_accelerations) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
-    last_acc_std = np.std(last_accs, axis = 0)   # TODO: reset array, when not taken
-    if np.all(last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]):
-      last_tfs = np.array(self.last_tfs)[ len(self.last_tfs) - (self.cfg_track["estimation"]["use_last"] - 1) : len(self.last_tfs)]
-      last_tfs = np.array(last_tfs)
-      ret = self.velocity_pose_regression.predictPose(np.array(last_tfs))
+    last_accs = np.array(self.velocity_pose_regression.pose_data["accs"]["quat"])[len(self.velocity_pose_regression.pose_data["accs"]["quat"]) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
+    last_acc_std = np.std(last_accs, axis = 0)
+    last_acc_std = np.sum(last_acc_std)
+    if last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]:
+      ret = self.velocity_pose_regression.predictPose()
       self.velocity_estimations["tfs"].append(ret)
       self.velocity_estimations["ids"].append(self.bundler._newframe._id)
       self.velocity_estimations["calculation_times"].append(time.time() - start_calc)

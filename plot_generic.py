@@ -305,11 +305,11 @@ class ResultPlotter:
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
 
-    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoPoseRegression2TimingLoftr/timing.npy"):
+    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoLoftrAnalysisFilter5/timing.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
-        timing_log_path = "plots/BuchVideo/timing/BundleSDF_pose_regression_2_loftr.txt"
-        WRITE_LOG = True
+        timing_log_path = "plots/BuchVideo/timing/BundleSDF_loftr_filter_5.txt"
+        WRITE_LOG = False
         
 
         keys = self.time_keeper.time_save.keys()
@@ -837,7 +837,7 @@ class ResultPlotter:
         
 
         #display thresholds
-        plt.plot(self.x, np.ones(self.x.shape) * 0.05)
+        plt.plot(self.x, np.ones(self.x.shape) * 0.15)
         #plt.plot(self.x, np.ones(self.x.shape) * 1)
 
 
@@ -869,7 +869,7 @@ class ResultPlotter:
         #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
         #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
         #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
-        #plt.show()
+        plt.show()
     
     def exportPlot(self, path:str, white_border:bool = False):
         is_pdf = False
@@ -969,7 +969,7 @@ class ResultPlotter:
     @staticmethod
     def calcQuaternionAccs(x, pose_dir):
         USE_LAST = 20
-        
+        TIME_PER_FRAME = 0.3
         poses = ResultPlotter.loadPoses(pose_dir)
         poses = np.array(poses)
         rots = poses[:,:3,:3]
@@ -977,10 +977,10 @@ class ResultPlotter:
         r = Rotation.from_matrix(rots)
         quaternions = r.as_quat(canonical=True)
         quaternions = np.array(quaternions)
-        vels_trans = np.diff(trans, axis = 0)
-        vels_rot = np.diff(quaternions, axis = 0)
-        accs_trans = np.diff(trans, axis = 0, n = 0)
-        accs_rot = np.diff(quaternions, axis = 0, n = 2)
+        vels_trans = np.diff(trans, axis = 0) / TIME_PER_FRAME
+        vels_rot = np.diff(quaternions, axis = 0) / TIME_PER_FRAME
+        accs_trans = np.diff(trans, axis = 0, n = 0) / TIME_PER_FRAME
+        accs_rot = np.diff(quaternions, axis = 0, n = 2) / TIME_PER_FRAME
         
         acc_ids = np.arange(len(x))
         acc_ids = acc_ids[2:len(acc_ids)]
