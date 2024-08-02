@@ -40,7 +40,7 @@ class VelocityPoseRegression:
 
         x = last_time_stamps if use_time_relation else np.arange(len(last_vels_quat))
         last_rot_mat = last_poses[-1, :3, :3].reshape((3,3))
-        last_trans_vec = last_poses[-1, :3, 3].reshape((3,1))
+        last_trans_vec = last_poses[-1, :3, 3].reshape((1,3))
 
         #Convert the matrix to Euler angles
         r = R.from_matrix(last_rot_mat)
@@ -60,10 +60,10 @@ class VelocityPoseRegression:
         est_quat_vel = linreg_rot.predict(x_pred)
         est_trans_vel = linreg_trans.predict(x_pred)
 
-        time_diff = time.time() - last_time_stamps[-1]
+        time_diff = time.time() - last_time_stamps[-1] if use_time_relation else 1
         est_quat = last_angles + est_quat_vel * time_diff 
         est_rot_mat = R.from_quat(est_quat).as_matrix() 
-        est_trans_vec = last_trans_vec + est_trans_vel 
+        est_trans_vec = last_trans_vec + est_trans_vel * time_diff
 
         est_pose = np.identity(4)
         est_pose[:3,:3] = est_rot_mat
