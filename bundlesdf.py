@@ -1665,7 +1665,7 @@ class BundleSdf:
       self.velocity_estimations["calculation_times"].append(time.time() - start_calc)
       np.savetxt(os.path.join(self.velocity_estimation_path, self.bundler._newframe._id_str + ".txt"), ret)
     else:
-      logging.info(f"No estimation used since {last_acc_std} > {self.cfg_track["estimation"]["max_acceleration_std"]}")
+      logging.info(f"No estimation used since {last_acc_std} > {self.cfg_track['estimation']['max_acceleration_std']}")
     
     return ret
 
