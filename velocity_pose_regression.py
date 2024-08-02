@@ -43,7 +43,7 @@ class VelocityPoseRegression:
 
         #Convert the matrix to Euler angles
         r = R.from_matrix(rot_mats)
-        angles = r.as_euler("zyx",)
+        angles = r.as_quat() #r.as_euler("zyx",)
         # rot_velocities = []
         # for idx, t_vec in enumerate(angles):
         #     if idx > 0:
@@ -72,7 +72,7 @@ class VelocityPoseRegression:
 
         time_diff = time.time() - last_time_stamps[-1]
         est_quat = angles[-1] + est_quat_vel  * time_diff # last_vels_quat[-1] + est_quat_vel #* time_diff #CHANGED
-        est_rot_mat = R.from_euler("zyx",est_quat).as_matrix() # R.from_quat(est_quat).as_matrix()
+        est_rot_mat = R.from_quat(est_quat).as_matrix() # R.from_euler("zyx",est_quat).as_matrix() # R.from_quat(est_quat).as_matrix()
         est_trans_vec = trans_vecs[-1] + est_trans_vel #* time_diff
 
         est_pose = np.identity(4)
