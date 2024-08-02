@@ -135,7 +135,7 @@ limits:
 estimation: # estimation through velocity regression 
   use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
   use_last: 10 # use last x frames for the estimation
-  max_acceleration_std: 0.2 # maximum acceleration changes -> if too much fluctuation, dont use estimation
+  max_acceleration_std: 10 #0.2 # maximum acceleration changes -> if too much fluctuation, dont use estimation
   max_acceleration_std_use_last: 20 # use last x frames for the acceleration limit test
 
 segmenter: #online cutie segmenter server
