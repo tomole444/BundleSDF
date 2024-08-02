@@ -21,6 +21,7 @@ class VelocityPoseRegression:
 
     def predictPose(self):
         use_last = self.cfg["estimation"]["use_last"] -1 # -1 because index is one lower than count 
+        use_time_relation = self.cfg["estimation"]["use_time_relation"]
         tf_count = len(self.pose_data["tfs"])
         vel_quat_count = len(self.pose_data["vels"]["quat"])
         vel_trans_count = len(self.pose_data["vels"]["trans"])
@@ -37,7 +38,7 @@ class VelocityPoseRegression:
         last_vels_trans = np.array(self.pose_data["vels"]["trans"]) [vel_trans_lower_index : vel_trans_count]
         last_time_stamps = np.array(self.pose_data["time_stamps"]) [time_stamp_lower_index : time_stamp_count]
         #x = np.arange(len(last_vels_quat))
-        x = last_time_stamps
+        x = last_time_stamps if use_time_relation else np.arange(len(last_vels_quat))
         rot_mats = last_poses[:, :3, :3]
         trans_vecs = last_poses[:, :3, 3]
 
@@ -66,7 +67,7 @@ class VelocityPoseRegression:
 
         #predict vels 
         
-        x_pred = np.array([time.time(), time.time(), time.time()]).reshape(-1,3)
+        x_pred = np.array([time.time(), time.time(), time.time()]).reshape(-1,3) if use_time_relation else np.array([len(x), len(x), len(x)]).reshape(-1,3)
         est_quat_vel = linreg_rot.predict(x_pred)
         est_trans_vel = linreg_trans.predict(x_pred)
 

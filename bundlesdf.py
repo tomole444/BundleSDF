@@ -1618,7 +1618,7 @@ class BundleSdf:
 
       if len(self.velocity_pose_regression.pose_data["tfs"]) != 0 and len(self.velocity_pose_regression.pose_data["time_stamps"]) != 0:
         current_time = time.time()
-        time_diff = current_time - self.velocity_pose_regression.pose_data["time_stamps"][-1]
+        time_diff = current_time - self.velocity_pose_regression.pose_data["time_stamps"][-1] if self.cfg_track["estimation"]["use_time_relation"] else 1
         r = Rotation.from_matrix(T_cam_obj[:3,:3])
         #current_angles = r.as_euler("zyx",)
         current_quat = r.as_quat() # r.as_euler("zyx",)# r.as_quat()
