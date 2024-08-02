@@ -30,7 +30,7 @@ class VelocityPoseRegression:
         tf_lower_index = tf_count - use_last if tf_count - use_last >= 0 else 0 
         vel_quat_lower_index = vel_quat_count - use_last if vel_quat_count - use_last >= 0 else 0
         vel_trans_lower_index = vel_trans_count - use_last if vel_trans_count - use_last >= 0 else 0
-        time_stamp_lower_index = time_stamp_count - use_last if time_stamp_count - use_last >= 0 else 0
+        time_stamp_lower_index = vel_quat_lower_index if vel_quat_count - use_last >= 0 else vel_quat_lower_index + 1
 
         last_poses = np.array(self.pose_data["tfs"]) [tf_lower_index : tf_count]
         last_vels_quat = np.array(self.pose_data["vels"]["quat"]) [vel_quat_lower_index : vel_quat_count]
@@ -66,7 +66,7 @@ class VelocityPoseRegression:
 
         #predict vels 
         
-        x_pred = np.array([len(x), len(x), len(x)]).reshape(-1,3)
+        x_pred = np.array([time.time(), time.time(), time.time()]).reshape(-1,3)
         est_quat_vel = linreg_rot.predict(x_pred)
         est_trans_vel = linreg_trans.predict(x_pred)
 
