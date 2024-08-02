@@ -24,41 +24,45 @@ class VelocityPoseRegression:
         tf_count = len(self.pose_data["tfs"])
         vel_quat_count = len(self.pose_data["vels"]["quat"])
         vel_trans_count = len(self.pose_data["vels"]["trans"])
+        time_stamp_count = len(self.pose_data["time_stamps"])
+
 
         tf_lower_index = tf_count - use_last if tf_count - use_last >= 0 else 0 
         vel_quat_lower_index = vel_quat_count - use_last if vel_quat_count - use_last >= 0 else 0
         vel_trans_lower_index = vel_trans_count - use_last if vel_trans_count - use_last >= 0 else 0
+        time_stamp_lower_index = time_stamp_count - use_last if time_stamp_count - use_last >= 0 else 0
 
         last_poses = np.array(self.pose_data["tfs"]) [tf_lower_index : tf_count]
         last_vels_quat = np.array(self.pose_data["vels"]["quat"]) [vel_quat_lower_index : vel_quat_count]
         last_vels_trans = np.array(self.pose_data["vels"]["trans"]) [vel_trans_lower_index : vel_trans_count]
+        last_time_stamps = np.array(self.pose_data["time_stamps"]) [time_stamp_lower_index : time_stamp_count]
         #x = np.arange(len(last_vels_quat))
-        x = np.arange(len(last_vels_quat) -1 )
+        x = last_time_stamps
         rot_mats = last_poses[:, :3, :3]
         trans_vecs = last_poses[:, :3, 3]
 
         #Convert the matrix to Euler angles
         r = R.from_matrix(rot_mats)
         angles = r.as_euler("zyx",)
-        rot_velocities = []
-        for idx, t_vec in enumerate(angles):
-            if idx > 0:
-                vel = t_vec - angles[idx-1]
-                rot_velocities.append(vel)
-        trans_velocities = []
-        for idx, t_vec in enumerate(trans_vecs):
-            if idx > 0:
-                vel = t_vec - trans_vecs[idx-1]
-                trans_velocities.append(vel)
+        # rot_velocities = []
+        # for idx, t_vec in enumerate(angles):
+        #     if idx > 0:
+        #         vel = t_vec - angles[idx-1]
+        #         rot_velocities.append(vel)
+        # trans_velocities = []
+        # for idx, t_vec in enumerate(trans_vecs):
+        #     if idx > 0:
+        #         vel = t_vec - trans_vecs[idx-1]
+        #         trans_velocities.append(vel)
 
-        rot_velocities = np.array(rot_velocities)
+        # rot_velocities = np.array(rot_velocities)
 
         #create linear regression
         x_stacked = np.vstack((x,x,x)).T
         linreg_rot = LinearRegression()
-        linreg_rot.fit(x_stacked, rot_velocities)#last_vels_quat) 
+        linreg_rot.fit(x_stacked, last_vels_quat) 
         linreg_trans = LinearRegression()
-        linreg_trans.fit(x_stacked, trans_velocities)#last_vels_trans) 
+        linreg_trans.fit(x_stacked, last_vels_trans) 
 
         #predict vels 
         
@@ -66,8 +70,8 @@ class VelocityPoseRegression:
         est_quat_vel = linreg_rot.predict(x_pred)
         est_trans_vel = linreg_trans.predict(x_pred)
 
-        time_diff = time.time() - np.array(self.pose_data["time_stamps"])[-1]
-        est_quat = angles[-1] + est_quat_vel # last_vels_quat[-1] + est_quat_vel #* time_diff #CHANGED
+        time_diff = time.time() - last_time_stamps[-1]
+        est_quat = angles[-1] + est_quat_vel  * time_diff # last_vels_quat[-1] + est_quat_vel #* time_diff #CHANGED
         est_rot_mat = R.from_euler("zyx",est_quat).as_matrix() # R.from_quat(est_quat).as_matrix()
         est_trans_vec = trans_vecs[-1] + est_trans_vel #* time_diff
 
