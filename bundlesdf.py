@@ -378,7 +378,7 @@ class BundleSdf:
     self.last_euler_velocities = []
     self.last_trans_velocities = []
 
-    set_logging_format(log_path= os.path.join(self.debug_dir,"console.log"))
+    set_logging_format(log_path= os.path.join(self.debug_dir,"console_log_info.log"))
 
     #time analysis
     self.time_keeper = TimeAnalyser(activated= self.cfg_track["meassurement"]["time"])

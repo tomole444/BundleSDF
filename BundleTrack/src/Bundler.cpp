@@ -841,9 +841,17 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
 
   if (_keyframes.size() > K)
   { 
-    std::cout << "filtering pairs going" << std::endl;
+    
+    Distance tr_dist;
     K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
-      
+    Eigen::Quaternion<float> query_quat = FeatureTree::getQuaternionFromFrame(frameA);
+    Point_d query = FeatureTree::quaternionToPoint_D(query_quat);
+    std::cout << fmt::format("KNN results for quaternion (w:{} x:{} y:{} z:{}) in frame {}:", query[0], query[1], query[2], query[3], frameA->_id_str) << std::endl;
+    for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+      std::cout << "\t distance = "
+              << tr_dist.inverse_of_transformed_distance(it->second) << " / quaternion: "
+              << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
+    }
 
     for(int i = 0; i <pairs_in.size(); i++){
       int req_id = pairs_in.at(i).second->_id;
@@ -853,7 +861,6 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
           pairs_out.push_back(pairs_in.at(i));
         } 
       }
-
     }
   }else {
     pairs_out = pairs_in;

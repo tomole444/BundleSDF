@@ -15,6 +15,7 @@ sys.path.append(code_dir)
 import debugpy
 import traceback
 import time
+from Logger import Logger
 
 def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_folder='/home/bowen/debug/bundlesdf_2022-11-18-15-10-24_milk/', use_segmenter=False, use_gui=False):
   set_seed(0)
@@ -69,7 +70,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   use_segmenter = cfg_bundletrack["segmenter"]["activated"]
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
-
+  sys.stdout = Logger(os.path.join(cfg_bundletrack["debug_dir"], "std_out_console.log"), sys.stdout)
+  sys.stderr = Logger(os.path.join(cfg_bundletrack["debug_dir"], "std_err_console.log"), sys.stderr)
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
 
