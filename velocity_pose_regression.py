@@ -37,26 +37,15 @@ class VelocityPoseRegression:
         last_vels_quat = np.array(self.pose_data["vels"]["quat"]) [vel_quat_lower_index : vel_quat_count]
         last_vels_trans = np.array(self.pose_data["vels"]["trans"]) [vel_trans_lower_index : vel_trans_count]
         last_time_stamps = np.array(self.pose_data["time_stamps"]) [time_stamp_lower_index : time_stamp_count]
-        #x = np.arange(len(last_vels_quat))
+
         x = last_time_stamps if use_time_relation else np.arange(len(last_vels_quat))
-        rot_mats = last_poses[:, :3, :3]
-        trans_vecs = last_poses[:, :3, 3]
+        last_rot_mat = last_poses[-1, :3, :3].reshape((3,3))
+        last_trans_vec = last_poses[-1, :3, 3].reshape((3,1))
 
         #Convert the matrix to Euler angles
-        r = R.from_matrix(rot_mats)
-        angles = r.as_quat() #r.as_euler("zyx",)
-        # rot_velocities = []
-        # for idx, t_vec in enumerate(angles):
-        #     if idx > 0:
-        #         vel = t_vec - angles[idx-1]
-        #         rot_velocities.append(vel)
-        # trans_velocities = []
-        # for idx, t_vec in enumerate(trans_vecs):
-        #     if idx > 0:
-        #         vel = t_vec - trans_vecs[idx-1]
-        #         trans_velocities.append(vel)
+        r = R.from_matrix(last_rot_mat)
+        last_angles = r.as_quat()
 
-        # rot_velocities = np.array(rot_velocities)
 
         #create linear regression
         x_stacked = np.vstack((x,x,x)).T
@@ -72,9 +61,9 @@ class VelocityPoseRegression:
         est_trans_vel = linreg_trans.predict(x_pred)
 
         time_diff = time.time() - last_time_stamps[-1]
-        est_quat = angles[-1] + est_quat_vel  * time_diff # last_vels_quat[-1] + est_quat_vel #* time_diff #CHANGED
-        est_rot_mat = R.from_quat(est_quat).as_matrix() # R.from_euler("zyx",est_quat).as_matrix() # R.from_quat(est_quat).as_matrix()
-        est_trans_vec = trans_vecs[-1] + est_trans_vel #* time_diff
+        est_quat = last_angles + est_quat_vel * time_diff 
+        est_rot_mat = R.from_quat(est_quat).as_matrix() 
+        est_trans_vec = last_trans_vec + est_trans_vel 
 
         est_pose = np.identity(4)
         est_pose[:3,:3] = est_rot_mat
