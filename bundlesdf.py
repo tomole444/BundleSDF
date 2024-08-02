@@ -1657,8 +1657,8 @@ class BundleSdf:
     ret = None
     last_accs = np.array(self.velocity_pose_regression.pose_data["accs"]["quat"])[len(self.velocity_pose_regression.pose_data["accs"]["quat"]) - self.cfg_track["estimation"]["max_acceleration_std_use_last"] :]
     last_acc_std = np.std(last_accs, axis = 0)
-    last_acc_std = np.sum(last_acc_std)
-    if last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]:
+    #last_acc_std = np.sum(last_acc_std)
+    if np.all(last_acc_std < self.cfg_track["estimation"]["max_acceleration_std"]):
       ret = self.velocity_pose_regression.predictPose()
       self.velocity_estimations["tfs"].append(ret)
       self.velocity_estimations["ids"].append(self.bundler._newframe._id)
