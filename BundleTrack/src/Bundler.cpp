@@ -833,6 +833,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
     return pairs_in;
   const unsigned int K = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
   std::vector<FramePair> pairs_out;
+  std::vector<int> frame_ids;
   
 
   auto frameA = pairs_in.at(0).first;
@@ -853,14 +854,21 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
               << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
     }
 
-    for(int i = 0; i <pairs_in.size(); i++){
+    for(int i = 0; i < pairs_in.size(); i++){
       int req_id = pairs_in.at(i).second->_id;
+      std::vector<int>::iterator it = std::find(frame_ids.begin(), frame_ids.end(), req_id);
+      if (it != frame_ids.end()){
+        // frame id in array -> duplicate -> skip
+        continue;
+      }
 
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
+          //frame id in knn results
           std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
           pairs_out.push_back(pairs_in.at(i));
-        } 
+          frame_ids.push_back(req_id);
+        }
       }
     }
   }else {
