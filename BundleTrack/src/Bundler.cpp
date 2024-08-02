@@ -858,6 +858,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
 
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
+          std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
           pairs_out.push_back(pairs_in.at(i));
         } 
       }
