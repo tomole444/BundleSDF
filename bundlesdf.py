@@ -766,7 +766,7 @@ class BundleSdf:
         return
 
 
-    logging.info(f"frame {frame._id_str} pose update before optimization \n{frame._pose_in_model.round(3)}")
+    logging.info(f"frame {frame._id_str} pose update before loftr-feature optimization \n{frame._pose_in_model.round(3)}")
     offset = self.bundler._fm.procrustesByCorrespondence(frame, ref_frame)
     #pose optimization resulting from feature matching -> eliminate spikes 
     feature_matching_optimized_pose = offset@frame._pose_in_model
@@ -779,7 +779,7 @@ class BundleSdf:
       logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset)")
     else:
       frame._pose_in_model = feature_matching_optimized_pose
-    logging.info(f"frame {frame._id_str} pose update after optimization \n{frame._pose_in_model.round(3)}")
+    logging.info(f"frame {frame._id_str} pose update after loftr-feature optimization \n{frame._pose_in_model.round(3)}")
 
     #Frames vergessen, wenn zu viele
     window_size = self.cfg_track["bundle"]["window_size"]
@@ -1664,6 +1664,8 @@ class BundleSdf:
       self.velocity_estimations["ids"].append(self.bundler._newframe._id)
       self.velocity_estimations["calculation_times"].append(time.time() - start_calc)
       np.savetxt(os.path.join(self.velocity_estimation_path, self.bundler._newframe._id_str + ".txt"), ret)
+    else:
+      logging.info(f"No estimation used since {last_acc_std} > {self.cfg_track["estimation"]["max_acceleration_std"]}")
     
     return ret
 
