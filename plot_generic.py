@@ -191,56 +191,56 @@ class ResultPlotter:
         #BuchVideo2
 
 
-        load_arr = np.load("benchmarks/BuchVideo2/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
-        self.add_bundle_orig_buch_2 = load_arr["result_y"]
+        # load_arr = np.load("benchmarks/BuchVideo2/ADD_BundleSDF_orig.npy", allow_pickle=True).item()
+        # self.add_bundle_orig_buch_2 = load_arr["result_y"]
 
-        load_arr = np.load("benchmarks/BuchVideo2/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
-        self.add_bundle_pose_regression_buch_2 = load_arr["result_y"]
+        # load_arr = np.load("benchmarks/BuchVideo2/ADD_BundleSDF_pose_regression_2.npy", allow_pickle=True).item()
+        # self.add_bundle_pose_regression_buch_2 = load_arr["result_y"]
 
-        load_arr = np.load("benchmarks/BuchVideo2/ADD_PVNet_upnp_Big_dataset.npy", allow_pickle=True).item()
-        self.add_pvnet_orig_buch_2 = load_arr["result_y"]
+        # load_arr = np.load("benchmarks/BuchVideo2/ADD_PVNet_upnp_Big_dataset.npy", allow_pickle=True).item()
+        # self.add_pvnet_orig_buch_2 = load_arr["result_y"]
 
 
-        load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/confidences_indiv.npy", allow_pickle=True).item()
-        cov_invs = load_arr["result_y"] 
+        # load_arr = np.load("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo2/outPVNet239upnp/confidences_indiv.npy", allow_pickle=True).item()
+        # cov_invs = load_arr["result_y"] 
 
-        self.confidence_sum = np.sum(np.abs(cov_invs), axis=2)
-        #confidence_sum = np.sum(confidence_sum, axis=2)
-        self.confidence_sum = 1-(self.confidence_sum / 5)
-        self.confidence_kpt_0 = self.confidence_sum[:,0] #1 - (confidence_sum[:,0]/ 5)
-        self.confidence_kpt_1 = self.confidence_sum[:,1] #1 - (confidence_sum[:,1]/ 5)
-        self.confidence_kpt_2 = self.confidence_sum[:,2] #1 - (confidence_sum[:,2]/ 5)
-        self.confidence_kpt_3 = self.confidence_sum[:,3] #1 - (confidence_sum[:,3]/ 5)
-        self.confidence_kpt_4 = self.confidence_sum[:,4] #1 - (confidence_sum[:,4]/ 5)
-        self.confidence_kpt_5 = self.confidence_sum[:,5] #1 - (confidence_sum[:,5]/ 5)
-        self.confidence_kpt_6 = self.confidence_sum[:,6] #1 - (confidence_sum[:,6]/ 5)
-        self.confidence_kpt_7 = self.confidence_sum[:,7] #1 - (confidence_sum[:,7]/ 5)
-        self.confidence_kpt_8 = self.confidence_sum[:,8] #1 - (confidence_sum[:,8]/ 5)
-        self.confidence_kpt_0 = np.append(self.confidence_kpt_0,0)
-        self.confidence_kpt_1 = np.append(self.confidence_kpt_1,0)
-        self.confidence_kpt_2 = np.append(self.confidence_kpt_2,0)
-        self.confidence_kpt_3 = np.append(self.confidence_kpt_3,0)
-        self.confidence_kpt_4 = np.append(self.confidence_kpt_4,0)
-        self.confidence_kpt_5 = np.append(self.confidence_kpt_5,0)
-        self.confidence_kpt_6 = np.append(self.confidence_kpt_6,0)
-        self.confidence_kpt_7 = np.append(self.confidence_kpt_7,0)
-        self.confidence_kpt_8 = np.append(self.confidence_kpt_8,0)
-        self.confidence_kpt_0 = self.confidence_kpt_0[self.mask_upnp]
-        self.confidence_kpt_1 = self.confidence_kpt_1[self.mask_upnp]
-        self.confidence_kpt_2 = self.confidence_kpt_2[self.mask_upnp]
-        self.confidence_kpt_3 = self.confidence_kpt_3[self.mask_upnp]
-        self.confidence_kpt_4 = self.confidence_kpt_4[self.mask_upnp]
-        self.confidence_kpt_5 = self.confidence_kpt_5[self.mask_upnp]
-        self.confidence_kpt_6 = self.confidence_kpt_6[self.mask_upnp]
-        self.confidence_kpt_7 = self.confidence_kpt_7[self.mask_upnp]
-        self.confidence_kpt_8 = self.confidence_kpt_8[self.mask_upnp]
+        # self.confidence_sum = np.sum(np.abs(cov_invs), axis=2)
+        # #confidence_sum = np.sum(confidence_sum, axis=2)
+        # self.confidence_sum = 1-(self.confidence_sum / 5)
+        # self.confidence_kpt_0 = self.confidence_sum[:,0] #1 - (confidence_sum[:,0]/ 5)
+        # self.confidence_kpt_1 = self.confidence_sum[:,1] #1 - (confidence_sum[:,1]/ 5)
+        # self.confidence_kpt_2 = self.confidence_sum[:,2] #1 - (confidence_sum[:,2]/ 5)
+        # self.confidence_kpt_3 = self.confidence_sum[:,3] #1 - (confidence_sum[:,3]/ 5)
+        # self.confidence_kpt_4 = self.confidence_sum[:,4] #1 - (confidence_sum[:,4]/ 5)
+        # self.confidence_kpt_5 = self.confidence_sum[:,5] #1 - (confidence_sum[:,5]/ 5)
+        # self.confidence_kpt_6 = self.confidence_sum[:,6] #1 - (confidence_sum[:,6]/ 5)
+        # self.confidence_kpt_7 = self.confidence_sum[:,7] #1 - (confidence_sum[:,7]/ 5)
+        # self.confidence_kpt_8 = self.confidence_sum[:,8] #1 - (confidence_sum[:,8]/ 5)
+        # self.confidence_kpt_0 = np.append(self.confidence_kpt_0,0)
+        # self.confidence_kpt_1 = np.append(self.confidence_kpt_1,0)
+        # self.confidence_kpt_2 = np.append(self.confidence_kpt_2,0)
+        # self.confidence_kpt_3 = np.append(self.confidence_kpt_3,0)
+        # self.confidence_kpt_4 = np.append(self.confidence_kpt_4,0)
+        # self.confidence_kpt_5 = np.append(self.confidence_kpt_5,0)
+        # self.confidence_kpt_6 = np.append(self.confidence_kpt_6,0)
+        # self.confidence_kpt_7 = np.append(self.confidence_kpt_7,0)
+        # self.confidence_kpt_8 = np.append(self.confidence_kpt_8,0)
+        # self.confidence_kpt_0 = self.confidence_kpt_0[self.mask_upnp]
+        # self.confidence_kpt_1 = self.confidence_kpt_1[self.mask_upnp]
+        # self.confidence_kpt_2 = self.confidence_kpt_2[self.mask_upnp]
+        # self.confidence_kpt_3 = self.confidence_kpt_3[self.mask_upnp]
+        # self.confidence_kpt_4 = self.confidence_kpt_4[self.mask_upnp]
+        # self.confidence_kpt_5 = self.confidence_kpt_5[self.mask_upnp]
+        # self.confidence_kpt_6 = self.confidence_kpt_6[self.mask_upnp]
+        # self.confidence_kpt_7 = self.confidence_kpt_7[self.mask_upnp]
+        # self.confidence_kpt_8 = self.confidence_kpt_8[self.mask_upnp]
 
-        confidence_sum_no_last = confidence_sum[:,:-1]
-        self.stabw = np.std(confidence_sum_no_last,axis = 1)[self.mask_upnp]
-        #stabw = np.sqrt(stabw)
-        self.avg = np.average(confidence_sum_no_last,axis = 1)[self.mask_upnp]
+        # confidence_sum_no_last = confidence_sum[:,:-1]
+        # self.stabw = np.std(confidence_sum_no_last,axis = 1)[self.mask_upnp]
+        # #stabw = np.sqrt(stabw)
+        # self.avg = np.average(confidence_sum_no_last,axis = 1)[self.mask_upnp]
 
-        self.err_detections = np.where(self.mask, 0, 0.8)
+        # self.err_detections = np.where(self.mask, 0, 0.8)
 
 
 
@@ -304,6 +304,9 @@ class ResultPlotter:
         self.precision_acc_first_mask_offline_xmem = load_arr["precision"]
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
+
+        self.mask_gt_avg_pixel_change_ids, self.mask_gt_avg_pixel_change, self.mask_gt_std_from_avg_pixel_change, self.mask_gt_pixel_change_count = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
+        self.mask_cutie_avg_pixel_change_ids, self.mask_cutie_avg_pixel_change, self.mask_cutie_std_from_avg_pixel_change, self.mask_cutie_pixel_count_change = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_offline")
 
     def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoLoftrAnalysisFilter5/timing.npy"):
         self.time_keeper = TimeAnalyser()
@@ -594,16 +597,24 @@ class ResultPlotter:
         self.tensorboard_val_vote_loss_y = np.array(d)[:,2].astype(float)
         self.tensorboard_val_vote_loss_x = np.array(d)[:,1].astype(int)
 
-    def setupPlot(self,use_tk_backend = True):
+    def setupPlot(self,use_tk_backend = False):
         if use_tk_backend:
             plt.switch_backend('TkAgg')
         plt.rc ('font', size = 30) #20 für masken / 30 für posen / 15 für timing
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1.5]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
+        ax.set_ylim([0, 1.3]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
         ax.set_xlim([0, len(self.x)])
    
     def plotMaskResults(self):
+        ax = plt.gca()
+        ax.set_xlabel("Frame-ID")
+        ax.set_ylabel("Valid pixels")# / Trans movement [m] / Rot movement [1]", fontsize = 20)
+
+        ax.set_ylim([0, 1000])
+
+        #twin1 = ax.twinx()
+
         
         # plt.plot(self.x, self.iou_pvnet, label = "IoU PVNet")
         # plt.plot(self.x, self.pixel_acc_pvnet,label  = "Pixel accuracy")
@@ -611,7 +622,8 @@ class ResultPlotter:
         # plt.plot(self.x, self.recall_pvnet, label = "Recall")
         # plt.plot(self.x, self.dice_pvnet, label = "Dice")
         
-        plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IoU Cutie")
+        #p2, = twin1.plot(self.x, self.iou_first_mask_pvnet_cutie, "C2", label = "IoU Cutie")
+        #plt.plot(self.x, self.iou_first_mask_pvnet_cutie, label = "IoU Cutie")
         # plt.plot(self.x, self.pixel_acc_first_mask_pvnet_cutie, label = "Pixel accuracy")
         # plt.plot(self.x, self.precision_acc_first_mask_pvnet_cutie, label = "Precision")
         # plt.plot(self.x, self.recall_first_mask_pvnet_cutie, label = "Recall")
@@ -635,9 +647,29 @@ class ResultPlotter:
         # plt.plot(self.x, self.recall_first_mask_offline_xmem, label = "Recall")
         # plt.plot(self.x, self.dice_first_mask_offline_xmem, label = "Dice")
 
-        ax = plt.gca()
-        ax.set_xlabel("Frame-ID")
-        ax.set_ylabel("ADD [m] / Value")
+
+        #plt.plot(np.arange(len(self.mask_gt_pixel_change_count)), self.mask_gt_pixel_change_count, label = "Valid pixel change")
+        plt.plot(self.mask_gt_avg_pixel_change_ids, self.mask_gt_avg_pixel_change, label = "Floating average 10")
+        plt.plot(self.mask_gt_avg_pixel_change_ids, self.mask_gt_std_from_avg_pixel_change, label = "Distance to average")
+
+        #plt.plot(np.arange(len(self.mask_cutie_pixel_count_change)), self.mask_cutie_pixel_count_change, label = "Valid pixel change")
+        #plt.plot(self.mask_cutie_avg_pixel_change_ids, self.mask_cutie_avg_pixel_change, label = "Floating average 10")
+        #p1, = ax.plot(self.mask_cutie_avg_pixel_change_ids, self.mask_cutie_std_from_avg_pixel_change, "C1", label = "Distance to average")
+
+
+        plt.plot(self.x, np.ones(self.x.shape) * 500)
+        # ax.yaxis.label.set_color(p1.get_color())
+        # twin1.yaxis.label.set_color(p2.get_color())
+
+
+        # ax.set(xlim=(0, self.x[-1]), ylim=(0, 1000), xlabel="Frame-ID", ylabel="Valid pixels")
+        # twin1.set(ylim=(0, 1.4), ylabel="IoU")
+
+        # ax.tick_params(axis='y', colors=p1.get_color())
+        # twin1.tick_params(axis='y', colors=p2.get_color())
+
+        #ax.legend(handles=[p1])
+        
         ax.grid(True)
         plt.legend(loc="upper right")
         
@@ -788,10 +820,9 @@ class ResultPlotter:
         # classic ADD eval
         #plt.plot(self.x, self.add_bundle_orig, label="Gt segmentation")
         #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
-        #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
-        #plt.plot(x, rot_movement_2, label="Rot movement")
-        # plt.plot(self.x, self.rot_movement_2, label="Rot movement")
-        # plt.plot(self.x, self.trans_movement_2, label="Trans movement")
+        plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
+        plt.plot(self.x, self.rot_movement_2, label="Rot movement")
+        plt.plot(self.x, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
         # plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
         #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
@@ -830,15 +861,16 @@ class ResultPlotter:
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q_{3} z")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,3], label = "q_{4} w")
         
-        plt.plot(self.acc_pose_regression_0_floating_std_ids, np.sum(self.acc_pose_regression_0_floating_std, axis = 1), label = "Standard deviation quaternion")
-        plt.plot(self.acc_pose_regression_0_floating_std_ids, np.sum(self.acc_pose_regression_0_floating_std, axis = 1), label = "Standard deviation translation")
+        # plt.plot(self.acc_pose_regression_0_floating_std_ids, np.sum(self.acc_pose_regression_0_floating_std, axis = 1), label = "Standard deviation quaternion")
+        # plt.plot(self.acc_pose_regression_0_floating_std_ids, np.sum(self.acc_pose_regression_0_floating_std, axis = 1), label = "Standard deviation translation")
         
-        ax.set_ylabel("Value")
+        # ax.set_ylabel("Value")
         
 
         #display thresholds
-        plt.plot(self.x, np.ones(self.x.shape) * 0.15)
-        #plt.plot(self.x, np.ones(self.x.shape) * 1)
+
+        plt.plot(self.x, np.ones(self.x.shape) * 0.1)
+        plt.plot(self.x, np.ones(self.x.shape) * 1)
 
 
         # plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
@@ -869,7 +901,7 @@ class ResultPlotter:
         #ani = FuncAnimation(fig, self.animate, frames=len(self.x), interval=int(1/fps * 1e3))
         #writer = FFMpegWriter(fps=fps, metadata=dict(artist='Tom Leyh'), extra_args=['-vcodec', 'libx264'])
         #ani.save('/home/thws_robotik/Downloads/ADD_own_implementation.mp4', writer=writer)
-        plt.show()
+        #plt.show()
     
     def exportPlot(self, path:str, white_border:bool = False):
         is_pdf = False
@@ -917,7 +949,6 @@ class ResultPlotter:
     def loadPoses(pose_dir):
         pose_paths = os.listdir(pose_dir)
         pose_paths.sort()
-        rot_movements = [0]
         poses = []
         for idx,pose_file in enumerate(pose_paths):
             pose = None
@@ -929,6 +960,23 @@ class ResultPlotter:
                 continue
             poses.append(pose)
         return poses
+    
+    @staticmethod
+    def loadMasks(mask_dir):
+        print("USING TIMEINTENSIVE MASK LOADING")
+        mask_paths = os.listdir(mask_dir)
+        mask_paths.sort()
+        masks = []
+        for idx,mask_file in enumerate(mask_paths):
+            mask = None
+            if idx % int(len(mask_paths) / 5) == 0:
+                print(f"{idx / len(mask_paths) * 100}% done")
+            if mask_file.endswith(".png") or mask_file.endswith(".jpg"):
+                mask = cv2.imread(os.path.join(mask_dir, mask_file), cv2.IMREAD_GRAYSCALE)
+            else:
+                continue
+            masks.append(mask)
+        return masks
     
     @staticmethod
     def calcRotMovement(pose_dir):
@@ -1024,6 +1072,39 @@ class ResultPlotter:
 
         return acc_ids, accs_rot, accs_std_ids, accs_rot_std
 
+    @staticmethod
+    def calcMaskMovement(mask_dir):
+        masks = ResultPlotter.loadMasks(mask_dir)
+        masks = np.array(masks).reshape((len(masks),-1))
+        valid_pixel_masks = np.count_nonzero(masks, axis=1)
+        #masks = np.where(masks > 0, True, False)
+        #valid_pixel_masks = np.reshape(valid_pixels,(-1))
+        USE_LAST = 10
+        mask_ids = np.arange(len(masks))
+        valid_pixel_changes_masks = np.diff(valid_pixel_masks)
+        valid_pixel_changes_masks_ids = mask_ids[1: len(mask_ids)]
+        
+        valid_pixel_change_avgs = []
+        valid_pixel_change_std_from_avgs = []
+        valid_pixel_change_avgs_ids = []
+
+        for i in range(USE_LAST, len(valid_pixel_changes_masks)):
+            current_changes = valid_pixel_changes_masks[i - USE_LAST : i]
+            newest_change = valid_pixel_changes_masks[i]
+            avg_change = np.average(current_changes)
+            std_newest = np.abs(avg_change - newest_change)
+
+            current_id = valid_pixel_changes_masks_ids[i]
+            valid_pixel_change_avgs.append(avg_change)
+            valid_pixel_change_std_from_avgs.append(std_newest)
+            valid_pixel_change_avgs_ids.append(current_id)
+
+        valid_pixel_change_avgs = np.array(valid_pixel_change_avgs)
+        valid_pixel_change_std_from_avgs = np.array(valid_pixel_change_std_from_avgs)
+        valid_pixel_change_avgs_ids = np.array(valid_pixel_change_avgs_ids)
+
+        return valid_pixel_change_avgs_ids, valid_pixel_change_avgs, valid_pixel_change_std_from_avgs, valid_pixel_changes_masks
+
     def countVisablePixels(mask_dir):
         mask_paths = os.listdir(mask_dir)
         mask_paths.sort()
@@ -1092,8 +1173,8 @@ class ResultPlotter:
 if __name__ == "__main__":
     result_plot = ResultPlotter()
     #result_plot.plotADDResults()
-    #result_plot.plotMaskResults()
+    result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
     #result_plot.plotRessourceResults()
     #result_plot.plotTensorboardResults()
-    #result_plot.exportPlot("plots/BuchVideo/vel_est/vel_est_accels_quat_std_0_2_thresh.pdf")
+    result_plot.exportPlot("plots/BuchVideo/mask/GT_valid_pixel_count_change_floating_average_deviation_thresh.pdf")

@@ -72,7 +72,7 @@ def run_video_realtime(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', k
     segmenter = InferenceClient()
 
   tracker = BundleSdf(cfg_track_dir=cfg_track_dir, cfg_nerf_dir=cfg_nerf_dir, start_nerf_keyframes=5, use_gui=use_gui)
-  tracker.loadKeyFrames(key_folder)
+  tracker.loadRelatedKeyFrames(key_folder)
   
   reader = YcbineoatReader(video_dir=video_dir)
 

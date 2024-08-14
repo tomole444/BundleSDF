@@ -75,6 +75,11 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
   reader = YcbineoatReader(video_dir=video_dir)
 
+  if cfg_bundletrack["preload_keyframes"]["activated"]:
+    keyframes_dataset_path = cfg_bundletrack["preload_keyframes"]["keyframes_dataset_path"]
+    tracker.loadUnRelatedKeyFrames(keyframes_dataset_path)
+
+
   first_color_img = None
 
   if use_segmenter:

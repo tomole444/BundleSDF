@@ -829,6 +829,8 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
 
 std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs_in){
   
+  bool PRINT_RESULTS = false;
+
   if (pairs_in.size() == 0)
     return pairs_in;
   const unsigned int K = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
@@ -838,21 +840,24 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
 
   auto frameA = pairs_in.at(0).first;
 
-  std::cout << "_keyframes count " << _keyframes.size()  << " and K " << K << std::endl;
+  std::cout << "filtering with _keyframes count " << _keyframes.size()  << " and K " << K << std::endl;
 
   if (_keyframes.size() > K)
   { 
     
     Distance tr_dist;
     K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
-    Eigen::Quaternion<float> query_quat = FeatureTree::getQuaternionFromFrame(frameA);
-    Point_d query = FeatureTree::quaternionToPoint_D(query_quat);
-    std::cout << fmt::format("KNN results for quaternion (w:{} x:{} y:{} z:{}) in frame {}:", query[0], query[1], query[2], query[3], frameA->_id_str) << std::endl;
-    for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
-      std::cout << "\t distance = "
-              << tr_dist.inverse_of_transformed_distance(it->second) << " / quaternion: "
-              << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
+    if (PRINT_RESULTS){
+      Eigen::Quaternion<float> query_quat = FeatureTree::getQuaternionFromFrame(frameA);
+      Point_d query = FeatureTree::quaternionToPoint_D(query_quat);
+      std::cout << fmt::format("KNN results for quaternion (w:{} x:{} y:{} z:{}) in frame {}:", query[0], query[1], query[2], query[3], frameA->_id_str) << std::endl;
+      for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+        std::cout << "\t distance = "
+                << tr_dist.inverse_of_transformed_distance(it->second) << " / quaternion: "
+                << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
+      }
     }
+    
 
     for(int i = 0; i < pairs_in.size(); i++){
       int req_id = pairs_in.at(i).second->_id;
@@ -865,7 +870,9 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
           //frame id in knn results
-          std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+          if (PRINT_RESULTS){
+            std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+          }
           pairs_out.push_back(pairs_in.at(i));
           frame_ids.push_back(req_id);
         }
@@ -875,7 +882,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
     pairs_out = pairs_in;
   }
 
-  std::cout << "pairs_in " << pairs_in.size() << " / pairs_out " << pairs_out.size() <<std::endl;
+  std::cout << "Filter results: pairs_in " << pairs_in.size() << " / pairs_out " << pairs_out.size() <<std::endl;
   return pairs_out;
 
 }
@@ -1305,6 +1312,65 @@ void Bundler::loadKeyframes(const py::array_t<int> &keyframeIds, size_t decimalC
   
 
 }
+
+
+void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std::vector<std::string> &depth_paths, const std::vector<std::string> &mask_paths, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1){
+  const unsigned short DECIMAL_COUNT = 5; 
+  
+  // std::vector<std::string> _rgb_paths = std::vector<std::string>(rgb_paths.data(), rgb_paths.data() + rgb_paths.nbytes()/rgb_paths.itemsize());
+  // std::vector<std::string> _depth_paths = std::vector<std::string>(depth_paths.data(), depth_paths.data() + depth_paths.nbytes()/depth_paths.itemsize());
+  // std::vector<std::string> _mask_paths = std::vector<std::string>(mask_paths.data(), mask_paths.data() + mask_paths.nbytes()/mask_paths.itemsize());
+
+  py::buffer_info bufPoses = poses_in_model.request();
+  float *ptr1 = static_cast<float *>( bufPoses.ptr);
+
+  for (size_t i = 0; i <rgb_paths.size(); i++){
+
+    std::string rgb_path = rgb_paths.at(i);
+    std::string depth_path = depth_paths.at(i);
+    std::string mask_path = mask_paths.at(i);
+
+    int id = i + 30000;
+    std::string idStr = std::to_string(id);
+    int precision = DECIMAL_COUNT - std::min((size_t)DECIMAL_COUNT, idStr.size());
+    idStr = std::string(precision, '0').append(idStr);
+
+    cv::Mat color = cv::imread(rgb_path);
+    cvtColor(color, color, cv::COLOR_BGR2RGB);
+    cv::Mat depth = cv::imread(depth_path, cv::IMREAD_UNCHANGED);
+    depth.convertTo(depth, CV_32F);
+    for(int i = 0; i < depth.rows; i++){
+      for(int j = 0; j < depth.cols; j++){
+        //if (depth.at<float>(i,j) > 1)
+          depth.at<float>(i,j) = depth.at<float>(i,j) / 1e3f; 
+      }
+      //std::cout << std::endl;
+    }
+    
+    cv::Mat mask = cv::imread(mask_path, cv::IMREAD_GRAYSCALE);
+    Eigen::Matrix4f pose_in_model;
+    Eigen::Vector4f roi;
+    int H = color.rows;
+    int W = color.cols;
+    roi << 0,W-1,0,H-1;
+    pose_in_model << ptr1[i * 4 * 4 + 0], ptr1[i * 4 * 4 + 1], ptr1[i * 4 * 4 + 2], ptr1[i * 4 * 4 + 3],
+    ptr1[i * 4 * 4 + 4], ptr1[i * 4 * 4 + 5], ptr1[i * 4 * 4 + 6], ptr1[i * 4 * 4 + 7],
+    ptr1[i * 4 * 4 + 8], ptr1[i * 4 * 4 + 9], ptr1[i * 4 * 4 + 10], ptr1[i * 4 * 4 + 11],
+    ptr1[i * 4 * 4 + 12], ptr1[i * 4 * 4 + 13], ptr1[i * 4 * 4 + 14], ptr1[i * 4 * 4 + 15];
+    //std::cout << pose_in_model;
+
+    //(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
+    std::shared_ptr<Frame> frame (new Frame (color,depth,roi, pose_in_model, id, idStr, K, yml1));
+    frame->_fg_mask = mask;
+    frame->invalidatePixelsByMask(frame->_fg_mask);
+    _keyframes.push_back(frame);
+    _feature_tree->insert(frame);
+    _frames[id] = frame;
+    SPDLOG("Added frame {} as keyframe, current #keyframe: {}", rgb_path, _keyframes.size());
+  }
+}
+
+
 
 void Bundler::saveFramesData(std::vector<std::shared_ptr<Frame>> frames, std::string foldername)
 {

@@ -614,7 +614,7 @@ class BundleSdf:
     #ReferenzFrame = letzter Keyframe
     if frame._id>0:
       #print(f"saved frames {str(list(self.bundler._frames.keys()))}")
-      #print(f"saved key-frames {[print(curr_frame._id, ' ',end = '') for curr_frame in self.bundler._keyframes]}")
+      print(f"saved key-frames {[curr_frame._id for curr_frame in self.bundler._keyframes]}")
 
       ref_frame = self.bundler._frames[list(self.bundler._frames.keys())[-1]]
       logging.info(f"Ref Frame: {ref_frame._id}")
@@ -1376,7 +1376,9 @@ class BundleSdf:
         self.gui_dict['K'] = self.K
         self.gui_dict['n_keyframe'] = len(self.bundler._keyframes)
 
-  def loadKeyFrames(self, key_folder):
+  def loadRelatedKeyFrames(self, key_folder):
+    #deprecated -> loadKeyframes changed in cpp
+    
     tmp = sorted(glob.glob(f"{key_folder}/ob_in_cam/*"))
     last_stamp = os.path.basename(tmp[-1]).replace('.txt','')
     logging.info(f'last_stamp {last_stamp}')
@@ -1392,12 +1394,52 @@ class BundleSdf:
     
     keys = [int(item.replace("keyframe_","")) for item in keys]
     keys = np.array(keys)
+    
     self.bundler.loadKeyframes(keys,5, key_cam_in_obs, K, key_folder,self.bundler.yml)
     
     
     self.cnt = len(keys) - 1
     #pdb.set_trace()
     #logging.info(f"Loaded keyframes#: {len(keyframes)}")
+
+  def loadUnRelatedKeyFrames(self, key_dataset_path):
+    rgb_dir = os.path.join(key_dataset_path, "rgb")
+    depth_dir = os.path.join(key_dataset_path, "depth")
+    mask_dir = os.path.join(key_dataset_path, "masks")
+    pose_dir = os.path.join(key_dataset_path, "pose")
+
+    K = np.loadtxt(os.path.join(key_dataset_path, "cam_K.txt"))
+
+    rgb_paths = os.listdir(rgb_dir)
+    rgb_paths.sort()
+    rgb_paths = [os.path.join(rgb_dir,path) for path in rgb_paths]
+    depth_paths = os.listdir(depth_dir)
+    depth_paths.sort()
+    depth_paths = [os.path.join(depth_dir,path) for path in depth_paths]
+    mask_paths = os.listdir(mask_dir)
+    mask_paths.sort()
+    mask_paths = [os.path.join(mask_dir,path) for path in mask_paths]
+    pose_paths = os.listdir(pose_dir)
+    pose_paths.sort()
+    pose_paths = [os.path.join(pose_dir,path) for path in pose_paths]
+
+
+    assert (len(rgb_paths) == len(depth_paths)) and (len(depth_paths) == len(mask_paths)) and (len(mask_paths) == len(pose_paths)), "Loading Keyframe-Folders are not the same length!"
+
+    poses_pose_in_model = []
+    for pose_path in pose_paths:
+      cam_in_ob = np.load(pose_path)
+      pose_in_model = np.linalg.inv(cam_in_ob) 
+      poses_pose_in_model.append(pose_in_model)
+    
+    # rgb_paths = np.array(rgb_paths)
+    # depth_paths = np.array(depth_paths)
+    # mask_paths = np.array(mask_paths)
+
+    poses_pose_in_model = np.array(poses_pose_in_model)
+
+    self.bundler.loadKeyframes(rgb_paths, depth_paths, mask_paths, poses_pose_in_model, K, self.bundler.yml)
+
 
   def run_global_nerf(self, reader=None, get_texture=False, tex_res=1024):
     '''
