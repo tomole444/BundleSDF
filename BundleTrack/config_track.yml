@@ -170,5 +170,5 @@ limit_mask: #TODO: implement
 
 preload_keyframes:
   activated: True # Load Keyframes into memory at beginning
-  keyframes_dataset_path: "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchTemplates" # path to keyframes folder 
+  keyframes_dataset_path: "../../datasets/BuchVideo2Templates" # path to keyframes folder 
   

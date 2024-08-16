@@ -773,18 +773,18 @@ class BundleSdf:
     distance = np.linalg.norm(feature_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
     
     if distance > self.cfg_track["loftr"]["max_feature_matching_offset"]:
-      #spike detected -> dont use frame#invalidate frame
-      #frame._status = my_cpp.Frame.FAIL
-      #frame._pose_in_model = np.identity(4) #assign invalid pose
+      #spike detected -> dont use frame
       logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset)")
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after loftr-feature optimization \n{frame._pose_in_model.round(3)}")
 
-    #Frames vergessen, wenn zu viele
+    # check if you have to forget frames 
     window_size = self.cfg_track["bundle"]["window_size"]
     if len(self.bundler._frames)-len(self.bundler._keyframes)>window_size:
+      # more frames saved than in keyframes + margin (window_size) -> trying to forget frames
       for frame_id in self.bundler._frames:
+        # frame_id ??? 
         old_frame = self.bundler._frames[frame_id]
         isforget = self.bundler.forgetFrame(old_frame)
         if isforget:
@@ -799,7 +799,6 @@ class BundleSdf:
 
 
     local_frames = self.bundler._local_frames
-    
     
     if self.cfg_track["time_reducer"]["search_all_pairs_feature_matching"]: 
       self.time_keeper.add("getFeatureMatchPairs",frame._id)
@@ -1437,6 +1436,7 @@ class BundleSdf:
     # mask_paths = np.array(mask_paths)
 
     poses_pose_in_model = np.array(poses_pose_in_model)
+
 
     self.bundler.loadKeyframes(rgb_paths, depth_paths, mask_paths, poses_pose_in_model, K, self.bundler.yml)
 

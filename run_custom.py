@@ -77,6 +77,10 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   if cfg_bundletrack["preload_keyframes"]["activated"]:
     keyframes_dataset_path = cfg_bundletrack["preload_keyframes"]["keyframes_dataset_path"]
+    os.makedirs(os.path.join(cfg_bundletrack["debug_dir"], "template_imgs"), exist_ok= True)
+    os.makedirs(os.path.join(cfg_bundletrack["debug_dir"], "template_imgs", "rgb"), exist_ok= True)
+    os.makedirs(os.path.join(cfg_bundletrack["debug_dir"], "template_imgs", "mask"), exist_ok= True)
+
     tracker.loadUnRelatedKeyFrames(keyframes_dataset_path)
 
 

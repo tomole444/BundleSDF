@@ -1336,7 +1336,7 @@ void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std
     idStr = std::string(precision, '0').append(idStr);
 
     cv::Mat color = cv::imread(rgb_path);
-    cvtColor(color, color, cv::COLOR_BGR2RGB);
+    //cvtColor(color, color, cv::COLOR_BGR2RGB);
     cv::Mat depth = cv::imread(depth_path, cv::IMREAD_UNCHANGED);
     depth.convertTo(depth, CV_32F);
     for(int i = 0; i < depth.rows; i++){
@@ -1361,11 +1361,14 @@ void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std
 
     //(const cv::Mat &color, const cv::Mat &depth, const Eigen::Matrix4f &pose_in_model, int id, std::string id_str, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1)
     std::shared_ptr<Frame> frame (new Frame (color,depth,roi, pose_in_model, id, idStr, K, yml1));
+    
     frame->_fg_mask = mask;
+    cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/mask/"+ idStr + ".jpg", frame->_fg_mask);
     frame->invalidatePixelsByMask(frame->_fg_mask);
     _keyframes.push_back(frame);
     _feature_tree->insert(frame);
     _frames[id] = frame;
+    cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".jpg", frame->_color);
     SPDLOG("Added frame {} as keyframe, current #keyframe: {}", rgb_path, _keyframes.size());
   }
 }
