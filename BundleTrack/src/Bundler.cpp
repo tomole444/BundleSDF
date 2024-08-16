@@ -864,7 +864,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       if (PRINT_RESULTS){
         std::cout << "Analysing pair (" << frameA->_id_str << " and " << frameB->_id_str  << ")" << std::endl;
       }
-      bool added_frame_pair = false;
+      bool early_stop_knn = false;
 
       //query frame = frame A -> search if frame B is in knn
 
@@ -886,16 +886,19 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
           //frame id in knn results
-          if (PRINT_RESULTS){
-            std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+          //checking distance
+          if (tr_dist.inverse_of_transformed_distance(it->second) < max_distance ){
+            if (PRINT_RESULTS){
+              std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+            }
+            pairs_out.push_back(pairs_no_duplicates.at(i));
           }
-          pairs_out.push_back(pairs_no_duplicates.at(i));
-          added_frame_pair = true;
+          early_stop_knn = true;
           break;
         }
       }
 
-      if (added_frame_pair){
+      if (early_stop_knn){
         if (PRINT_RESULTS){
             std::cout << "Skipping to next frame-pair"<< std::endl;
         }
@@ -920,10 +923,13 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
           //frame id in knn results
-          if (PRINT_RESULTS){
-            std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+          //checking distance
+          if (tr_dist.inverse_of_transformed_distance(it->second) < max_distance ){
+            if (PRINT_RESULTS){
+              std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+            }
+            pairs_out.push_back(pairs_no_duplicates.at(i));
           }
-          pairs_out.push_back(pairs_no_duplicates.at(i));
           break;
         }
       }

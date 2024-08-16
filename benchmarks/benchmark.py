@@ -333,7 +333,7 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Downloads/outBuchVideoTemplate/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Downloads/outBuchVideoNoTemplate/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
                       pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
                       model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
                       model_diameter=0.211,
@@ -341,7 +341,7 @@ def calcADD():
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_Bundle_template.npy")
+    bench.save_results("benchmarks/BuchVideo/ADD_Bundle_no_template.npy")
 
 def calcMaskMetrics():
     bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_pvnet",

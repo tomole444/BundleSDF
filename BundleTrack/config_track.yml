@@ -161,7 +161,7 @@ meassurement:
 loftr: #Settings for the loftr feature matching
   do_matches_kd_tree_filtering: True #is kd_tree filtering activated 
   k_neighbor_count: 30 # number of neighbors in k-nn search
-  max_k_neighbor_distance: 0.1 # maximum distance of rotation in kd_tree -> equals maximum of loftr-matchings that are examined at once
+  max_k_neighbor_distance: 0.3 # maximum distance of rotation in kd_tree -> equals maximum of loftr-matchings that are examined at once
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 
 limit_mask: #TODO: implement
