@@ -835,38 +835,47 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
     return pairs_in;
   const unsigned int K = (*yml)["loftr"]["k_neighbor_count"].as<int>();
   const float max_distance = (*yml)["loftr"]["max_k_neighbor_distance"].as<float>();
+  std::vector<FramePair> pairs_no_duplicates;
   std::vector<FramePair> pairs_out;
-  std::vector<int> frame_ids;
-  
+  std::map<FramePair, int> duplicate_checker;
 
-  auto frameA = pairs_in.at(0).first;
+  for (const auto &elem: pairs_no_duplicates)
+  {
+      ++duplicate_checker[elem];
+  }
+  //filter for duplicate pairs
+  for (const auto &elem: duplicate_checker) {
+    if (elem.second >1){
+      if (PRINT_RESULTS){
+        std::cout << "Found duplicate for frame " << elem.first.first->_id << " and frame " << elem.first.second->_id << " !" << std::endl;
+      }
+    }
+    pairs_no_duplicates.push_back(elem.first);
+  }
 
-  std::cout << "filtering with _keyframes count " << _keyframes.size()  << " and K " << K << std::endl;
+
+  //std::cout << "filtering with _keyframes count " << _keyframes.size()  << " and K " << K << std::endl;
 
   if (_keyframes.size() > K)
   { 
-    
-    Distance tr_dist;
-    K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
-    if (PRINT_RESULTS){
-      Eigen::Quaternion<float> query_quat = FeatureTree::getQuaternionFromFrame(frameA);
-      Point_d query = FeatureTree::quaternionToPoint_D(query_quat);
-      std::cout << fmt::format("KNN results for quaternion (w:{} x:{} y:{} z:{}) in frame {}:", query[0], query[1], query[2], query[3], frameA->_id_str) << std::endl;
-      for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
-        std::cout << "\t distance = "
-                << tr_dist.inverse_of_transformed_distance(it->second) << " / quaternion: "
-                << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
-      }
-    }
-    
+    for (int i = 0; i < pairs_no_duplicates.size(); i ++){
+      auto frameA = pairs_no_duplicates.at(i).first;
+      auto frameB = pairs_no_duplicates.at(i).second;
 
-    for(int i = 0; i < pairs_in.size(); i++){
-      int req_id = pairs_in.at(i).second->_id;
-      std::vector<int>::iterator it = std::find(frame_ids.begin(), frame_ids.end(), req_id);
-      if (it != frame_ids.end()){
-        // frame id in array -> duplicate -> skip
-        continue;
+      Distance tr_dist;
+      K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
+      if (PRINT_RESULTS){
+        Eigen::Quaternion<float> query_quat = FeatureTree::getQuaternionFromFrame(frameA);
+        Point_d query = FeatureTree::quaternionToPoint_D(query_quat);
+        std::cout << fmt::format("KNN results for quaternion (w:{} x:{} y:{} z:{}) in frame {}:", query[0], query[1], query[2], query[3], frameA->_id_str) << std::endl;
+        for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+          std::cout << "\t distance = "
+                  << tr_dist.inverse_of_transformed_distance(it->second) << " / quaternion: "
+                  << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
+        }
       }
+
+      int req_id = frameB->_id;
 
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
@@ -874,13 +883,14 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
           if (PRINT_RESULTS){
             std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
           }
-          pairs_out.push_back(pairs_in.at(i));
-          frame_ids.push_back(req_id);
+          pairs_out.push_back(pairs_no_duplicates.at(i));
         }
       }
+
+    
     }
   }else {
-    pairs_out = pairs_in;
+    pairs_out = pairs_no_duplicates;
   }
 
   std::cout << "Filter results: pairs_in " << pairs_in.size() << " / pairs_out " << pairs_out.size() <<std::endl;
