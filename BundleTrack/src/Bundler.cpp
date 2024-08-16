@@ -862,6 +862,8 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       auto frameA = pairs_no_duplicates.at(i).first;
       auto frameB = pairs_no_duplicates.at(i).second;
 
+      //query frame = frame A -> search if frame B is in knn
+
       Distance tr_dist;
       K_neighbor_search kd_frame_search_result = _feature_tree->nearestNeighbor(frameA, K);
       if (PRINT_RESULTS){
@@ -876,6 +878,32 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       }
 
       int req_id = frameB->_id;
+
+      for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+        if (req_id == boost::get<1>(it->first)->_id){
+          //frame id in knn results
+          if (PRINT_RESULTS){
+            std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
+          }
+          pairs_out.push_back(pairs_no_duplicates.at(i));
+        }
+      }
+
+      //query frame = frame B -> search if frame A is in knn
+
+      kd_frame_search_result = _feature_tree->nearestNeighbor(frameB, K);
+      if (PRINT_RESULTS){
+        Eigen::Quaternion<float> query_quat = FeatureTree::getQuaternionFromFrame(frameB);
+        Point_d query = FeatureTree::quaternionToPoint_D(query_quat);
+        std::cout << fmt::format("KNN results for quaternion (w:{} x:{} y:{} z:{}) in frame {}:", query[0], query[1], query[2], query[3], frameB->_id_str) << std::endl;
+        for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
+          std::cout << "\t distance = "
+                  << tr_dist.inverse_of_transformed_distance(it->second) << " / quaternion: "
+                  << boost::get<0>(it->first)<< " / frame_id: " << boost::get<1>(it->first)->_id << std::endl;
+        }
+      }
+
+      req_id = frameA->_id;
 
       for(K_neighbor_search::iterator it = kd_frame_search_result.begin(); it != kd_frame_search_result.end(); it++){
         if (req_id == boost::get<1>(it->first)->_id){
