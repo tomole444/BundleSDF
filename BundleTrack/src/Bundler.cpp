@@ -861,6 +861,9 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
     for (int i = 0; i < pairs_no_duplicates.size(); i ++){
       auto frameA = pairs_no_duplicates.at(i).first;
       auto frameB = pairs_no_duplicates.at(i).second;
+      if (PRINT_RESULTS){
+        std::cout << "Analysing pair (" << frameA->_id_str << " and " << frameB->_id_str  << ")" << std::endl;
+      }
       bool added_frame_pair = false;
 
       //query frame = frame A -> search if frame B is in knn
@@ -921,6 +924,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
             std::cout << "frame-id " << req_id << " is in the knn-results! Adding it to out!" << std::endl;
           }
           pairs_out.push_back(pairs_no_duplicates.at(i));
+          break;
         }
       }
 
