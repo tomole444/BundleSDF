@@ -1363,12 +1363,15 @@ void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std
     std::shared_ptr<Frame> frame (new Frame (color,depth,roi, pose_in_model, id, idStr, K, yml1));
     
     frame->_fg_mask = mask;
-    cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/mask/"+ idStr + ".jpg", frame->_fg_mask);
     frame->invalidatePixelsByMask(frame->_fg_mask);
     _keyframes.push_back(frame);
     _feature_tree->insert(frame);
     _frames[id] = frame;
-    cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".jpg", frame->_color);
+    if ((*yml)["SPDLOG"].as<int>()>=4){
+      cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".jpg", frame->_color);
+      cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/mask/"+ idStr + ".jpg", frame->_fg_mask);      
+    }
+
     SPDLOG("Added frame {} as keyframe, current #keyframe: {}", rgb_path, _keyframes.size());
   }
 }
