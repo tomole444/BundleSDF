@@ -1437,7 +1437,6 @@ class BundleSdf:
 
     poses_pose_in_model = np.array(poses_pose_in_model)
 
-
     self.bundler.loadKeyframes(rgb_paths, depth_paths, mask_paths, poses_pose_in_model, K, self.bundler.yml)
 
 

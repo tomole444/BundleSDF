@@ -829,11 +829,12 @@ std::vector<FramePair> Bundler::getFeatureMatchPairs(std::vector<std::shared_ptr
 
 std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<FramePair> pairs_in){
   
-  bool PRINT_RESULTS = false;
+  bool PRINT_RESULTS = (*yml)["SPDLOG"].as<int>()>=4;
 
   if (pairs_in.size() == 0)
     return pairs_in;
-  const unsigned int K = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
+  const unsigned int K = (*yml)["loftr"]["k_neighbor_count"].as<int>();
+  const unsigned int max_distance = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
   std::vector<FramePair> pairs_out;
   std::vector<int> frame_ids;
   
@@ -1368,7 +1369,7 @@ void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std
     _feature_tree->insert(frame);
     _frames[id] = frame;
     if ((*yml)["SPDLOG"].as<int>()>=4){
-      cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".jpg", frame->_color);
+      cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".png", frame->_color);
       cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/mask/"+ idStr + ".jpg", frame->_fg_mask);      
     }
 
