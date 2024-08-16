@@ -893,6 +893,9 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
       }
 
       if (added_frame_pair){
+        if (PRINT_RESULTS){
+            std::cout << "Skipping to next frame-pair"<< std::endl;
+        }
         continue;
       }
       //query frame = frame B -> search if frame A is in knn
