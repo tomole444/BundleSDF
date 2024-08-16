@@ -834,7 +834,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
   if (pairs_in.size() == 0)
     return pairs_in;
   const unsigned int K = (*yml)["loftr"]["k_neighbor_count"].as<int>();
-  const unsigned int max_distance = (*yml)["loftr"]["max_k_neighbor_distance"].as<int>();
+  const unsigned float max_distance = (*yml)["loftr"]["max_k_neighbor_distance"].as<float>();
   std::vector<FramePair> pairs_out;
   std::vector<int> frame_ids;
   
