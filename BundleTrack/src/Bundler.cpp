@@ -839,7 +839,7 @@ std::vector<FramePair> Bundler::filterFeatureMatchPairsWithKDTree(std::vector<Fr
   std::vector<FramePair> pairs_out;
   std::map<FramePair, int> duplicate_checker;
 
-  for (const auto &elem: pairs_no_duplicates)
+  for (const auto &elem: pairs_in)
   {
       ++duplicate_checker[elem];
   }
