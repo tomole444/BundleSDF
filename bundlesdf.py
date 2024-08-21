@@ -386,6 +386,9 @@ class BundleSdf:
     #ressource analysis
     self.ressource_tracker = RessourceAnalyser(activated= self.cfg_track["meassurement"]["ressources"])
 
+    #mask limitation
+    self.seg_mask_valid_pixels = []
+
     os.makedirs(self.trans_movement_path, exist_ok=True)
     os.makedirs(self.rot_movement_path, exist_ok=True)
     os.makedirs(self.velocity_estimation_path, exist_ok=True)
@@ -611,7 +614,7 @@ class BundleSdf:
     
     self.bundler._newframe = frame
     os.makedirs(self.debug_dir, exist_ok=True)
-    #ReferenzFrame = letzter Keyframe
+    #reference frame = last frame
     if frame._id>0:
       #print(f"saved frames {str(list(self.bundler._frames.keys()))}")
       print(f"saved key-frames {[curr_frame._id for curr_frame in self.bundler._keyframes]}")
@@ -642,8 +645,13 @@ class BundleSdf:
     frame.invalidatePixelsByMask(frame._fg_mask)
     self.time_keeper.add("invalidatePixelsByMask_end",frame._id)
 
-    #if(frame._id == 180):
-    #  print("here")
+    # check if mask_movement was too large
+    if not self.checkMaskMovement(frame):
+      logging.info(f"Frame {frame._id_str} has too much mask movement, marked FAIL")
+      frame._status = my_cpp.Frame.FAIL
+      frame._pose_in_model = np.identity(4) #assign invalid pose
+      self.bundler.forgetFrame(frame)
+      return
 
     #Initiales KOS festlegen durch PVNet
     if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
@@ -1684,6 +1692,37 @@ class BundleSdf:
       self.velocity_pose_regression.pose_data["time_stamps"].append(time.time())
 
     return ret
+
+  def checkMaskMovement(self, frame):
+    ret = True
+    if self.cfg_track["limit_mask"]["activated"]:
+      current_mask = frame._fg_mask
+      last_valid = np.array(self.seg_mask_valid_pixels)
+      current_valid_pixel_mask = np.count_nonzero(current_mask)
+
+      use_last = self.cfg_track["limit_mask"]["use_last"]
+
+      # array not filled enough -> minimum = use_last + 1 elements in array to continue
+      if len(last_valid) - 1 < use_last:
+        self.seg_mask_valid_pixels.append(current_valid_pixel_mask)
+        return ret
+
+      last_valid_changes = np.diff(last_valid)
+
+      current_changes = last_valid_changes[len(last_valid_changes) - use_last - 1 :]
+      newest_change = current_valid_pixel_mask - last_valid[-1]
+
+      avg_change = np.average(current_changes)
+      std_newest = np.abs(avg_change - newest_change)
+
+      if std_newest > self.cfg_track["limit_mask"]["max_mask_area_change"]:
+        ret = False
+
+
+      self.seg_mask_valid_pixels.append(current_valid_pixel_mask)
+    return ret
+
+
 
   def get_Estimation(self):
     
