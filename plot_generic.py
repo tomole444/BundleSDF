@@ -257,11 +257,11 @@ class ResultPlotter:
         self.trans_movement_2 = ResultPlotter.calcTransMovement(pose_dir = "outBuchVideoNoNerf/ob_in_cam")
 
 
-        mask = ResultPlotter.calcMask("/home/thws_robotik/Downloads/outBuchVideoPoseRegression0TimingNoICP/ob_in_cam")
-        self.add_bundle_pose_regression_0_no_icp_new = self.loadADDFromFile("benchmarks/BuchVideo/ADD_Bundle_pose_regression_0_no_icp_new.npy", "ADD_Bundle_pose_regression_0_no_icp_new", invalid_poses_mask= ~mask)        
-        self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot, self.acc_pose_regression_0_floating_std_ids, self.acc_pose_regression_0_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Downloads/outBuchVideoPoseRegression0TimingNoICP/ob_in_cam")
+        #mask = ResultPlotter.calcMask("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression0/ob_in_cam")
+        #self.add_bundle_pose_regression_0_no_icp_new = self.loadADDFromFile("benchmarks/BuchVideo/ADD_Bundle_pose_regression_0_no_icp_new.npy", "ADD_Bundle_pose_regression_0_no_icp_new", invalid_poses_mask= ~mask)        
+        self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot, self.acc_pose_regression_0_floating_std_ids, self.acc_pose_regression_0_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression0/ob_in_cam")
 
-        self.acc_pose_regression_2_ids, self.acc_pose_regression_2_rot, self.acc_pose_regression_2_floating_std_ids, self.acc_pose_regression_2_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Downloads/outBuchVideoPoseRegression2TimingNoICP/ob_in_cam")
+        self.acc_pose_regression_2_ids, self.acc_pose_regression_2_rot, self.acc_pose_regression_2_floating_std_ids, self.acc_pose_regression_2_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPose_regression_2_old/ob_in_cam")
 
 
         with open(self.ADD_logpath, 'w') as datei:
@@ -305,14 +305,14 @@ class ResultPlotter:
         self.recall_first_mask_offline_xmem = load_arr["recall"]
         self.dice_first_mask_offline_xmem = load_arr["dice"]
 
-        self.mask_gt_avg_pixel_change_ids, self.mask_gt_avg_pixel_change, self.mask_gt_std_from_avg_pixel_change, self.mask_gt_pixel_change_count = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
-        self.mask_cutie_avg_pixel_change_ids, self.mask_cutie_avg_pixel_change, self.mask_cutie_std_from_avg_pixel_change, self.mask_cutie_pixel_count_change = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_offline")
+        #self.mask_gt_avg_pixel_change_ids, self.mask_gt_avg_pixel_change, self.mask_gt_std_from_avg_pixel_change, self.mask_gt_pixel_change_count = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks")
+        #self.mask_cutie_avg_pixel_change_ids, self.mask_cutie_avg_pixel_change, self.mask_cutie_std_from_avg_pixel_change, self.mask_cutie_pixel_count_change = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_offline")
 
-    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Downloads/outBuchVideoLoftrAnalysisFilter5/timing.npy"):
+    def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/time_analysis/timing_cap_loftr_30.npy"):
         self.time_keeper = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
-        timing_log_path = "plots/BuchVideo/timing/BundleSDF_loftr_filter_5.txt"
-        WRITE_LOG = False
+        timing_log_path = "plots/BuchVideo/timing/BundleSDF_loftr_knn_30.txt"
+        WRITE_LOG = True
         
 
         keys = self.time_keeper.time_save.keys()
@@ -1173,8 +1173,8 @@ class ResultPlotter:
 if __name__ == "__main__":
     result_plot = ResultPlotter()
     #result_plot.plotADDResults()
-    result_plot.plotMaskResults()
+    #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
     #result_plot.plotRessourceResults()
     #result_plot.plotTensorboardResults()
-    result_plot.exportPlot("plots/BuchVideo/mask/GT_valid_pixel_count_change_floating_average_deviation_thresh.pdf")
+    #result_plot.exportPlot("plots/BuchVideo/mask/GT_valid_pixel_count_change_floating_average_deviation_thresh.pdf")

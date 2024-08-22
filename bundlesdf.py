@@ -789,11 +789,7 @@ class BundleSdf:
       if self.cfg_track["preload_templates"]["activated"]:
         offset_template_feature_matching = self.matchTemplates(frame)
         template_matching_optimized_pose = offset_template_feature_matching @ frame._pose_in_model
-        distance = np.linalg.norm(template_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
-        if distance < self.cfg_track["loftr"]["max_feature_matching_offset"]:
-          frame._pose_in_model = template_matching_optimized_pose
-        else:
-          logging.info(f"Templatematching failed for frame {frame._id_str}. template_matching_optimized_pose (too big of an offset)!")
+        frame._pose_in_model = template_matching_optimized_pose
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after loftr-feature optimization \n{frame._pose_in_model.round(3)}")
@@ -1751,7 +1747,12 @@ class BundleSdf:
         best_pair = pair
     
     self.bundler._fm.vizCorresBetween(frame, best_pair[1], 'best_template_Matching')
-    offset = self.bundler._fm.procrustesByCorrespondence(frame, best_pair[1])
+    if max_matches < self.cfg_track["preload_templates"]["min_match_with_template"]:
+      offset = np.identity(4)
+      logging.info(f"Templatematching failed for frame {frame._id_str}. Too few matches !")
+    else:
+      offset = self.bundler._fm.procrustesByCorrespondence(frame, best_pair[1])
+    
     if self.cfg_track["preload_templates"]["do_viz"]:
       template_feature_matching_optimized_pose = offset@frame._pose_in_model
       #convert to cam coords 

@@ -166,11 +166,12 @@ loftr: #Settings for the loftr feature matching
 
 limit_mask:
   activated: True # activation 
-  max_mask_area_change: 10000 #maximum number of segmentation pixels that can change between frame 
+  max_mask_area_change: 500 #maximum number of segmentation pixels that can change between frame 
   use_last: 10 # use last x frames for the average valid pixel count
 
 preload_templates:
   activated: True # Load Keyframes into memory at beginning
   keyframes_dataset_path: "../../datasets/BuchVideo2Templates" # path to keyframes folder 
   do_viz: True # viz pose from template matching via loftr
+  min_match_with_template: 70 # minimum number of matches between frame and template
   
