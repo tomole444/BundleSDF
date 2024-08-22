@@ -169,7 +169,8 @@ limit_mask:
   max_mask_area_change: 10000 #maximum number of segmentation pixels that can change between frame 
   use_last: 10 # use last x frames for the average valid pixel count
 
-preload_keyframes:
-  activated: False # Load Keyframes into memory at beginning
+preload_templates:
+  activated: True # Load Keyframes into memory at beginning
   keyframes_dataset_path: "../../datasets/BuchVideo2Templates" # path to keyframes folder 
+  do_viz: True # viz pose from template matching via loftr
   

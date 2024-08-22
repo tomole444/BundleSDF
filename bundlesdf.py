@@ -653,7 +653,7 @@ class BundleSdf:
       self.bundler.forgetFrame(frame)
       return
 
-    #Initiales KOS festlegen durch PVNet
+    #set initial coordinate system through PVNet
     if frame._id==0 and np.abs(np.array(frame._pose_in_model)-np.eye(4)).max()<=1e-4:
       # Scheitert hieran -> gelöst -> zfar erhöhen
       #frame.setNewInitCoordinate()
@@ -777,12 +777,23 @@ class BundleSdf:
     logging.info(f"frame {frame._id_str} pose update before loftr-feature optimization \n{frame._pose_in_model.round(3)}")
     offset = self.bundler._fm.procrustesByCorrespondence(frame, ref_frame)
     #pose optimization resulting from feature matching -> eliminate spikes 
-    feature_matching_optimized_pose = offset@frame._pose_in_model
+    feature_matching_optimized_pose = offset @ frame._pose_in_model
     distance = np.linalg.norm(feature_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
+    #self.matchTemplates(frame)
+
     
     if distance > self.cfg_track["loftr"]["max_feature_matching_offset"]:
       #spike detected -> dont use frame
-      logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset)")
+      logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset). Trying template matching.")
+      #try tamplate Matching
+      if self.cfg_track["preload_templates"]["activated"]:
+        offset_template_feature_matching = self.matchTemplates(frame)
+        template_matching_optimized_pose = offset_template_feature_matching @ frame._pose_in_model
+        distance = np.linalg.norm(template_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
+        if distance < self.cfg_track["loftr"]["max_feature_matching_offset"]:
+          frame._pose_in_model = template_matching_optimized_pose
+        else:
+          logging.info(f"Templatematching failed for frame {frame._id_str}. template_matching_optimized_pose (too big of an offset)!")
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after loftr-feature optimization \n{frame._pose_in_model.round(3)}")
@@ -792,10 +803,10 @@ class BundleSdf:
     if len(self.bundler._frames)-len(self.bundler._keyframes)>window_size:
       # more frames saved than in keyframes + margin (window_size) -> trying to forget frames
       for frame_id in self.bundler._frames:
-        # frame_id ??? 
         old_frame = self.bundler._frames[frame_id]
         isforget = self.bundler.forgetFrame(old_frame)
         if isforget:
+          # frame is not in keyframes -> forget frame
           logging.info(f"exceed window size, forget frame {old_frame._id_str}")
           break
 
@@ -804,6 +815,7 @@ class BundleSdf:
     self.time_keeper.add("selectKeyFramesForBA",frame._id)
     self.bundler.selectKeyFramesForBA()
     self.time_keeper.add("selectKeyFramesForBA_end",frame._id)
+
 
 
     local_frames = self.bundler._local_frames
@@ -1383,7 +1395,7 @@ class BundleSdf:
         self.gui_dict['K'] = self.K
         self.gui_dict['n_keyframe'] = len(self.bundler._keyframes)
 
-  def loadRelatedKeyFrames(self, key_folder):
+  def loadKeyFrames(self, key_folder):
     #deprecated -> loadKeyframes changed in cpp
     
     tmp = sorted(glob.glob(f"{key_folder}/ob_in_cam/*"))
@@ -1409,7 +1421,7 @@ class BundleSdf:
     #pdb.set_trace()
     #logging.info(f"Loaded keyframes#: {len(keyframes)}")
 
-  def loadUnRelatedKeyFrames(self, key_dataset_path):
+  def loadTemplates(self, key_dataset_path):
     rgb_dir = os.path.join(key_dataset_path, "rgb")
     depth_dir = os.path.join(key_dataset_path, "depth")
     mask_dir = os.path.join(key_dataset_path, "masks")
@@ -1445,7 +1457,7 @@ class BundleSdf:
 
     poses_pose_in_model = np.array(poses_pose_in_model)
 
-    self.bundler.loadKeyframes(rgb_paths, depth_paths, mask_paths, poses_pose_in_model, K, self.bundler.yml)
+    self.bundler.loadTemplates(rgb_paths, depth_paths, mask_paths, poses_pose_in_model, K, self.bundler.yml)
 
 
   def run_global_nerf(self, reader=None, get_texture=False, tex_res=1024):
@@ -1721,6 +1733,39 @@ class BundleSdf:
 
       self.seg_mask_valid_pixels.append(current_valid_pixel_mask)
     return ret
+
+  def matchTemplates(self, frame):
+    pairs = []
+    for templateframe_idx in range(len(self.bundler._template_frames)):
+      if int(self.bundler._template_frames[templateframe_idx]._id / 10_000) == 3:
+        pair = (frame, self.bundler._template_frames[templateframe_idx])
+        pairs.append(pair)
+    self.find_corres(pairs)
+    best_pair = pairs[0]
+    max_matches = -1
+    for pair in pairs:
+      matches = self.bundler._fm._matches[pair]
+      logging.info(f"Matches between frames {pair[0]._id} / {pair[1]._id} : {len(matches)}")
+      if len(matches) > max_matches:
+        max_matches = len(matches)
+        best_pair = pair
+    
+    self.bundler._fm.vizCorresBetween(frame, best_pair[1], 'best_template_Matching')
+    offset = self.bundler._fm.procrustesByCorrespondence(frame, best_pair[1])
+    if self.cfg_track["preload_templates"]["do_viz"]:
+      template_feature_matching_optimized_pose = offset@frame._pose_in_model
+      #convert to cam coords 
+      template_feature_matching_optimized_pose_ob_in_cam = np.linalg.inv(template_feature_matching_optimized_pose)
+
+      color_frame = np.array(frame._color)
+
+      #viz pose
+      viz_pose_template_matching_img = draw_xyz_axis(color = color_frame, ob_in_cam = template_feature_matching_optimized_pose_ob_in_cam, K = self.K)
+
+      cv2.imwrite(os.path.join(self.cfg_track["debug_dir"], frame._id_str, "template_matching_pose_viz.jpg"), viz_pose_template_matching_img)
+
+    return offset
+
 
 
 

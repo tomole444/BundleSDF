@@ -70,6 +70,7 @@ bool Bundler::forgetFrame(const std::shared_ptr<Frame> &f)
   if (f==NULL) return false;
   if (std::find(_keyframes.begin(),_keyframes.end(),f)==_keyframes.end())
   {
+    //frame f is not in the keframes
     SPDLOG("forgetting frame {}",f->_id_str);
     _fm->forgetFrame(f);
     _frames.erase(f->_id);
@@ -1372,7 +1373,7 @@ void Bundler::loadKeyframes(const py::array_t<int> &keyframeIds, size_t decimalC
 }
 
 
-void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std::vector<std::string> &depth_paths, const std::vector<std::string> &mask_paths, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1){
+void Bundler::loadTemplates(const std::vector<std::string> &rgb_paths, const std::vector<std::string> &depth_paths, const std::vector<std::string> &mask_paths, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1){
   const unsigned short DECIMAL_COUNT = 5; 
   
   // std::vector<std::string> _rgb_paths = std::vector<std::string>(rgb_paths.data(), rgb_paths.data() + rgb_paths.nbytes()/rgb_paths.itemsize());
@@ -1422,8 +1423,8 @@ void Bundler::loadKeyframes(const std::vector<std::string> &rgb_paths, const std
     
     frame->_fg_mask = mask;
     frame->invalidatePixelsByMask(frame->_fg_mask);
-    _keyframes.push_back(frame);
-    _feature_tree->insert(frame);
+    _template_frames.push_back(frame);
+    //_feature_tree->insert(frame);
     _frames[id] = frame;
     if ((*yml)["SPDLOG"].as<int>()>=4){
       cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".png", frame->_color);

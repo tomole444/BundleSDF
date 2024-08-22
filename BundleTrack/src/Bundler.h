@@ -41,6 +41,7 @@ public:
 
   std::shared_ptr<Frame> _newframe, _firstframe;
   std::deque<std::shared_ptr<Frame>> _keyframes;
+  std::deque<std::shared_ptr<Frame>> _template_frames;
   std::map<int,std::shared_ptr<Frame>> _frames;    //!NOTE store past few frames and keyframes. To make easier get frame by id, needed by frame->_ref_frame_id
 
   std::shared_ptr<GluNet> _fm;
@@ -86,7 +87,7 @@ public:
   void saveFramesData(std::vector<std::shared_ptr<Frame>> frames, std::string foldername);
   void runNerf(std::vector<std::shared_ptr<Frame>> &frames);
   void loadKeyframes(const py::array_t<int> &keyframeIds, size_t decimalCount, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::string key_folder, std::shared_ptr<YAML::Node> yml1);
-  void loadKeyframes(const std::vector<std::string> &rgb_paths, const std::vector<std::string> &depth_paths, const std::vector<std::string> &mask_paths, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1);
+  void loadTemplates(const std::vector<std::string> &rgb_paths, const std::vector<std::string> &depth_paths, const std::vector<std::string> &mask_paths, const py::array_t<float> &poses_in_model, const Eigen::Matrix3f &K, std::shared_ptr<YAML::Node> yml1);
 };
 
 #endif
