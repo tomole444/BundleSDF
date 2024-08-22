@@ -1425,13 +1425,13 @@ void Bundler::loadTemplates(const std::vector<std::string> &rgb_paths, const std
     frame->invalidatePixelsByMask(frame->_fg_mask);
     _template_frames.push_back(frame);
     //_feature_tree->insert(frame);
-    _frames[id] = frame;
+    //_frames[id] = frame;
     if ((*yml)["SPDLOG"].as<int>()>=4){
       cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/rgb/"+ idStr + ".png", frame->_color);
       cv::imwrite((*yml1)["debug_dir"].as<std::string>() + "/template_imgs/mask/"+ idStr + ".jpg", frame->_fg_mask);      
     }
 
-    SPDLOG("Added frame {} as keyframe, current #keyframe: {}", rgb_path, _keyframes.size());
+    SPDLOG("Added frame {} as template, current #_template_frames: {}", rgb_path, _template_frames.size());
   }
 }
 
