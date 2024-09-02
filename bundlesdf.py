@@ -809,15 +809,17 @@ class BundleSdf:
     self.bundler._frames[frame._id] = frame
 
     self.time_keeper.add("selectKeyFramesForBA",frame._id)
+    #set _local_frames / maximum frames = bundle->max_BA_frames / sorting method: bundle->subset_selection_method
     self.bundler.selectKeyFramesForBA()
     self.time_keeper.add("selectKeyFramesForBA_end",frame._id)
 
 
-
+    # get _local_frames
     local_frames = self.bundler._local_frames
     
     if self.cfg_track["time_reducer"]["search_all_pairs_feature_matching"]: 
       self.time_keeper.add("getFeatureMatchPairs",frame._id)
+      #do feature matching with loftr on selected pairs
       pairs = self.bundler.getFeatureMatchPairs(self.bundler._local_frames)
       self.time_keeper.add("getFeatureMatchPairs_end",frame._id)
       self.time_keeper.add("find_corres_2",frame._id)

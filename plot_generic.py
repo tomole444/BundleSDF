@@ -65,24 +65,24 @@ class ResultPlotter:
         confidence_sum = np.sum(np.abs(cov_invs), axis=2)
         #confidence_sum = np.sum(confidence_sum, axis=2)
         confidence_sum = 1-(confidence_sum / 5)
-        confidence_kpt_0 = confidence_sum[:,0] #1 - (confidence_sum[:,0]/ 5)
-        confidence_kpt_1 = confidence_sum[:,1] #1 - (confidence_sum[:,1]/ 5)
-        confidence_kpt_2 = confidence_sum[:,2] #1 - (confidence_sum[:,2]/ 5)
-        confidence_kpt_3 = confidence_sum[:,3] #1 - (confidence_sum[:,3]/ 5)
-        confidence_kpt_4 = confidence_sum[:,4] #1 - (confidence_sum[:,4]/ 5)
-        confidence_kpt_5 = confidence_sum[:,5] #1 - (confidence_sum[:,5]/ 5)
-        confidence_kpt_6 = confidence_sum[:,6] #1 - (confidence_sum[:,6]/ 5)
-        confidence_kpt_7 = confidence_sum[:,7] #1 - (confidence_sum[:,7]/ 5)
-        confidence_kpt_8 = confidence_sum[:,8] #1 - (confidence_sum[:,8]/ 5)
-        confidence_kpt_0 = confidence_kpt_0[self.mask]
-        confidence_kpt_1 = confidence_kpt_1[self.mask]
-        confidence_kpt_2 = confidence_kpt_2[self.mask]
-        confidence_kpt_3 = confidence_kpt_3[self.mask]
-        confidence_kpt_4 = confidence_kpt_4[self.mask]
-        confidence_kpt_5 = confidence_kpt_5[self.mask]
-        confidence_kpt_6 = confidence_kpt_6[self.mask]
-        confidence_kpt_7 = confidence_kpt_7[self.mask]
-        confidence_kpt_8 = confidence_kpt_8[self.mask]
+        self.confidence_kpt_0 = confidence_sum[:,0] #1 - (confidence_sum[:,0]/ 5)
+        self.confidence_kpt_1 = confidence_sum[:,1] #1 - (confidence_sum[:,1]/ 5)
+        self.confidence_kpt_2 = confidence_sum[:,2] #1 - (confidence_sum[:,2]/ 5)
+        self.confidence_kpt_3 = confidence_sum[:,3] #1 - (confidence_sum[:,3]/ 5)
+        self.confidence_kpt_4 = confidence_sum[:,4] #1 - (confidence_sum[:,4]/ 5)
+        self.confidence_kpt_5 = confidence_sum[:,5] #1 - (confidence_sum[:,5]/ 5)
+        self.confidence_kpt_6 = confidence_sum[:,6] #1 - (confidence_sum[:,6]/ 5)
+        self.confidence_kpt_7 = confidence_sum[:,7] #1 - (confidence_sum[:,7]/ 5)
+        self.confidence_kpt_8 = confidence_sum[:,8] #1 - (confidence_sum[:,8]/ 5)
+        # confidence_kpt_0 = confidence_kpt_0[self.mask]
+        # confidence_kpt_1 = confidence_kpt_1[self.mask]
+        # confidence_kpt_2 = confidence_kpt_2[self.mask]
+        # confidence_kpt_3 = confidence_kpt_3[self.mask]
+        # confidence_kpt_4 = confidence_kpt_4[self.mask]
+        # confidence_kpt_5 = confidence_kpt_5[self.mask]
+        # confidence_kpt_6 = confidence_kpt_6[self.mask]
+        # confidence_kpt_7 = confidence_kpt_7[self.mask]
+        # confidence_kpt_8 = confidence_kpt_8[self.mask]
 
         confidence_sum_no_last = confidence_sum[:,:-1]
         self.stabw = np.std(confidence_sum_no_last,axis = 1)[self.mask]
@@ -184,6 +184,8 @@ class ResultPlotter:
         indices = np.searchsorted(self.x, self.x_extrapolated_poses_only_minus_4)
         self.add_bundle_extrapolated_poses_only_minus_4_gapped[indices] = self.add_bundle_extrapolated_poses_only_minus_4
 
+        mask = ResultPlotter.calcMask("outBuchVideoCapLoftr30NoDup/ob_in_cam")
+        self.add_bundle_loftr_cap_30_no_dup = self.loadADDFromFile("benchmarks/BuchVideo/ADD_Bundle_loftr_cap_30_no_dup.npy", "ADD_Bundle_loftr_cap_30_no_dup", invalid_poses_mask= ~mask)
 
 
 
@@ -309,13 +311,20 @@ class ResultPlotter:
         #self.mask_cutie_avg_pixel_change_ids, self.mask_cutie_avg_pixel_change, self.mask_cutie_std_from_avg_pixel_change, self.mask_cutie_pixel_count_change = ResultPlotter.calcMaskMovement("/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_offline")
 
     def loadTimingResults(self, timing_file_path = "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/time_analysis/timing_cap_loftr_30.npy"):
+        
+        
         self.time_keeper = TimeAnalyser()
+        self.time_keeper_2 = TimeAnalyser()
         self.time_keeper.load(timing_file_path)
+        self.time_keeper_2.load("/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/benchmarks/BuchVideo/time_analysis/timing_pose_regression_2_no_cap_loftr.npy")
         timing_log_path = "plots/BuchVideo/timing/BundleSDF_loftr_knn_30.txt"
-        WRITE_LOG = True
+        WRITE_LOG = False
         
 
-        keys = self.time_keeper.time_save.keys()
+        #keys = self.time_keeper.time_save.keys()
+        #print("Loaded timer with keys: ", keys)
+
+        #keys = self.time_keeper_2.time_save.keys()
         #print("Loaded timer with keys: ", keys)
 
         ANALYSE_ORIGINAL = False
@@ -438,6 +447,7 @@ class ResultPlotter:
             self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_selectKeyFramesForBA)
             self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_getFeatureMatchPairs)
             self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_find_corres_2)
+            self.time_pair_find_corres_2_ids_2, self.time_pair_find_corres_2_execution_time_2 = self.time_keeper_2.getSyncTimeByFrameID(time_pair_find_corres_2)
             self.time_pair_loftr_predict_ids, self.time_pair_loftr_predict_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_predict)
             self.time_pair_loftr_match_assign_ids, self.time_pair_loftr_match_assign_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_match_assign)
             self.time_pair_loftr_rawMatchesToCorres_ids, self.time_pair_loftr_rawMatchesToCorres_execution_time = self.time_keeper.getSyncTimeByFrameID(time_pair_loftr_rawMatchesToCorres)
@@ -603,7 +613,7 @@ class ResultPlotter:
         plt.rc ('font', size = 30) #20 für masken / 30 für posen / 15 für timing
         fig = plt.figure(figsize=(16, 9), dpi=(1920/16))
         ax = plt.gca()
-        ax.set_ylim([0, 1.3]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
+        ax.set_ylim([0, 1]) #1.4 oder 2.5 für Masken / 1.2 oder 1.0 für Posen / 20 oder 1.5 für timing  / 100 für ressource
         ax.set_xlim([0, len(self.x)])
    
     def plotMaskResults(self):
@@ -696,24 +706,26 @@ class ResultPlotter:
         # plt.plot(self.time_pair_nerf_pose_adaptation_ids, self.time_pair_nerf_pose_adaptation_execution_times, label = "nerf_pose_adaptation")
         # plt.plot(self.time_pair_rematch_after_nerf_ids, self.time_pair_rematch_after_nerf_execution_times, label = "rematch_after_nerf")
 
-        plt.plot(self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time, label = "invalidatePixelsByMask")
-        plt.plot(self.time_pair_denoise_cloud_ids, self.time_pair_denoise_cloud_execution_time, label = "denoise_cloud")
-        plt.plot(self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time, label = "find_corres_1")
-        plt.plot(self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time, label = "selectKeyFramesForBA")
-        plt.plot(self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time, label = "getFeatureMatchPairs")
-        plt.plot(self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time, label = "find_corres_2")
-        plt.plot(self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time, label = "optimizeGPU")
-        plt.plot(self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time, label = "checkMovement_limits")
-        plt.plot(self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time, label = "checkAndAddKeyframe")
-        plt.plot(self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time, label = "process_frame")
+        # plt.plot(self.time_pair_invalidatePixelsByMask_ids, self.time_pair_invalidatePixelsByMask_execution_time, label = "invalidatePixelsByMask")
+        # plt.plot(self.time_pair_denoise_cloud_ids, self.time_pair_denoise_cloud_execution_time, label = "denoise_cloud")
+        # plt.plot(self.time_pair_find_corres_1_ids, self.time_pair_find_corres_1_execution_time, label = "find_corres_1")
+        # plt.plot(self.time_pair_selectKeyFramesForBA_ids, self.time_pair_selectKeyFramesForBA_execution_time, label = "selectKeyFramesForBA")
+        # plt.plot(self.time_pair_getFeatureMatchPairs_ids, self.time_pair_getFeatureMatchPairs_execution_time, label = "getFeatureMatchPairs")
+        plt.plot(self.time_pair_find_corres_2_ids_2, self.time_pair_find_corres_2_execution_time_2, label = "find_corres_2 filter off")
+        plt.plot(self.time_pair_find_corres_2_ids, self.time_pair_find_corres_2_execution_time, label = "find_corres_2 filter on")
+        # plt.plot(self.time_pair_optimizeGPU_ids, self.time_pair_optimizeGPU_execution_time, label = "optimizeGPU")
+        # plt.plot(self.time_pair_checkMovement_limits_ids, self.time_pair_checkMovement_limits_execution_time, label = "checkMovement_limits")
+        # plt.plot(self.time_pair_checkAndAddKeyframe_ids, self.time_pair_checkAndAddKeyframe_execution_time, label = "checkAndAddKeyframe")
+        # plt.plot(self.time_pair_process_frame_ids, self.time_pair_process_frame_execution_time, label = "process_frame")
         #plt.plot(self.time_pair_icp_ids, self.time_pair_icp_execution_time, label = "time_pair_icp")
 
 
 
         
         plt.legend(loc="upper right")
+        ax.grid(True)
         
-        plt.show()
+        #plt.show()
 
     def plotRessourceResults(self):
         ax = plt.gca()
@@ -801,7 +813,7 @@ class ResultPlotter:
 
         # PVNet confidence eval
         #plt.plot(self.x, self.add_pvnet_orig, label ="PVNet original")
-        #plt.plot(self.x, self.add_pvnet_upnp,label ="PVNet upnp")
+        # plt.plot(self.x, self.add_pvnet_upnp,label ="PVNet upnp")
         # plt.plot(self.x_masked_upnp, self.confidence_kpt_0[self.mask_upnp], label ="Confidences kpt 0")
         # plt.plot(self.x_masked_upnp, self.confidence_kpt_1[self.mask_upnp], label ="Confidences kpt 1")
         # plt.plot(self.x_masked_upnp, self.confidence_kpt_2[self.mask_upnp], label ="Confidences kpt 2")
@@ -820,9 +832,9 @@ class ResultPlotter:
         # classic ADD eval
         #plt.plot(self.x, self.add_bundle_orig, label="Gt segmentation")
         #plt.plot(self.x, self.add_bundle_nonerf, label="No NeRF")
-        plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
-        plt.plot(self.x, self.rot_movement_2, label="Rot movement")
-        plt.plot(self.x, self.trans_movement_2, label="Trans movement")
+        #plt.plot(self.x, self.add_bundle_nonerf_pvnet, label="First estimation PVNet")
+        #plt.plot(self.x, self.rot_movement_2, label="Rot movement")
+        #plt.plot(self.x, self.trans_movement_2, label="Trans movement")
         #plt.plot(x, add_bundle_periodic_orig, label="ADD BundleSDF periodic orig")
         # plt.plot(self.x, self.add_bundle_periodic_upnp, label="Periodic PVNet")
         #plt.plot(self.x, self.add_bundle_limit_rot, label="Limit rotation translation")
@@ -834,13 +846,14 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
-        #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
-        #plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression -4")
+        plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
+        plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression ¼")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,0], label = "q1 x")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,1], label = "q2 y")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q3 z")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,3], label = "q4 w")
-        #plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
+        # plt.plot(self.x, self.add_bundle_loftr_cap_30_no_dup, label = "LoFTR filter 30 0.3")
+        # plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "XMEM segmentation")
         #plt.plot(self.x,self.add_bundle_pvnet_seg_only, label = "PVNet segmentation")
@@ -869,8 +882,8 @@ class ResultPlotter:
 
         #display thresholds
 
-        plt.plot(self.x, np.ones(self.x.shape) * 0.1)
-        plt.plot(self.x, np.ones(self.x.shape) * 1)
+        #plt.plot(self.x, np.ones(self.x.shape) * 0.1)
+        #plt.plot(self.x, np.ones(self.x.shape) * 1)
 
 
         # plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
@@ -890,7 +903,7 @@ class ResultPlotter:
 
 
 
-        plt.legend(loc="upper right")
+        plt.legend(loc="upper right")#, fontsize=14)
 
         ax.grid(True)
         
@@ -1160,21 +1173,21 @@ class ResultPlotter:
             for k_m in range(10,50,10):
                 k_m = float(k_m) / 100
                 good_add = y[y < (k_m * diameter)]
-                full_string += f"ADD_{int(k_m * 100)} = " + str (np.round(len(good_add) / total_add,3)) + "\n"
-                latex_string += str (np.round(len(good_add) / total_add,3)) + " & "
+                full_string += f"ADD_{int(k_m * 100)} = " + str (np.round(len(good_add) / total_add,3)).replace(".",",") + "\n"
+                latex_string += str (np.round(len(good_add) / total_add,3)).replace(".",",") + " & "
 
             k_m = 0.5
             good_add = y[y < (k_m * diameter)]
-            full_string += "ADD_50 = " + str (np.round(len(good_add) / total_add,3)) + "\n"
-            latex_string += str (np.round(len(good_add) / total_add,3)) + " \\\\\n"
+            full_string += "ADD_50 = " + str (np.round(len(good_add) / total_add,3)).replace(".",",") + "\n"
+            latex_string += str (np.round(len(good_add) / total_add,3)).replace(".",",") + " \\\\\n"
         return full_string, latex_string
 
 
 if __name__ == "__main__":
     result_plot = ResultPlotter()
-    #result_plot.plotADDResults()
+    result_plot.plotADDResults()
     #result_plot.plotMaskResults()
     #result_plot.plotTimingResults()
     #result_plot.plotRessourceResults()
     #result_plot.plotTensorboardResults()
-    #result_plot.exportPlot("plots/BuchVideo/mask/GT_valid_pixel_count_change_floating_average_deviation_thresh.pdf")
+    result_plot.exportPlot("plots/BuchVideo/ADD/ADD_BundleSDF_pose_regression_2_pose_regression_-4_9_v2.pdf")

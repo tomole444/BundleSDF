@@ -133,7 +133,7 @@ limits:
   min_mask_pixels: 100 #minimum number of pixels of the object that needs to be seen
 
 estimation: # estimation through velocity regression 
-  use_every: 2 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
+  use_every: -4 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
   use_last: 10 # use last x frames for the estimation
   use_time_relation: False # use the velocity estimation in respect to time or in respect to frame-ID 
   max_acceleration_std: 0.05 # maximum acceleration changes -> if too much fluctuation, dont use estimation
@@ -159,7 +159,7 @@ meassurement:
   ressources: True # meassure ressource usage
 
 loftr: #Settings for the loftr feature matching
-  do_matches_kd_tree_filtering: True #is kd_tree filtering activated 
+  do_matches_kd_tree_filtering: False #is kd_tree filtering activated 
   k_neighbor_count: 30 # number of neighbors in k-nn search
   max_k_neighbor_distance: 0.3 # maximum distance of rotation in kd_tree -> equals maximum of loftr-matchings that are examined at once
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
@@ -170,7 +170,7 @@ limit_mask:
   use_last: 10 # use last x frames for the average valid pixel count
 
 preload_templates:
-  activated: True # Load Keyframes into memory at beginning
+  activated: False # Load Keyframes into memory at beginning
   keyframes_dataset_path: "../../datasets/BuchVideo2Templates" # path to keyframes folder 
   do_viz: True # viz pose from template matching via loftr
   min_match_with_template: 70 # minimum number of matches between frame and template
