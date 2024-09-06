@@ -73,7 +73,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   sys.stdout = Logger(os.path.join(cfg_bundletrack["debug_dir"], "std_out_console.log"), sys.stdout)
   sys.stderr = Logger(os.path.join(cfg_bundletrack["debug_dir"], "std_err_console.log"), sys.stderr)
   #reader = YcbineoatReader(video_dir=video_dir, shorter_side=480)
-  reader = YcbineoatReader(video_dir=video_dir)
+  reader = YcbineoatReader(video_dir=video_dir) #FIXME: CHANGE BACK
+  #reader = Ho3dReader(video_dir=video_dir)
 
   if cfg_bundletrack["preload_templates"]["activated"]:
     keyframes_dataset_path = cfg_bundletrack["preload_templates"]["keyframes_dataset_path"]
@@ -144,7 +145,8 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     if(cfg_nerf["activated"]):
       tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     else:
-      tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+      #tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+      tracker.runTemplateMatchingOnly(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     
     i += args.stride
     
@@ -307,7 +309,7 @@ if __name__=="__main__":
   args = parser.parse_args()
 
   if args.debug:
-    port = 56781
+    port = 56784
     print(f"Waiting for debugger to attach to port {port}")
     debugpy.listen(port)
     debugpy.wait_for_client()

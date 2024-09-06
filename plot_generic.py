@@ -145,8 +145,8 @@ class ResultPlotter:
         self.add_bundle_pose_regression_2 = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_2.npy", "ADD_BundleSDF_pose_regression_2")
         self.add_bundle_pose_regression_2 = np.where(self.add_bundle_pose_regression_2 > 0.7, np.nan, self.add_bundle_pose_regression_2)
 
-        self.add_bundle_pose_regression_minus_4 = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_pose_regression_-4.npy", "ADD_BundleSDF_pose_regression_-4")
-        self.add_bundle_pose_regression_minus_4 = np.where(self.add_bundle_pose_regression_minus_4 > 0.7, np.nan, self.add_bundle_pose_regression_minus_4)
+        mask = ResultPlotter.calcMask("outBuchVideoPoseRegression-4_v2/ob_in_cam")
+        self.add_bundle_pose_regression_minus_4 = self.loadADDFromFile("benchmarks/BuchVideo/ADD_Bundle_pose_regression_-4_v2.npy", "ADD_BundleSDF_pose_regression_-4", invalid_poses_mask= ~mask)
         
         mask = ResultPlotter.calcMask("outBuchVideoFirstMaskOffline/ob_in_cam")
         self.add_bundle_cutie_first_offline_segmentation = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_cutie_first_offline_segmentation.npy", "ADD_BundleSDF_cutie_first_offline_segmentation", invalid_poses_mask= ~mask)
@@ -177,7 +177,7 @@ class ResultPlotter:
         indices = np.searchsorted(self.x, self.x_extrapolated_poses_only_2)
         self.add_bundle_extrapolated_poses_only_2_gapped[indices] = self.add_bundle_extrapolated_poses_only_2
 
-        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_-4.npy", allow_pickle=True).item()
+        load_arr = np.load("benchmarks/BuchVideo/ADD_BundleSDF_extrapolated_poses_only_-4_v2.npy", allow_pickle=True).item()
         self.add_bundle_extrapolated_poses_only_minus_4 = load_arr["result_y"]
         self.x_extrapolated_poses_only_minus_4 = load_arr["ids"]
         self.add_bundle_extrapolated_poses_only_minus_4_gapped = np.full_like(self.x, np.nan, dtype=np.float64)
@@ -846,8 +846,8 @@ class ResultPlotter:
         #plt.plot(self.x, self.add_bundle_occ_aware_force_pvnet, label="Occlusion aware") #1380 problematic -> full occlusion
         #plt.plot(self.x,self.add_bundle_feature_matching_spike, label = "Limit feature matching")
         #plt.plot(self.x,self.add_bundle_pose_regression, label = "ADD Pose regression")
-        plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
-        plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression ¼")
+        #plt.plot(self.x,self.add_bundle_pose_regression_2, label = "Pose regression 2")
+        #plt.plot(self.x,self.add_bundle_pose_regression_minus_4, label = "Pose regression ¼")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,0], label = "q1 x")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,1], label = "q2 y")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q3 z")
@@ -864,8 +864,8 @@ class ResultPlotter:
 
         #Eval pose regression poses only 
         #plt.plot(self.x_extrapolated_poses_only_2, self.add_bundle_extrapolated_poses_only_2, label = "Pose regression 2")
-        #plt.scatter(self.x, self.add_bundle_extrapolated_poses_only_2_gapped, label = "Pose regression 2", s = 10)
-        #plt.plot(self.x, self.add_bundle_extrapolated_poses_only_minus_4_gapped, color = "C1", label = "Pose regression -4")
+        plt.scatter(self.x, self.add_bundle_extrapolated_poses_only_2_gapped, label = "Pose regression 2", s = 10)
+        plt.plot(self.x, self.add_bundle_extrapolated_poses_only_minus_4_gapped, color = "C1", label = "Pose regression ¼")
 
         #Eval / limit rotational accelerations 
         #plt.plot(self.x, self.add_bundle_pose_regression_0_no_icp_new, label = "Pose regression 0")
@@ -1190,4 +1190,4 @@ if __name__ == "__main__":
     #result_plot.plotTimingResults()
     #result_plot.plotRessourceResults()
     #result_plot.plotTensorboardResults()
-    result_plot.exportPlot("plots/BuchVideo/ADD/ADD_BundleSDF_pose_regression_2_pose_regression_-4_9_v2.pdf")
+    result_plot.exportPlot("plots/BuchVideo/ADD/ADD_BundleSDF_pose_regression_2_-4_only_extrapolated_v2.pdf")

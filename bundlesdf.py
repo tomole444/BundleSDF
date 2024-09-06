@@ -787,9 +787,8 @@ class BundleSdf:
       logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset). Trying template matching.")
       #try tamplate Matching
       if self.cfg_track["preload_templates"]["activated"]:
-        offset_template_feature_matching = self.matchTemplates(frame)
-        template_matching_optimized_pose = offset_template_feature_matching @ frame._pose_in_model
-        frame._pose_in_model = template_matching_optimized_pose
+        new_pose_in_model = self.matchTemplates(frame)
+        frame._pose_in_model = new_pose_in_model
     else:
       frame._pose_in_model = feature_matching_optimized_pose
     logging.info(f"frame {frame._id_str} pose update after loftr-feature optimization \n{frame._pose_in_model.round(3)}")
@@ -1263,6 +1262,59 @@ class BundleSdf:
       os.makedirs(f'{self.debug_dir}/occ_mask/', exist_ok=True)
       cv2.imwrite(f'{self.debug_dir}/occ_mask/{frame._id_str}.png', occ_mask)
     
+  def runTemplateMatchingOnly(self,color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
+    self.cnt += 1
+    self.color = color
+    self.depth = depth
+
+    if self.K is None:
+      self.K = K
+      with self.lock:
+        self.p_dict['K'] = self.K
+
+    if self.use_gui:
+      while 1:
+        with self.gui_lock:
+          started = self.gui_dict['started']
+        if not started:
+          time.sleep(1)
+          logging.info("Waiting for GUI")
+          continue
+        break
+
+    H,W = color.shape[:2]
+
+    percentile = self.cfg_track['depth_processing']["percentile"]
+    print(f"\033[94m depth: {depth.shape} mask: {mask.shape} percentile: {percentile}\033[0m")
+    #percentile = 100
+    if percentile<100:   # Denoise
+      logging.info("percentile denoise start")
+      #logging.info(f"depth: {depth.shape}")
+      valid = (depth>=0.1) & (mask>0)
+
+      #np.savetxt("test.txt", depth, delimiter = ",")
+      #print(f"\033[94m Valid: {valid.shape} \033[0m")
+
+      thres = np.percentile(depth[valid], percentile)
+      depth[depth>=thres] = 0
+      logging.info("percentile denoise done")
+    
+
+    
+    frame = self.make_frame(color, depth, K, id_str, mask, occ_mask, pose_in_model)
+    frame.invalidatePixelsByMask(frame._fg_mask)
+    self.bundler._newframe = frame
+    os.makedirs(f"{self.debug_dir}/{frame._id_str}", exist_ok=True)
+    #os.makedirs(f"{self.debug_dir}/onlyMatching_ob_in_cam", exist_ok= True)
+    frame._pose_in_model = self.matchTemplates(frame)
+
+
+    ob_in_cam = np.linalg.inv(frame._pose_in_model)
+    #np.savetxt(os.path.join(f"{self.debug_dir}/onlyMatching_ob_in_cam", f"{frame._id_str}.txt"), ob_in_cam)
+    self.bundler.saveNewframeResult()
+
+   
+
 
   def runRealtime(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
 
@@ -1748,17 +1800,22 @@ class BundleSdf:
         max_matches = len(matches)
         best_pair = pair
     
-    self.bundler._fm.vizCorresBetween(frame, best_pair[1], 'best_template_Matching')
+    template_frame = best_pair[1]
+    self.bundler._fm.vizCorresBetween(frame, template_frame, 'best_template_Matching')
+    is_matching_successful = False
     if max_matches < self.cfg_track["preload_templates"]["min_match_with_template"]:
-      offset = np.identity(4)
+      offset = np.identity(4, dtype= np.float32)
       logging.info(f"Templatematching failed for frame {frame._id_str}. Too few matches !")
     else:
-      offset = self.bundler._fm.procrustesByCorrespondence(frame, best_pair[1])
+      offset = self.bundler._fm.procrustesByCorrespondence(frame, template_frame)
+      is_matching_successful = True
     
-    if self.cfg_track["preload_templates"]["do_viz"]:
-      template_feature_matching_optimized_pose = offset@frame._pose_in_model
+    frame_pose_in_model = offset ## @ template_frame._pose_in_model
+
+
+    if self.cfg_track["preload_templates"]["do_viz"] and is_matching_successful:
       #convert to cam coords 
-      template_feature_matching_optimized_pose_ob_in_cam = np.linalg.inv(template_feature_matching_optimized_pose)
+      template_feature_matching_optimized_pose_ob_in_cam = np.linalg.inv(frame_pose_in_model)
 
       color_frame = np.array(frame._color)
 
@@ -1767,7 +1824,7 @@ class BundleSdf:
 
       cv2.imwrite(os.path.join(self.cfg_track["debug_dir"], frame._id_str, "template_matching_pose_viz.jpg"), viz_pose_template_matching_img)
 
-    return offset
+    return frame_pose_in_model
 
 
 

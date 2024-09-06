@@ -14,7 +14,7 @@ segmentation:
   tolerance: 0.03
 
 depth_processing:
-  zfar: 3.0
+  zfar: 3
   erode:
     radius: 1
     diff: 0.001
@@ -170,7 +170,7 @@ limit_mask:
   use_last: 10 # use last x frames for the average valid pixel count
 
 preload_templates:
-  activated: True # Load Keyframes into memory at beginning
+  activated: False # Load Keyframes into memory at beginning
   keyframes_dataset_path: "../../datasets/BuchVideo2Templates" # path to keyframes folder 
   do_viz: True # viz pose from template matching via loftr
   min_match_with_template: 70 # minimum number of matches between frame and template

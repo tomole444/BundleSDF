@@ -333,15 +333,20 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Downloads/outBuchVideoTemplate/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
-                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
-                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
+    # bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/velocity_estimation",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
+    #                   pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
+    #                   model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
+    #                   model_diameter=0.211,
+    #                   first_pose_adjust= False) 
+    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outho3dap10_Orig/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
+                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/AP10/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
+                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/AP10/model.ply",
                       model_diameter=0.211,
-                      first_pose_adjust= False) 
+                      first_pose_adjust= True) 
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/BuchVideo/ADD_Bundle_template.npy")
+    bench.save_results("benchmarks/HO3D/AP10/ADD_orig.npy")
 
 def calcMaskMetrics():
     bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_pvnet",

@@ -117,6 +117,54 @@ class YcbineoatReader:
     mesh = trimesh.load(f'/mnt/9a72c439-d0a7-45e8-8d20-d7a235d02763/DATASET/YCB_Video/YCB_Video_Models/models/{ob_name}/textured_simple.obj')
     return mesh
 
+class CustomHo3dReader(YcbineoatReader):
+  def __init__(self,video_dir, downscale=1, shorter_side=None):
+    self.video_dir = video_dir
+    self.downscale = downscale
+    #self.color_files = sorted(glob.glob(f"{self.video_dir}/rgb/*.png"))
+    color_dir = os.path.join(self.video_dir,"rgb")
+    self.color_files = os.listdir(color_dir)
+    self.color_files.sort()
+    self.color_files = [os.path.join(color_dir, color_file) for color_file in self.color_files]
+    self.K = np.loadtxt(f'{video_dir}/cam_K.txt').reshape(3,3)
+    self.id_strs = []
+    for color_file in self.color_files:
+      id_str = os.path.basename(color_file).replace('.png','').replace('.jpg','')
+      self.id_strs.append(id_str)
+    print(f"reading {self.color_files[0]}")
+    self.H,self.W = cv2.imread(self.color_files[0]).shape[:2]
+
+    if shorter_side is not None:
+      self.downscale = shorter_side/min(self.H, self.W)
+
+    self.H = int(self.H*self.downscale)
+    self.W = int(self.W*self.downscale)
+    self.K[:2] *= self.downscale
+    logging.info(f"W: {self.W} H: {self.H} downscale: {self.downscale}")
+
+
+    self.gt_pose_files = sorted(glob.glob(f'{self.video_dir}/annotated_poses/*'))
+
+    self.videoname_to_object = {
+      'bleach0': "021_bleach_cleanser",
+      'bleach_hard_00_03_chaitanya': "021_bleach_cleanser",
+      'cracker_box_reorient': '003_cracker_box',
+      'cracker_box_yalehand0': '003_cracker_box',
+      'mustard0': '006_mustard_bottle',
+      'mustard_easy_00_02': '006_mustard_bottle',
+      'sugar_box1': '004_sugar_box',
+      'sugar_box_yalehand0': '004_sugar_box',
+      'tomato_soup_can_yalehand0': '005_tomato_soup_can',
+    }
+  
+  def get_depth(self,i):
+    depth_scale = 0.00012498664727900177
+    depth = cv2.imread(self.color_files[i].replace('.jpg','.png').replace('rgb','depth'), -1)
+    depth = (depth[...,2]+depth[...,1]*256)*depth_scale
+    return depth
+  def get_mask(self, i):
+    mask = cv2.imread(self.color_files[i].replace('.jpg','.png').replace('rgb','masks_Cutie'),-1)
+    return mask
 
 class Ho3dReader:
   def __init__(self,video_dir):
