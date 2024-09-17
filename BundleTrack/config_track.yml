@@ -113,10 +113,10 @@ shape:
   truncate_dist: 0.005
 
 pvnet:
-  activated: False # use pvnet
+  activated: True # use pvnet
   ip_addr: "192.168.99.91" #address of the inference server
   port: 11024 #port number of the server 
-  adjust_every: 10000 #60 # get TF from PVNet every x frames
+  adjust_every: 60 # get TF from PVNet every x frames
   max_confidence_std: 0.05 # maximum standard deviation of keypoint confidence
   min_confidence_avg: 0.65 # minimum average keypoint confidence
 
@@ -127,10 +127,10 @@ icp:
   max_iterations: 2000 # maximum iterations for icp resolver
 
 limits:
-  max_rot_movement: 10 #1 # maximum sum rot movement in radians
-  max_t_vec_movement: 10 #0.1 # maximum distance in meters
-  force_pvnet_after: 10000 #15 #number of frames that need to be discarded before pvnet is utilized
-  min_mask_pixels: 0 #100 #minimum number of pixels of the object that needs to be seen
+  max_rot_movement: 1 # maximum sum rot movement in radians
+  max_t_vec_movement: 0.1 # maximum distance in meters
+  force_pvnet_after: 15 #number of frames that need to be discarded before pvnet is utilized
+  min_mask_pixels: 100 #minimum number of pixels of the object that needs to be seen
 
 estimation: # estimation through velocity regression 
   use_every: 0 # if positive (2 ... inf ): use estimation every x frames / if negativate (-inf ... -2): use meassurement every -x frames / if 0 : dont use estimation
@@ -159,18 +159,18 @@ meassurement:
   ressources: True # meassure ressource usage
 
 loftr: #Settings for the loftr feature matching
-  do_matches_kd_tree_filtering: False #is kd_tree filtering activated 
+  do_matches_kd_tree_filtering: True #is kd_tree filtering activated 
   k_neighbor_count: 30 # number of neighbors in k-nn search
   max_k_neighbor_distance: 0.3 # maximum distance of rotation in kd_tree -> equals maximum of loftr-matchings that are examined at once
   max_feature_matching_offset: 0.2 # maximum feature matching translation offset
 
 limit_mask:
-  activated: False # activation 
+  activated: True # activation 
   max_mask_area_change: 500 #maximum number of segmentation pixels that can change between frame 
   use_last: 10 # use last x frames for the average valid pixel count
 
 preload_templates:
-  activated: True # Load Keyframes into memory at beginning
+  activated: False # Load Keyframes into memory at beginning
   keyframes_dataset_path: "../../datasets/BuchVideo2Templates" # path to keyframes folder 
   do_viz: True # viz pose from template matching via loftr
   min_match_with_template: 70 # minimum number of matches between frame and template

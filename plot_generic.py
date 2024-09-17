@@ -187,8 +187,8 @@ class ResultPlotter:
         mask = ResultPlotter.calcMask("outBuchVideoCapLoftr30NoDup/ob_in_cam")
         self.add_bundle_loftr_cap_30_no_dup = self.loadADDFromFile("benchmarks/BuchVideo/ADD_Bundle_loftr_cap_30_no_dup.npy", "ADD_Bundle_loftr_cap_30_no_dup", invalid_poses_mask= ~mask)
 
-
-
+        mask = ResultPlotter.calcMask("outBuchVideoTemplateOnlyMin50/ob_in_cam")
+        self.add_template_matching_only_min_50 = self.loadADDFromFile("benchmarks/BuchVideo/ADD_BundleSDF_TemplateOnlyMin50.npy", "Add_template_matching_only_min_50", invalid_poses_mask= ~mask)
 
         #BuchVideo2
 
@@ -264,6 +264,34 @@ class ResultPlotter:
         self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot, self.acc_pose_regression_0_floating_std_ids, self.acc_pose_regression_0_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPoseRegression0/ob_in_cam")
 
         self.acc_pose_regression_2_ids, self.acc_pose_regression_2_rot, self.acc_pose_regression_2_floating_std_ids, self.acc_pose_regression_2_floating_std = ResultPlotter.calcQuaternionAccs(self.x, "/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outBuchVideoPose_regression_2_old/ob_in_cam")
+
+
+
+        ###### BuchVideo2 #####
+
+        mask = ResultPlotter.calcMask("outBuchVideo2Orig/ob_in_cam")
+        self.ADD_Buch_Video_2_orig = self.loadADDFromFile("benchmarks/BuchVideo2/ADD_Bundle_orig.npy", "ADD_Buch_Video_2_orig", invalid_poses_mask= ~mask)
+
+        mask = ResultPlotter.calcMask("outBuchVideo2Loftr30/ob_in_cam")
+        self.ADD_Buch_Video_2_loftr_cap_30_no_dup = self.loadADDFromFile("benchmarks/BuchVideo2/ADD_Bundle_loftr_cap_30_no_dup.npy", "ADD_Buch_Video_2_loftr_cap_30_no_dup", invalid_poses_mask= ~mask)
+
+        
+        ###### BuchVideo3 #####
+
+        mask = ResultPlotter.calcMask("outBuchVideo3Orig/ob_in_cam")
+        self.ADD_Buch_Video_3_orig = self.loadADDFromFile("benchmarks/BuchVideo3/ADD_BundleSDF_orig.npy", "ADD_Buch_Video_3_orig", invalid_poses_mask= ~mask)
+
+        mask = ResultPlotter.calcMask("outBuchVideo3/ob_in_cam")
+        self.ADD_Buch_Video_3_loftr_cap_30_no_dup = self.loadADDFromFile("benchmarks/BuchVideo3/ADD_BundleSDF_current_impl.npy", "ADD_Buch_Video_3_loftr_cap_30_no_dup", invalid_poses_mask= ~mask)
+
+        ###### BuchVideo4 #####
+
+        mask = ResultPlotter.calcMask("outBuchVideo4Orig/ob_in_cam")
+        self.ADD_Buch_Video_4_orig = self.loadADDFromFile("benchmarks/BuchVideo4/ADD_BundleSDF_orig.npy", "ADD_Buch_Video_4_orig", invalid_poses_mask= ~mask)
+
+        mask = ResultPlotter.calcMask("outBuchVideo4/ob_in_cam")
+        self.ADD_Buch_Video_4_loftr_cap_30_no_dup = self.loadADDFromFile("benchmarks/BuchVideo4/ADD_BundleSDF_current_impl.npy", "ADD_Buch_Video_4_loftr_cap_30_no_dup", invalid_poses_mask= ~mask)
+
 
 
         with open(self.ADD_logpath, 'w') as datei:
@@ -852,7 +880,7 @@ class ResultPlotter:
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,1], label = "q2 y")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,2], label = "q3 z")
         # plt.plot(self.acc_pose_regression_0_ids, self.acc_pose_regression_0_rot[:,3], label = "q4 w")
-        # plt.plot(self.x, self.add_bundle_loftr_cap_30_no_dup, label = "LoFTR filter 30 0.3")
+        #plt.plot(self.x, self.add_bundle_loftr_cap_30_no_dup, label = "LoFTR filter 30 0.3")
         # plt.plot(self.x,self.add_bundle_cutie_first_offline_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_cutie_segmentation, label = "Cutie segmentation")
         #plt.plot(self.x,self.add_bundle_orig_xmem_segmentation, label = "XMEM segmentation")
@@ -861,11 +889,12 @@ class ResultPlotter:
         #plt.plot(self.x,self.add_test, label = "ADD First PVNet Cutie Segmentation_2")
         #plt.plot(self.x,self.add_bundle_current_implementation, label = "Current implementation")
         #plt.plot(self.x,self.add_bundle_union_occlusion, label = "Union occlusion value")
+        #plt.plot(self.x, self.add_template_matching_only_min_50, label = "Template Matching 50")
 
         #Eval pose regression poses only 
         #plt.plot(self.x_extrapolated_poses_only_2, self.add_bundle_extrapolated_poses_only_2, label = "Pose regression 2")
-        plt.scatter(self.x, self.add_bundle_extrapolated_poses_only_2_gapped, label = "Pose regression 2", s = 10)
-        plt.plot(self.x, self.add_bundle_extrapolated_poses_only_minus_4_gapped, color = "C1", label = "Pose regression ¼")
+        #plt.scatter(self.x, self.add_bundle_extrapolated_poses_only_2_gapped, label = "Pose regression 2", s = 10)
+        #plt.plot(self.x, self.add_bundle_extrapolated_poses_only_minus_4_gapped, color = "C1", label = "Pose regression ¼")
 
         #Eval / limit rotational accelerations 
         #plt.plot(self.x, self.add_bundle_pose_regression_0_no_icp_new, label = "Pose regression 0")
@@ -886,9 +915,18 @@ class ResultPlotter:
         #plt.plot(self.x, np.ones(self.x.shape) * 1)
 
 
-        # plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
-        # plt.plot(self.x,self.add_bundle_pose_regression_buch_2, label = "ADD BundleSDF pose_regression BuchVideo2")
+        #plt.plot(self.x,self.add_bundle_orig_buch_2, label = "ADD BundleSDF orig BuchVideo2")
+        #plt.plot(self.x,self.add_bundle_pose_regression_buch_2, label = "ADD BundleSDF pose_regression BuchVideo2")
         # plt.plot(self.x,self.add_pvnet_orig_buch_2, label = "ADD PVNet BuchVideo2")
+
+        # plt.plot(self.x, self.ADD_Buch_Video_2_orig, label = "BundleSDF orig")
+        # plt.plot(self.x, self.ADD_Buch_Video_2_loftr_cap_30_no_dup, label = "LoFTR filter 30 0.3")
+
+        plt.plot(self.x, self.ADD_Buch_Video_3_orig, label = "BundleSDF orig")
+        plt.plot(self.x, self.ADD_Buch_Video_3_loftr_cap_30_no_dup, label = "LoFTR filter 30 0.3")
+
+        # plt.plot(self.x, self.ADD_Buch_Video_4_orig, label = "BundleSDF orig")
+        # plt.plot(self.x, self.ADD_Buch_Video_4_loftr_cap_30_no_dup, label = "LoFTR filter 30 0.3")
 
         #jumps = ResultPlotter.getJumps(self.add_bundle_occ_aware_masked,self.x_masked)
         #print("jumps at", jumps)
@@ -1190,4 +1228,4 @@ if __name__ == "__main__":
     #result_plot.plotTimingResults()
     #result_plot.plotRessourceResults()
     #result_plot.plotTensorboardResults()
-    result_plot.exportPlot("plots/BuchVideo/ADD/ADD_BundleSDF_pose_regression_2_-4_only_extrapolated_v2.pdf")
+    result_plot.exportPlot("plots/BuchVideo3/ADD/ADD_BundleSDF_orig_loftr.pdf")

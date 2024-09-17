@@ -609,11 +609,12 @@ class BundleSdf:
 
     self.bundler.checkAndAddKeyframe(frame)
   
-  def process_new_frame_pvnet(self, frame):
+  def process_new_frame_improved(self, frame):
     logging.info(f"process frame {frame._id_str}")
     
     self.bundler._newframe = frame
     os.makedirs(self.debug_dir, exist_ok=True)
+    # check if first frame for initial coordinate system
     #reference frame = last frame
     if frame._id>0:
       #print(f"saved frames {str(list(self.bundler._frames.keys()))}")
@@ -781,7 +782,7 @@ class BundleSdf:
     distance = np.linalg.norm(feature_matching_optimized_pose[:3,3] - frame._pose_in_model[:3,3])
     #self.matchTemplates(frame)
 
-    
+    # try template matching if offest distance is too big
     if distance > self.cfg_track["loftr"]["max_feature_matching_offset"]:
       #spike detected -> dont use frame
       logging.info(f"Did not use frame's {frame._id_str} feature_matching_optimization (too big of an offset). Trying template matching.")
@@ -807,13 +808,14 @@ class BundleSdf:
 
     self.bundler._frames[frame._id] = frame
 
+    # bundle-adjustment with frames with similar rotation
     self.time_keeper.add("selectKeyFramesForBA",frame._id)
     #set _local_frames / maximum frames = bundle->max_BA_frames / sorting method: bundle->subset_selection_method
     self.bundler.selectKeyFramesForBA()
     self.time_keeper.add("selectKeyFramesForBA_end",frame._id)
 
 
-    # get _local_frames
+    # get _local_frames (= frames for bundle adjustment)
     local_frames = self.bundler._local_frames
     
     if self.cfg_track["time_reducer"]["search_all_pairs_feature_matching"]: 
@@ -832,6 +834,7 @@ class BundleSdf:
 
     find_matches = False
 
+    # execute bundle adjustment on GPU
     self.time_keeper.add("optimizeGPU",frame._id)
     self.bundler.optimizeGPU(local_frames, find_matches)
     self.time_keeper.add("optimizeGPU_end",frame._id)
@@ -1182,7 +1185,8 @@ class BundleSdf:
         self.gui_dict['K'] = self.K
         self.gui_dict['n_keyframe'] = len(self.bundler._keyframes)
 
-  def runNoNerf(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
+  def runImprovedVersion(self, color, depth, K, id_str, mask=None, occ_mask=None, pose_in_model=np.eye(4)):
+    #load all parameters into members
     self.cnt += 1
     self.color = color
     self.depth = depth
@@ -1220,28 +1224,19 @@ class BundleSdf:
       logging.info("percentile denoise done")
     
 
-    
+    # generate a cpp-object
     frame = self.make_frame(color, depth, K, id_str, mask, occ_mask, pose_in_model)
     os.makedirs(f"{self.debug_dir}/{frame._id_str}", exist_ok=True)
 
     logging.info(f"processNewFrame start {frame._id_str}")
-    # self.bundler.processNewFrame(frame)
-    #self.process_new_frame(frame)
+
+    #process the frame 
     self.time_keeper.add("process_new_frame_pvnet",frame._id)
-    self.process_new_frame_pvnet(frame)
+    self.process_new_frame_improved(frame)
     self.time_keeper.add("process_new_frame_pvnet_done",frame._id)
     logging.info(f"processNewFrame done {frame._id_str}")
-
-    #correct with pvnet correction
-    #logging.info(f"Tranformation difference {self.T_pvnet_bundle}")
-    #orig_pose = np.array(frame._pose_in_model).copy()
-    #logging.info(f"BundleSDF Pose {orig_pose}")
-    #logging.info(f"BundleSDF Inverse-Pose {np.linalg.inv(orig_pose)}")
-    #frame._pose_in_model = self.T_pvnet_bundle @ orig_pose #  np.linalg.inv(self.T_pvnet_bundle) 
     
-    #logging.info(f"corrected pose Pose {frame._pose_in_model}")
-    
-
+    # save the results
     self.bundler.saveNewframeResult()
     #frame._pose_in_model = orig_pose
     

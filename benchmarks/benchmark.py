@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 class BenchmarkADD:
-
+    # Benchmark the add-values of a result
     def __init__(self, pose_pred_dir, pose_gt_dir, model_path, model_diameter, first_pose_adjust = True):
         self.pose_pred_dir = pose_pred_dir
         self.pose_gt_dir = pose_gt_dir
@@ -30,7 +30,7 @@ class BenchmarkADD:
         
 
     def run_add_pose(self):
-
+        # calculate add for loaded poses
         #preditcted poses
         pose_pred_files = os.listdir(self.pose_pred_dir)
         pose_pred_files.sort()
@@ -102,6 +102,7 @@ class BenchmarkADD:
         #ADD_AUC = compute_auc(add_errs)*100
     
     def run_occlusion(self):
+        #calc occlusion percentage
         mask_full_paths = os.listdir(self.pose_gt_dir)
         mask_full_paths.sort()
         mask_full_counts = []
@@ -127,6 +128,7 @@ class BenchmarkADD:
 
 
     def plot_results(self):
+        #plot the results
         plt.switch_backend('TkAgg')
 
         y = self.result_y
@@ -138,6 +140,7 @@ class BenchmarkADD:
         plt.show()
 
     def save_results(self, path):
+        #save the results 
         save_arr = dict()
         save_arr["result_y"] = self.result_y 
         save_arr["trans_err"] = self.trans_errs
@@ -179,7 +182,7 @@ class BenchmarkADD:
 
 
 class BenchmarkSegmentation:
-
+    # benchmark the segmentation
     def __init__(self, masks_est_dir, masks_gt_dir) -> None:
         self.masks_est_dir = masks_est_dir
         self.masks_gt_dir = masks_gt_dir
@@ -203,6 +206,7 @@ class BenchmarkSegmentation:
     
     @staticmethod
     def calc_iou( mask_est, mask_gt):
+        # calculate IOU metric
         confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
         denominator = (confusion["tp"] + confusion["fp"] + confusion["fn"])
         if denominator != 0:
@@ -214,6 +218,7 @@ class BenchmarkSegmentation:
     
     @staticmethod
     def calc_pixel_acc(mask_est, mask_gt):
+        # calculate pixel accuracy
         confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
         denominator = (confusion["tp"] + confusion["tn"] + confusion["fp"] + confusion["fn"])
         if denominator != 0:
@@ -224,6 +229,7 @@ class BenchmarkSegmentation:
     
     @staticmethod
     def calc_precision(mask_est, mask_gt):
+        # calculate precision metric
         confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
         denominator = (confusion["tp"] + confusion["fp"])
         if denominator != 0:
@@ -234,6 +240,7 @@ class BenchmarkSegmentation:
     
     @staticmethod
     def calc_recall(mask_est, mask_gt):
+        # calculate recall metric
         confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
         denominator = (confusion["tp"] + confusion["fn"])
         if denominator != 0:
@@ -244,6 +251,7 @@ class BenchmarkSegmentation:
 
     @staticmethod
     def calc_dice(mask_est, mask_gt):
+        # calculate dice metric
         confusion = BenchmarkSegmentation.calc_confusion(mask_est, mask_gt)
         denominator = (2 * confusion["tp"] + confusion["fp"] + confusion["fn"])
         if denominator != 0:
@@ -254,6 +262,7 @@ class BenchmarkSegmentation:
 
     @staticmethod
     def calc_confusion(mask_est, mask_gt):
+        # calculate the confusion matrix
         tp = np.sum(np.logical_and(mask_est, mask_gt))
         tn = np.sum(np.logical_and(np.logical_not(mask_est), np.logical_not(mask_gt)))
         fp = np.sum(np.logical_and(mask_est, np.logical_not(mask_gt)))
@@ -267,6 +276,7 @@ class BenchmarkSegmentation:
         return confusion
 
     def calc_metrics(self):
+        # calculate all metrics
         for idx, mask_est_path in enumerate(self.mask_est_paths):
             print(f"calulating metrics for {mask_est_path}")
             mask_est_path = os.path.join(self.masks_est_dir, mask_est_path)
@@ -302,6 +312,7 @@ class BenchmarkSegmentation:
         self.ids = np.array(self.ids)
     
     def plot_results(self):
+        #plot the results
         plt.switch_backend('TkAgg')
 
         ax = plt.gca()
@@ -320,6 +331,7 @@ class BenchmarkSegmentation:
         plt.show()
 
     def save_results(self, path):
+        # save the results
         save_arr = dict()
         save_arr["iou"] = self.iou_arr 
         save_arr["pixel_acc"] = self.pixel_acc_arr 
@@ -333,20 +345,20 @@ class BenchmarkSegmentation:
 
 
 def calcADD():
-    # bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/velocity_estimation",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
-    #                   pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
-    #                   model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/model.ply",
-    #                   model_diameter=0.211,
-    #                   first_pose_adjust= False) 
-    bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outho3dap10_Orig/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
-                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/AP10/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
-                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/AP10/model.ply",
+    bench = BenchmarkADD(pose_pred_dir="outBuchVideo3_bad/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
+                      pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo3/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
+                      model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo3/model.ply",
                       model_diameter=0.211,
-                      first_pose_adjust= True) 
+                      first_pose_adjust= False) 
+    # bench = BenchmarkADD(pose_pred_dir="/home/thws_robotik/Documents/Leyh/6dpose/detection/BundleSDF/outho3dap10_Orig/ob_in_cam",#"/home/thws_robotik/Downloads/outBuchVideoPoseRegression-4/ob_in_cam",
+    #                   pose_gt_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/AP10/pose", #"/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/pose"
+    #                   model_path="/home/thws_robotik/Documents/Leyh/6dpose/datasets/HO3D_v3/evaluation/AP10/model.ply",
+    #                   model_diameter=0.211,
+    #                   first_pose_adjust= True) 
     bench.run_add_pose()
     #bench.run_occlusion()
     bench.plot_results()
-    bench.save_results("benchmarks/HO3D/AP10/ADD_orig.npy")
+    bench.save_results("benchmarks/BuchVideo3/ADD_BundleSDF_current_impl.npy")
 
 def calcMaskMetrics():
     bench = BenchmarkSegmentation(masks_est_dir= "/home/thws_robotik/Documents/Leyh/6dpose/datasets/BuchVideo/masks_cutie_first_pvnet",

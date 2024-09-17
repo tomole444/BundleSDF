@@ -21,7 +21,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   set_seed(0)
 
   os.system(f'rm -rf {out_folder} && mkdir -p {out_folder}')
-
+  # change some config parameters
   cfg_bundletrack = yaml.load(open(f"{code_dir}/BundleTrack/config_track.yml",'r'))
   cfg_bundletrack['SPDLOG'] = int(args.debug_level)
   #cfg_bundletrack['depth_processing']["zfar"] = 1.75
@@ -76,6 +76,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   reader = YcbineoatReader(video_dir=video_dir) #FIXME: CHANGE BACK
   #reader = Ho3dReader(video_dir=video_dir)
 
+  #load templates
   if cfg_bundletrack["preload_templates"]["activated"]:
     keyframes_dataset_path = cfg_bundletrack["preload_templates"]["keyframes_dataset_path"]
     os.makedirs(os.path.join(cfg_bundletrack["debug_dir"], "template_imgs"), exist_ok= True)
@@ -87,6 +88,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
 
   first_color_img = None
 
+  # setup segmenter
   if use_segmenter:
     first_color_img = cv2.imread(reader.color_files[0])
 
@@ -109,6 +111,7 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
   tracker.time_keeper.add("whole_runtime", 0)
 
   i = 0
+  #loop through all the pictures
   while i < len(reader.color_files):
     tracker.time_keeper.add("preprocessing", int(reader.id_strs[i]))
     if cfg_bundletrack["real_time_simulation"]["activated"]:
@@ -143,10 +146,12 @@ def run_one_video(video_dir='/home/bowen/debug/2022-11-18-15-10-24_milk', out_fo
     tracker.time_keeper.add("preprocessing_done", int(id_str))
     tracker.time_keeper.add("run", int(id_str))
     if(cfg_nerf["activated"]):
+      # run the original implementation
       tracker.run(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     else:
-      #tracker.runNoNerf(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
-      tracker.runTemplateMatchingOnly(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+      # run the new implementation
+      tracker.runImprovedVersion(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
+      #tracker.runTemplateMatchingOnly(color, depth, K, id_str, mask=mask, occ_mask=None, pose_in_model=pose_in_model)
     
     i += args.stride
     
@@ -308,6 +313,7 @@ if __name__=="__main__":
   parser.add_argument('--debug', action="store_true", help="Start in vscode debug mode")
   args = parser.parse_args()
 
+  #start debugger 
   if args.debug:
     port = 56784
     print(f"Waiting for debugger to attach to port {port}")
